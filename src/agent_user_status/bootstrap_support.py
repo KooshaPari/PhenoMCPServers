@@ -1,0 +1,137 @@
+"""Shared bootstrap constants and path helpers."""
+
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+
+@dataclass(frozen=True)
+class BootstrapPaths:
+    root: Path
+    src: Path
+    launchd_src: Path
+    bin_dir: Path
+    share_dir: Path
+    launchd_dir: Path
+    state_dir: Path
+    eye_venv: Path
+
+SUPPORT_MODULES = [
+    "bootstrap.py",
+    "agent_imessage_core.py",
+    "agent_imessage_learning.py",
+    "agent_imessage_status.py",
+    "agent_imessage_commands.py",
+    "correction.py",
+    "gaze_context.py",
+    "gaze_calibration.py",
+    "gaze_projection.py",
+    "eye_state_payload.py",
+    "webcam_support.py",
+    "eye_publish.py",
+    "eye_smoothing.py",
+    "monitor_html.py",
+    "bootstrap_cli.py",
+]
+
+PLIST_NAMES = [
+    "com.phenotype.agent-user-statusd.plist",
+    "com.phenotype.agent-user-status-tray.plist",
+    "com.phenotype.agent-user-status-cursor-tracker.plist",
+    "com.phenotype.agent-user-status-webcam-eye-tracker.plist",
+]
+
+RUNTIME_BIN_SPECS = [
+    ("agent-imessage", "agent_user_status/agent_imessage.py"),
+    ("agent-user-statusd", "agent_user_status/statusd.py"),
+    ("agent-user-status-cursor-tracker", "agent_user_status/cursor_tracker.py"),
+    ("agent-user-status-webcam-eye-tracker", "agent_user_status/webcam_eye_tracker.py"),
+    ("agent-imessage-mcp", "mcp/agent_imessage_mcp.py"),
+]
+
+NATIVE_MONITOR_FILES = [
+    "AgentUserStatusMonitor.swift",
+    "EyeTrackerControls.swift",
+    "MonitorStatusSummary.swift",
+    "MonitorUIStateStore.swift",
+    "WorkspaceAttribution.swift",
+    "VisualGazeFilter.swift",
+    "WindowTracking.swift",
+    "PanelView.swift",
+]
+
+
+def env_path(name: str, default: Path) -> Path:
+    value = os.environ.get(name)
+    return Path(value).expanduser() if value else default
+
+
+def env_bool(name: str, default: bool) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value not in {"0", "false", "False", "no", "NO"}
+
+
+def locate_source_root() -> Path:
+    override = os.environ.get("AGENT_USER_STATUS_SOURCE_ROOT")
+    if override:
+        root = Path(override).expanduser().resolve()
+        if (root / "src" / "agent_user_status").exists():
+            return root
+
+    here = Path(__file__).resolve()
+    for candidate in [Path.cwd(), *Path.cwd().parents, here.parent, *here.parents]:
+        root = candidate.resolve()
+        if (root / "src" / "agent_user_status").exists() and (root / "scripts" / "install.sh").exists():
+            return root
+
+    raise SystemExit("Could not locate the source checkout. Set AGENT_USER_STATUS_SOURCE_ROOT.")
+
+
+def resolve_paths() -> BootstrapPaths:
+    root = locate_source_root()
+    share_dir = env_path("AGENT_USER_STATUS_SHARE_DIR", Path.home() / ".local" / "share" / "agent-imessage")
+    return BootstrapPaths(
+        root=root,
+        src=root / "src",
+        launchd_src=root / "launchd",
+        bin_dir=env_path("AGENT_USER_STATUS_BIN_DIR", Path.home() / ".local" / "bin"),
+        share_dir=share_dir,
+        launchd_dir=env_path("AGENT_USER_STATUS_LAUNCHD_DIR", Path.home() / "Library" / "LaunchAgents"),
+        state_dir=env_path("AGENT_IMESSAGE_STATE_DIR", share_dir / "state"),
+        eye_venv=env_path(
+            "AGENT_USER_STATUS_EYE_VENV",
+            Path.home() / ".local" / "share" / "agent-imessage" / "eye-tracker-venv",
+        ),
+    )
+
+
+def source_runtime_paths(paths: Any) -> list[Path]:
+    root = paths.src
+    return [
+        root / source for _, source in RUNTIME_BIN_SPECS
+    ] + [
+        root / "agent_user_status" / "bootstrap.py",
+        root / "agent_user_status" / "bootstrap_cli.py",
+    ]
+
+
+def installed_runtime_paths(paths: Any) -> list[Path]:
+    bin_dir = paths.bin_dir
+    return [bin_dir / name for name, _ in RUNTIME_BIN_SPECS] + [bin_dir / "agent-user-status"]
+
+
+def installed_support_paths(paths: Any) -> list[Path]:
+    bin_dir = paths.bin_dir
+    return [bin_dir / "agent_user_status" / "__init__.py"] + [
+        bin_dir / "agent_user_status" / filename for filename in SUPPORT_MODULES
+    ]
+
+
+def native_monitor_paths(paths: Any) -> list[Path]:
+    share_dir = paths.share_dir
+    return [share_dir / "native-monitor" / filename for filename in NATIVE_MONITOR_FILES]

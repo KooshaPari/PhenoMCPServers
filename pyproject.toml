@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-user-status"
+version = "0.1.0"
+description = "Local user-status, iMessage, and native monitor runtime for coding agents."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+eye = [
+  "mediapipe>=0.10.30",
+  "numpy>=1.26",
+  "opencv-python>=4.10",
+  "pyobjc-framework-Cocoa>=10.0",
+]
+
+[project.scripts]
+agent-user-status = "agent_user_status.bootstrap:main"
+agent-imessage = "agent_user_status.agent_imessage:main"
+agent-user-statusd = "agent_user_status.statusd:main"
+agent-user-status-cursor-tracker = "agent_user_status.cursor_tracker:main"
+agent-user-status-webcam-eye-tracker = "agent_user_status.webcam_eye_tracker:main"
+agent-imessage-mcp = "mcp.agent_imessage_mcp:main"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["agent_user_status*", "mcp*"]
+namespaces = true

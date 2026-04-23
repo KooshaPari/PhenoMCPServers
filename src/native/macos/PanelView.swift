@@ -1,0 +1,180 @@
+import AppKit
+import Foundation
+
+final class PanelView: NSView {
+    let model: StatusModel
+
+    init(model: StatusModel) {
+        self.model = model
+        super.init(frame: .zero)
+        wantsLayer = true
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        NSColor.clear.setFill()
+        dirtyRect.fill()
+        drawPanel()
+    }
+
+    private func drawPanel() {
+        let panel = bounds.insetBy(dx: 10, dy: 10)
+        NSColor(calibratedRed: 0.10, green: 0.11, blue: 0.14, alpha: 0.97).setFill()
+        NSBezierPath(roundedRect: panel, xRadius: 8, yRadius: 8).fill()
+
+        var y = panel.maxY - 32
+        drawText("Agent \(model.status.status)", x: panel.minX + 16, y: y, size: 18, weight: .semibold)
+        let badgeText = model.eye.calibrationBannerText
+        drawPill(
+            text: badgeText,
+            frame: CGRect(x: panel.maxX - 118, y: y - 2, width: 96, height: 20),
+            fill: badgeText == "Tracking" ? NSColor.systemGreen : (badgeText == "Projection hold" ? NSColor.systemOrange : NSColor.systemRed)
+        )
+        y -= 28
+        drawText("ETA \(model.status.eta)", x: panel.minX + 16, y: y, size: 11, color: NSColor(calibratedWhite: 0.82, alpha: 1))
+        drawText("Confidence \(fmt(model.status.confidence))", x: panel.maxX - 162, y: y, size: 11, color: NSColor(calibratedWhite: 0.82, alpha: 1))
+
+        let calibrationTop = panel.maxY - 100
+        drawSection(
+            title: "Calibration",
+            frame: CGRect(x: panel.minX + 10, y: calibrationTop, width: panel.width - 20, height: 98),
+            accent: model.eye.calibrationRecommendedAction == "recalibrate" || model.eye.calibrationQualityLabel == "poor"
+                ? NSColor.systemRed
+                : (model.eye.projectionHoldActive ? NSColor.systemOrange : NSColor.systemGreen)
+        ) { section in
+            let action = model.eye.calibrationActionText
+            drawMetricGrid(
+                in: section,
+                left: [
+                    ("QUALITY", model.eye.calibrationQualityLabel),
+                    ("MEAN", model.eye.calibrationMeanErrorPx.map { "\(Int($0)) px" } ?? "n/a"),
+                    ("P95", model.eye.calibrationP95ErrorPx.map { "\(Int($0)) px" } ?? "n/a"),
+                    ("SAMPLES", model.eye.calibrationSampleCount.map { "\($0)" } ?? "n/a")
+                ],
+                right: [
+                    ("ACTION", action),
+                    ("HOLD", model.eye.projectionHoldActive ? "projection hold" : "tracking"),
+                    ("REASON", model.eye.projectionHoldReason.replacingOccurrences(of: "_", with: " ")),
+                    ("DETAIL", model.eye.calibrationDetailText)
+                ]
+            )
+        }
+
+        drawSection(
+            title: "Stability",
+            frame: CGRect(x: panel.minX + 10, y: calibrationTop - 102, width: panel.width - 20, height: 98),
+            accent: model.eye.targetingReliable ? NSColor.systemBlue : NSColor.systemOrange
+        ) { section in
+            drawMetricGrid(
+                in: section,
+                left: [
+                    ("JUMP", "\(Int(model.eye.jumpPx)) px"),
+                    ("JITTER", "\(Int(model.eye.jitterPx)) px"),
+                    ("VELOCITY", "\(Int(model.eye.velocityPxS)) px/s")
+                ],
+                right: [
+                    ("TARGET", model.eye.targetingReliable ? "reliable" : "held"),
+                    ("COORD", coord(model.eyePoint())),
+                    ("SCORE", fmt(model.eye.stabilityScore))
+                ]
+            )
+        }
+
+        drawSection(
+            title: "Target",
+            frame: CGRect(x: panel.minX + 10, y: calibrationTop - 204, width: panel.width - 20, height: 98),
+            accent: NSColor(calibratedWhite: 0.58, alpha: 1)
+        ) { section in
+            let targetTitle = model.target.title.isEmpty ? "(no title)" : model.target.title
+            let targetOwner = "\(model.target.owner) [\(model.target.pid)]"
+            drawMetricGrid(
+                in: section,
+                left: [
+                    ("PROCESS", targetOwner),
+                    ("WINDOW", targetTitle),
+                    ("AGENT", model.target.agentSurface)
+                ],
+                right: [
+                    ("RESOLUTION", model.target.resolution),
+                    ("HOOK", model.target.hookStatus),
+                    ("TOOLS", model.commandStatus)
+                ]
+            )
+        }
+    }
+
+    private func drawSection(title: String, frame: CGRect, accent: NSColor, body: (CGRect) -> Void) {
+        let card = frame.insetBy(dx: 0, dy: 0)
+        NSColor(calibratedRed: 0.16, green: 0.17, blue: 0.21, alpha: 0.96).setFill()
+        NSBezierPath(roundedRect: card, xRadius: 7, yRadius: 7).fill()
+        accent.withAlphaComponent(0.6).setStroke()
+        let border = NSBezierPath(roundedRect: card, xRadius: 7, yRadius: 7)
+        border.lineWidth = 1
+        border.stroke()
+        drawText(title.uppercased(), x: card.minX + 12, y: card.maxY - 14, size: 10, weight: .semibold, color: NSColor(calibratedWhite: 0.78, alpha: 1))
+        body(card.insetBy(dx: 12, dy: 18))
+    }
+
+    private func drawMetricGrid(in section: CGRect, left: [(String, String)], right: [(String, String)]) {
+        let leftX = section.minX
+        let rightX = section.midX + 4
+        let width = section.width / 2 - 8
+        var y = section.maxY - 8
+        for item in left {
+            drawMetric(label: item.0, value: item.1, x: leftX, y: y, width: width)
+            y -= 20
+        }
+        y = section.maxY - 8
+        for item in right {
+            drawMetric(label: item.0, value: item.1, x: rightX, y: y, width: width)
+            y -= 20
+        }
+    }
+
+    private func drawMetric(label: String, value: String, x: CGFloat, y: CGFloat, width: CGFloat) {
+        drawText(label, x: x, y: y, size: 10, weight: .semibold, color: NSColor(calibratedWhite: 0.68, alpha: 1), maxWidth: width * 0.45)
+        drawText(value, x: x + width * 0.45, y: y, size: 11, color: .white, maxWidth: width * 0.55)
+    }
+
+    private func drawPill(text: String, frame: CGRect, fill: NSColor) {
+        fill.withAlphaComponent(0.22).setFill()
+        NSBezierPath(roundedRect: frame, xRadius: 10, yRadius: 10).fill()
+        fill.withAlphaComponent(0.9).setStroke()
+        let path = NSBezierPath(roundedRect: frame, xRadius: 10, yRadius: 10)
+        path.lineWidth = 1
+        path.stroke()
+        drawText(text, x: frame.minX, y: frame.minY + 4, size: 9, weight: .semibold, color: fill, maxWidth: frame.width, center: true)
+    }
+
+    private func coord(_ point: CGPoint) -> String {
+        "\(Int(point.x)), \(Int(point.y))"
+    }
+
+    private func fmt(_ value: Double) -> String {
+        String(format: "%.2f", value)
+    }
+
+    private func drawText(
+        _ text: String,
+        x: CGFloat,
+        y: CGFloat,
+        size: CGFloat,
+        weight: NSFont.Weight = .regular,
+        color: NSColor = .white,
+        maxWidth: CGFloat = 310,
+        center: Bool = false
+    ) {
+        let clipped = text.count > 72 ? String(text.prefix(69)) + "..." : text
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = center ? .center : .left
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: size, weight: weight),
+            .foregroundColor: color,
+            .paragraphStyle: paragraph
+        ]
+        clipped.draw(in: CGRect(x: x, y: y - size, width: maxWidth, height: size + 8), withAttributes: attrs)
+    }
+}

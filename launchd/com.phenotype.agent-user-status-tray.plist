@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.phenotype.agent-user-status-tray</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>{{AGENT_USER_STATUS_NATIVE_MONITOR}}</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+  <key>ProcessType</key>
+  <string>Aqua</string>
+  <key>StandardOutPath</key>
+  <string>{{STATE_DIR}}/user-status-tray.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>{{STATE_DIR}}/user-status-tray.err.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>{{LAUNCHD_PATH}}</string>
+    <key>AGENT_IMESSAGE_STATE_DIR</key>
+    <string>{{STATE_DIR}}</string>
+    <key>AGENT_USER_STATUS_EYE_CAMERA</key>
+    <string>0</string>
+  </dict>
+</dict>
+</plist>

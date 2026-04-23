@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.phenotype.agent-user-status-webcam-eye-tracker</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>{{EYE_PYTHON_BIN}}</string>
+    <string>{{AGENT_USER_STATUS_WEBCAM_EYE_TRACKER}}</string>
+    <string>run</string>
+    <string>--camera</string>
+    <string>0</string>
+    <string>--width</string>
+    <string>1280</string>
+    <string>--height</string>
+    <string>720</string>
+    <string>--hz</string>
+    <string>8</string>
+    <string>--min-cutoff</string>
+    <string>1.15</string>
+    <string>--beta</string>
+    <string>0.012</string>
+    <string>--max-jump-px</string>
+    <string>620</string>
+  </array>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>KeepAlive</key>
+  <false/>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+  <key>StandardOutPath</key>
+  <string>{{STATE_DIR}}/user-status-webcam-eye-tracker.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>{{STATE_DIR}}/user-status-webcam-eye-tracker.err.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>{{LAUNCHD_PATH}}</string>
+    <key>AGENT_USER_STATUS_EYE_CALIBRATION</key>
+    <string>{{STATE_DIR}}/eye_calibration.json</string>
+    <key>AGENT_IMESSAGE_STATE_DIR</key>
+    <string>{{STATE_DIR}}</string>
+    <key>AGENT_USER_STATUS_EYE_CAMERA</key>
+    <string>0</string>
+  </dict>
+</dict>
+</plist>
