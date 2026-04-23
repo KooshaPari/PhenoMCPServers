@@ -12,3 +12,4 @@ Current status:
 - Local repo is initialized.
 - GitHub auth is available.
 - Session README already exists and covers the eye-tracker workstream.
+- GitHub workflow and issue/PR templates are being added as part of the repo bootstrap.

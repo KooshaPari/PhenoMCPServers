@@ -10,5 +10,7 @@ For GitHub setup:
 - attach `origin` to the repo name derived from the checkout
 - make the first commit include the docs/session scaffold
 - publish the initial tree before any broader cleanup or restructuring
+- add a lightweight CI workflow for unit tests
+- add issue and PR templates so the remote is usable immediately
 
 No runtime behavior changes are needed for this setup pass.
