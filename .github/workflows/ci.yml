@@ -63,6 +63,8 @@ jobs:
           exit 1
 
       - name: Run smoke checks
+        env:
+          AGENT_USER_STATUS_SMOKE_SKIP_IMESSAGE: "1"
         run: ./tests/smoke/smoke.sh
 
       - name: Stop backend

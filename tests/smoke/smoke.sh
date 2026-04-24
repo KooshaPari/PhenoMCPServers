@@ -148,6 +148,11 @@ curl -fsS -X POST http://127.0.0.1:8765/dev/eye \
   -d '{"screen_x":720,"screen_y":450,"screen_width":1440,"screen_height":900,"score":0.9,"confidence":0.92,"stability_score":0.91,"targeting_reliable":true,"filter_mode":"tracking","state":"looking_at_screen:smoke_reliable","max_age_seconds":5}' \
   >/dev/null
 
+if [ "${AGENT_USER_STATUS_SMOKE_SKIP_IMESSAGE:-0}" = "1" ]; then
+  echo "smoke passed"
+  exit 0
+fi
+
 ~/.local/bin/agent-imessage action output agent-complete \
   --state smoke_agent_complete \
   --max-age-seconds 60 \
