@@ -52,3 +52,13 @@ For the native/runtime rewrite:
 - avoid a partial rewrite that leaves Python, Swift, and Rust all owning
   lifecycle; the target boundary is native UI + native capture + shared Rust
   core + pluggable model inference.
+
+Current concrete implementation:
+- MediaPipe-derived head yaw, pitch, roll, frame size, and framing
+  quality are computed inside the frame-processing call and published as
+  bounded derived telemetry.
+- The native monitor displays head-pose and framing summaries beside the gaze
+  smoothing metrics, so poor camera framing is visible before blaming the
+  calibration model.
+- The derived payload schema accepts these abstract values and continues to
+  reject raw landmark/camera/biometric data.

@@ -18,3 +18,15 @@ Acceptance criteria:
 - MCP status redacts message preview/chat metadata by default.
 - Generic Messages MCP registration is admin-gated and not part of the default
   polished sponsor/user messaging path.
+- Webcam tracker publishes derived head pose/framing state without raw frames,
+  screenshots, landmarks, identity, or biometric templates.
+- Native monitor exposes calibration health, passive correction status,
+  head-pose summary, and camera framing state in the pinned panel.
+
+Privacy constraints for eye/head/facial-control signals:
+- Allowed: bounded gaze coordinates, confidence, smoothing/projection state,
+  approximate head yaw/pitch/roll, framing quality/state, correction
+  offsets, and calibration quality.
+- Forbidden: raw frames, screenshots, raw landmarks, identity recognition,
+  facial recognition labels, biometric embeddings/templates, raw gaze streams,
+  audio waveforms, transcripts, and typed text.

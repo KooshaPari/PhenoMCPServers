@@ -99,12 +99,14 @@ final class PanelView: NSView {
                 left: [
                     ("JUMP", "\(Int(model.eye.jumpPx)) px"),
                     ("JITTER", "\(Int(model.eye.jitterPx)) px"),
-                    ("VELOCITY", "\(Int(model.eye.velocityPxS)) px/s")
+                    ("VELOCITY", "\(Int(model.eye.velocityPxS)) px/s"),
+                    ("HEAD", model.eye.headPoseSummaryText)
                 ],
                 right: [
                     ("TARGET", model.eye.targetingReliable ? "reliable" : "held"),
                     ("COORD", coord(model.eyePoint())),
-                    ("SCORE", fmt(model.eye.stabilityScore))
+                    ("SCORE", fmt(model.eye.stabilityScore)),
+                    ("FRAME", model.eye.framingSummaryText)
                 ]
             )
         }

@@ -29,6 +29,11 @@ struct EyeState {
     var correctionSampleCount: Int?
     var correctionReliabilityScore: Double?
     var correctionUpdatedAt: String?
+    var headYawDeg: Double?
+    var headPitchDeg: Double?
+    var headRollDeg: Double?
+    var framingQuality: Double?
+    var framingState: String = "unknown"
     var projectionHoldActive: Bool = false
     var projectionHoldReason: String = "unknown"
     var projectionHoldHint: String?
@@ -223,6 +228,11 @@ final class StatusModel {
             correctionSampleCount: eye["correction_sample_count"] as? Int,
             correctionReliabilityScore: eye["correction_reliability_score"] as? Double,
             correctionUpdatedAt: eye["correction_updated_at"] as? String,
+            headYawDeg: eye["head_yaw_deg"] as? Double,
+            headPitchDeg: eye["head_pitch_deg"] as? Double,
+            headRollDeg: eye["head_roll_deg"] as? Double,
+            framingQuality: eye["framing_quality"] as? Double,
+            framingState: eye["framing_state"] as? String ?? "unknown",
             projectionHoldActive: eye["projection_hold_active"] as? Bool ?? false,
             projectionHoldReason: eye["projection_hold_reason"] as? String ?? "unknown",
             projectionHoldHint: eye["projection_hold_hint"] as? String,

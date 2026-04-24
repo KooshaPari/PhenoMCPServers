@@ -166,6 +166,7 @@ def _publish_sample(
             config=publisher,
             extra=_publish_metadata(
                 stability=stability,
+                sample_telemetry=sample.telemetry,
                 calibration_quality=calibration_quality,
                 raw_point=raw_point,
                 correction=correction,
@@ -179,6 +180,7 @@ def _publish_sample(
 def _publish_metadata(
     *,
     stability: dict[str, Any],
+    sample_telemetry: dict[str, Any],
     calibration_quality: dict[str, Any],
     raw_point: tuple[float, float],
     correction: dict[str, Any] | None,
@@ -186,6 +188,7 @@ def _publish_metadata(
 ) -> dict[str, Any]:
     return {
         **stability,
+        **sample_telemetry,
         **calibration_quality,
         "observed_screen_x": round(raw_point[0], 2),
         "observed_screen_y": round(raw_point[1], 2),

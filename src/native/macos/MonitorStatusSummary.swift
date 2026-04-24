@@ -49,6 +49,18 @@ extension EyeState {
         return "\(quality) · \(mean) · \(p95) · \(samples) · \(drift)"
     }
 
+    var headPoseSummaryText: String {
+        let yaw = headYawDeg.map { "yaw \(Int($0))" } ?? "yaw n/a"
+        let pitch = headPitchDeg.map { "pitch \(Int($0))" } ?? "pitch n/a"
+        let roll = headRollDeg.map { "roll \(Int($0))" } ?? "roll n/a"
+        return "\(yaw) \(pitch) \(roll)"
+    }
+
+    var framingSummaryText: String {
+        let quality = framingQuality.map { String(format: "%.2f", $0) } ?? "n/a"
+        return "\(framingState.replacingOccurrences(of: "_", with: " ")) \(quality)"
+    }
+
     var calibrationDetailText: String {
         let action = calibrationActionText
         if isProjectionHoldActive {

@@ -57,3 +57,35 @@ Session-bus findings:
   CLI rather than owning a session registry.
 - The next session layer should add self-registration/heartbeat first, then
   passive process/tmux discovery, and only later evaluate SSE/UDS/NATS.
+
+Eye/head/facial-control ecosystem findings:
+- OptiKey is the strongest interaction-design reference for assistive
+  eye-control UX. Useful patterns are dwell timing, precision mouse/zoom,
+  configurable selection sources, and communication-first controls. Its Windows
+  stack is not a direct model-layer dependency for this project. Sources:
+  `https://optikey.org/`, `https://github.com/Optikey/Optikey/wiki`.
+- Tracky Mouse, eViacam, and Apple Head Pointer show that webcam head tracking
+  is often more stable than webcam gaze. For this system, head pose should be a
+  presence/framing/confidence signal first, not a coordinate source. Sources:
+  `https://trackymouse.js.org/`, `https://eviacam.crea-si.com/`,
+  `https://support.apple.com/guide/mac-help/mchlb2d4782b/mac`.
+- Windows Eye Control is the best OS-level precedent for a native launcher,
+  keyboard, mouse, scroll, and speech surface. The relevant lesson is explicit
+  tracker permissions plus a small always-available control surface. Sources:
+  `https://support.microsoft.com/windows/get-started-with-eye-control-in-windows-1a170a20-1083-2452-8f42-17a7d4fe89a9`,
+  `https://support.microsoft.com/windows/windows-eye-tracking-and-privacy-62623324-36cf-04a3-6992-8f329081f20b`.
+- MediaPipe is still the practical local baseline because it gives face/eye
+  landmarks and iris points with simple deployment. OpenFace/OpenSeeFace are
+  useful prior art for richer head pose and action-unit research, but they
+  increase runtime and packaging complexity. Sources:
+  `https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker`,
+  `https://docs.warudo.app/docs/mocap/openseeface`.
+- WebGazer, EyeGestures, EyeTheia, and GazeFollower point to the same long-term
+  requirement: webcam gaze needs calibration, drift correction, head-motion
+  handling, and optional user-specific fine-tuning. A smoother cannot repair a
+  bad projection model by itself. Sources: `https://webgazer.cs.brown.edu/`,
+  `https://eyegestures.com/`, `https://arxiv.org/abs/2601.06279`,
+  `https://pypi.org/project/gazefollower/`.
+- Facial recognition/identity matching is explicitly out of scope. Ephemeral
+  landmark/head-pose/action signals are acceptable only when reduced to bounded
+  derived states and discarded before publishing.

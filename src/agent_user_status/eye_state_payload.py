@@ -173,6 +173,33 @@ def build_eye_record(payload: dict[str, Any]) -> dict[str, Any]:
         "correction_updated_at": str(payload.get("correction_updated_at") or "")[:40]
         if payload.get("correction_updated_at") is not None
         else None,
+        "head_yaw_deg": bounded_float(payload.get("head_yaw_deg"), 0.0, -90.0, 90.0, "head_yaw_deg")
+        if payload.get("head_yaw_deg") is not None
+        else None,
+        "head_pitch_deg": bounded_float(payload.get("head_pitch_deg"), 0.0, -90.0, 90.0, "head_pitch_deg")
+        if payload.get("head_pitch_deg") is not None
+        else None,
+        "head_roll_deg": bounded_float(payload.get("head_roll_deg"), 0.0, -90.0, 90.0, "head_roll_deg")
+        if payload.get("head_roll_deg") is not None
+        else None,
+        "head_span_width_norm": bounded_float(
+            payload.get("head_span_width_norm"), 0.0, 0.0, 1.0, "head_span_width_norm"
+        )
+        if payload.get("head_span_width_norm") is not None
+        else None,
+        "head_span_height_norm": bounded_float(
+            payload.get("head_span_height_norm"), 0.0, 0.0, 1.0, "head_span_height_norm"
+        )
+        if payload.get("head_span_height_norm") is not None
+        else None,
+        "framing_quality": bounded_float(
+            payload.get("framing_quality"), 0.0, 0.0, 1.0, "framing_quality"
+        )
+        if payload.get("framing_quality") is not None
+        else None,
+        "framing_state": str(payload.get("framing_state") or "unknown")[:80]
+        if payload.get("framing_state") is not None
+        else None,
         "confidence": bounded_float(payload.get("confidence"), score, 0.0, 1.0, "confidence"),
         "stability_score": bounded_float(payload.get("stability_score"), score, 0.0, 1.0, "stability_score"),
         "jump_px": bounded_float(payload.get("jump_px"), 0.0, 0.0, 100000.0, "jump_px"),

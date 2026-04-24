@@ -22,6 +22,7 @@ class Screen:
 class GazeSample:
     features: list[float]
     confidence: float
+    telemetry: dict[str, float | str]
 
 
 @dataclass(frozen=True)
@@ -49,6 +50,8 @@ LEFT_EYE_INNER = 133
 RIGHT_EYE_INNER = 362
 RIGHT_EYE_OUTER = 263
 NOSE_TIP = 1
+FOREHEAD = 10
+CHIN = 152
 LEFT_IRIS = (468, 469, 470, 471, 472)
 RIGHT_IRIS = (473, 474, 475, 476, 477)
 
@@ -192,6 +195,54 @@ def relative_iris(
     return ((px * ux + py * uy) / width, (px * vx + py * vy) / width)
 
 
+def clamp(value: float, low: float, high: float) -> float:
+    return max(low, min(high, value))
+
+
+def derived_head_telemetry(
+    landmarks: list[Any],
+    *,
+    left_outer: tuple[float, float],
+    right_outer: tuple[float, float],
+    nose: tuple[float, float],
+    face_width: float,
+) -> dict[str, float | str]:
+    xs = [float(landmark.x) for landmark in landmarks]
+    ys = [float(landmark.y) for landmark in landmarks]
+    frame_center_x = (min(xs) + max(xs)) / 2
+    frame_center_y = (min(ys) + max(ys)) / 2
+    frame_width = max(xs) - min(xs)
+    frame_height = max(ys) - min(ys)
+    eye_mid_x = (left_outer[0] + right_outer[0]) / 2
+    eye_mid_y = (left_outer[1] + right_outer[1]) / 2
+    roll_deg = math.degrees(math.atan2(right_outer[1] - left_outer[1], right_outer[0] - left_outer[0]))
+    yaw_deg = clamp(((nose[0] - eye_mid_x) / max(face_width, 1e-6)) * 70.0, -45.0, 45.0)
+    pitch_anchor = point(landmarks, FOREHEAD)
+    chin = point(landmarks, CHIN)
+    head_height = max(abs(chin[1] - pitch_anchor[1]), frame_height, 1e-6)
+    pitch_deg = clamp(((nose[1] - eye_mid_y) / head_height - 0.22) * 80.0, -45.0, 45.0)
+    size_quality = 1.0 - min(1.0, abs(frame_width - 0.28) / 0.28)
+    center_quality = 1.0 - min(1.0, math.hypot(frame_center_x - 0.5, frame_center_y - 0.48) / 0.45)
+    framing_quality = clamp(0.65 * size_quality + 0.35 * center_quality, 0.0, 1.0)
+    if frame_width < 0.16:
+        framing_state = "too_far"
+    elif frame_width > 0.58:
+        framing_state = "too_close"
+    elif center_quality < 0.45:
+        framing_state = "off_center"
+    else:
+        framing_state = "usable"
+    return {
+        "head_yaw_deg": round(yaw_deg, 2),
+        "head_pitch_deg": round(pitch_deg, 2),
+        "head_roll_deg": round(roll_deg, 2),
+        "head_span_width_norm": round(frame_width, 4),
+        "head_span_height_norm": round(frame_height, 4),
+        "framing_quality": round(framing_quality, 4),
+        "framing_state": framing_state,
+    }
+
+
 def frame_sample(face_mesh: FaceTracker, frame: Any) -> GazeSample | None:
     cv2 = import_cv2()
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -225,4 +276,14 @@ def frame_sample(face_mesh: FaceTracker, frame: Any) -> GazeSample | None:
         eye_asymmetry,
     ]
     confidence = max(0.0, min(1.0, (face_width - 0.08) / 0.18))
-    return GazeSample(features=features, confidence=confidence)
+    return GazeSample(
+        features=features,
+        confidence=confidence,
+        telemetry=derived_head_telemetry(
+            landmarks,
+            left_outer=left_outer,
+            right_outer=right_outer,
+            nose=nose,
+            face_width=face_width,
+        ),
+    )
