@@ -1,4 +1,47 @@
 import Foundation
+import CoreGraphics
+
+private let repeatedGazeSampleReason = "repeated_gaze_sample"
+private let stuckGazeSampleReason = "stuck_gaze_sample"
+
+struct CalibrationEvalSampleHealth {
+    private var lastObservedAt: String?
+    private var lastPointKey: String?
+    private var repeatCount = 0
+    private let repeatedThreshold = 2
+    private let stuckThreshold = 4
+    private(set) var repeated = 0
+    private(set) var stuck = 0
+
+    mutating func inspect(point: CGPoint, observedAt: String) -> String? {
+        let key = "\(Int(point.x.rounded())):\(Int(point.y.rounded()))"
+        let samePoint = key == lastPointKey
+        let sameObservation = !observedAt.isEmpty && observedAt == lastObservedAt
+        if samePoint || sameObservation {
+            repeatCount += 1
+        } else {
+            repeatCount = 1
+        }
+        lastPointKey = key
+        lastObservedAt = observedAt
+
+        if repeatCount >= stuckThreshold {
+            stuck += 1
+            return stuckGazeSampleReason
+        }
+        if repeatCount >= repeatedThreshold {
+            repeated += 1
+            return repeatedGazeSampleReason
+        }
+        return nil
+    }
+
+    mutating func reset() {
+        lastObservedAt = nil
+        lastPointKey = nil
+        repeatCount = 0
+    }
+}
 
 struct CalibrationEvalTargetStats {
     var accepted = 0
@@ -17,6 +60,7 @@ struct CalibrationEvalTargetStats {
 
 struct CalibrationEvalStats {
     private(set) var targets: [CalibrationEvalTargetStats]
+    private var sampleHealth = CalibrationEvalSampleHealth()
 
     init(targetCount: Int) {
         targets = Array(repeating: CalibrationEvalTargetStats(), count: targetCount)
@@ -35,6 +79,11 @@ struct CalibrationEvalStats {
         targets[index].accept()
     }
 
+    mutating func inspectSample(index: Int, point: CGPoint, observedAt: String) -> String? {
+        guard targets.indices.contains(index) else { return nil }
+        return sampleHealth.inspect(point: point, observedAt: observedAt)
+    }
+
     mutating func reject(index: Int, reason: String) {
         guard targets.indices.contains(index) else { return }
         targets[index].reject(reason)
@@ -49,6 +98,7 @@ struct CalibrationEvalStats {
             let reasonText = reasons.isEmpty ? "none" : reasons
             return "P\(offset + 1): accepted \(target.accepted), rejected \(target.rejected) (\(reasonText))"
         }
-        return targetLines.joined(separator: "\n")
+        let sampleHealthLine = "Sample health: repeated \(sampleHealth.repeated), stuck \(sampleHealth.stuck)"
+        return ([sampleHealthLine] + targetLines).joined(separator: "\n")
     }
 }

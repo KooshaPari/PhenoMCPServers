@@ -10,7 +10,9 @@ package. It does not replace the current `scripts/install.sh` workflow.
 - `entitlements.plist`: hardened-runtime signing entitlements for local camera
   access, local Apple Events automation, and dynamically loaded native support.
 - `pkg/Distribution.xml`: product archive distribution metadata for `productbuild`.
+- `pkg/resources/`: installer resource HTML referenced by the distribution file.
 - `pkg/README.md`: notes for safe package assembly.
+- `../scripts/build-macos-pkg.sh`: validation, dry-run, and explicit build helper.
 
 ## Bundle Shape
 
@@ -35,4 +37,5 @@ frames, screenshots, face landmarks, raw gaze streams, or biometric data.
 plutil -lint packaging/macos/Info.plist
 plutil -lint packaging/macos/entitlements.plist
 xmllint --noout packaging/macos/pkg/Distribution.xml
+packaging/scripts/build-macos-pkg.sh --dry-run
 ```

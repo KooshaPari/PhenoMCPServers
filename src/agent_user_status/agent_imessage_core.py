@@ -9,7 +9,7 @@ import os
 import re
 import subprocess
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -112,8 +112,7 @@ def run_imsg(args: list[str], timeout: int | None = 30) -> subprocess.CompletedP
     return subprocess.run(
         [str(IMSG), *args],
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         timeout=timeout,
         check=False,
     )
@@ -124,8 +123,7 @@ def run_cmd(args: list[str], timeout: int = 5) -> subprocess.CompletedProcess[st
         return subprocess.run(
             args,
             text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             timeout=timeout,
             check=False,
         )
@@ -155,13 +153,13 @@ def parse_dt(value: str | None) -> datetime | None:
         return None
     text = value.replace("Z", "+00:00")
     try:
-        return datetime.fromisoformat(text).astimezone(timezone.utc)
+        return datetime.fromisoformat(text).astimezone(UTC)
     except ValueError:
         return None
 
 
 def iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def stable_hash(value: str) -> str:
@@ -212,7 +210,7 @@ def message_time(message: dict[str, Any]) -> datetime | None:
 
 
 def sort_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return sorted(messages, key=lambda item: message_time(item) or datetime.min.replace(tzinfo=timezone.utc))
+    return sorted(messages, key=lambda item: message_time(item) or datetime.min.replace(tzinfo=UTC))
 
 
 def inbound_messages(config: Config, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -264,7 +262,7 @@ def read_presence_override() -> dict[str, Any] | None:
     except json.JSONDecodeError:
         return None
     until = parse_dt(override.get("until"))
-    if until and until < datetime.now(timezone.utc):
+    if until and until < datetime.now(UTC):
         return None
     return override
 
@@ -418,7 +416,7 @@ def external_signal_records() -> list[dict[str, Any]]:
     if not data:
         return []
     records = data.get("signals", data if isinstance(data, list) else [])
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     fresh: list[dict[str, Any]] = []
     for record in records if isinstance(records, list) else []:
         if not isinstance(record, dict):

@@ -19,8 +19,8 @@
    - shared native/CLI evaluation counters. Done.
    - per-target accepted/rejected sample counts. Done.
    - stale/repeated sample rejection. CLI confidence-settle reasons done;
-     native stale/low-confidence/unreliable counters done; deeper repeated-sample
-     detection pending.
+     native stale/low-confidence/unreliable counters done; repeated/stuck sample
+     detection done.
    - projection-hold rejection metrics. CLI hold-candidate counts done.
    - coordinate parity tests,
    - stronger calibration collection/model upgrade.
@@ -30,7 +30,8 @@
    - update LaunchAgent tray launch to app-bundle executable or intentional
      `open -a` flow. Done with direct app-bundle executable launch.
    - macOS `.pkg` dry-run packaging with signing/notarization hooks. Metadata
-     scaffold done; build script pending.
+     scaffold and build helper done; signing/notarization remain opt-in release
+     inputs.
    - Windows WinUI 3/MSIX manifest plan and installer scaffold. Done.
    - Linux GTK4/libadwaita `.desktop` and AppStream scaffold. Done.
 15. Build the scoped sponsor/user messaging lane:
@@ -42,13 +43,15 @@
    - `session-scan` command for process tree, TTY, repo/cwd hints, and tmux
      metadata. Done; full cwd is opt-in with `--include-cwd`.
    - `POST /session/heartbeat`, `GET /sessions`, and `POST /event`. Done.
-   - in-memory event ring plus schema-versioned JSONL. JSONL done; ring pending.
-   - hook/subagent spawn/close event publishing,
-   - policy guidance for when to text versus use subagents.
+   - in-memory event ring plus schema-versioned JSONL. Done.
+   - hook/subagent spawn/close event publishing. Stop-hook event publishing done;
+     subagent spawn/close requires wrapper integration.
+   - policy guidance for when to text versus use subagents. Done in long-term
+     architecture guidance.
 17. Build the quality-gate lane:
-   - close current Ruff findings,
-   - close current Pyright findings,
-   - enable lint/type CI gates after green.
+   - close current Ruff findings. Done.
+   - close current Pyright findings. Done.
+   - enable lint/type CI gates after green. Done.
 18. Build the modularity lane for files above the 350-line target after gates
    are stable.
 
@@ -57,10 +60,6 @@ Critical path:
   telemetry and runtime changes.
 - Packaging/runtime path centralization blocks reliable non-default install
   prefixes and doctor coverage.
-- App bundle build scripts and LaunchAgent app-bundle launch still block
-  Spotlight-grade macOS runtime discoverability.
-- Hook event publishing still blocks reliable process-to-session attachment and
-  subagent/session coordination.
-- Deeper repeated-sample/stuck-gaze detection blocks full diagnosis of model
-  noise versus calibration failure versus intentional look-away.
-- Lint/type cleanup blocks enabling stricter CI quality gates.
+- Subagent wrapper integration still blocks automatic spawn/close session events.
+- Full release distribution still needs real signing identities, notarization
+  credentials, icon assets, and final install-channel manifests.

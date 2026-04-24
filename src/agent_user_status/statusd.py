@@ -15,21 +15,22 @@ import re
 import subprocess
 import threading
 import time
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from datetime import UTC, datetime
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from agent_user_status.bootstrap_support import agent_imessage_bin
 from agent_user_status.correction import recent_correction_events, store_correction_event
+from agent_user_status.eye_state_payload import bounded_float, bounded_int, build_eye_record, now_iso
 from agent_user_status.gaze_context import as_bool
 from agent_user_status.gaze_drift_correction import load_drift_correction
-from agent_user_status.eye_state_payload import bounded_float, bounded_int, build_eye_record, now_iso
 from agent_user_status.monitor_html import MONITOR_HTML
 from agent_user_status.session_registry import (
     append_session_event,
     append_session_heartbeat,
+    recent_session_events,
     session_summaries,
     session_timeline,
 )
@@ -238,7 +239,11 @@ def store_eye_payload(payload: dict[str, Any]) -> dict[str, Any]:
     state_payload["updated_at"] = now_iso()
     write_json_file(DEV_STATE_PATH, state_payload)
     signal_state = eye.get("state") or "looking_at_screen"
-    signal = queue_eye_signal(str(signal_state), float(eye.get("score", 0.5) or 0.5), int(eye.get("max_age_seconds", 5) or 5))
+    signal = queue_eye_signal(
+        str(signal_state),
+        float(eye.get("score", 0.5) or 0.5),
+        int(eye.get("max_age_seconds", 5) or 5),
+    )
     return {"eye": eye, "signal": signal}
 
 
@@ -314,6 +319,11 @@ class Handler(BaseHTTPRequestHandler):
                     self.send_json(200, {"ok": True, "records": session_timeline(session_id, limit=limit)})
                 else:
                     self.send_json(200, {"ok": True, "sessions": session_summaries(limit=limit)})
+            elif path == "/session/events":
+                query = parse_qs(parsed.query)
+                limit = bounded_int(query.get("limit", [80])[0], 80, 1, 500, "limit")
+                kind = query.get("kind", [None])[0]
+                self.send_json(200, {"ok": True, "events": recent_session_events(limit=limit, kind=kind)})
             elif path == "/correction/events":
                 query = parse_qs(parsed.query)
                 limit = bounded_int(query.get("limit", [80])[0], 80, 1, 500, "limit")

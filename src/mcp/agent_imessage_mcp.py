@@ -42,8 +42,7 @@ def run(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         args,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         timeout=timeout,
         check=False,
     )

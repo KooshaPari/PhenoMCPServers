@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from agent_user_status.gaze_evaluation import EvaluationCounters
+from agent_user_status.gaze_evaluation import (
+    REPEATED_GAZE_SAMPLE,
+    STUCK_GAZE_SAMPLE,
+    EvaluationCounters,
+    GazeSampleStuckDetector,
+)
 
 
 def test_evaluation_counters_report_rejection_reasons_per_target() -> None:
@@ -27,3 +32,34 @@ def test_evaluation_counters_report_rejection_reasons_per_target() -> None:
     assert summary["projection_hold_candidate_count"] == 1
     assert summary["targets"][0]["accepted"] == 1
     assert summary["targets"][0]["rejected"]["settling"] == 2
+
+
+def test_stuck_detector_reports_repeated_then_stuck_derived_coordinates() -> None:
+    detector = GazeSampleStuckDetector(repeated_threshold=2, stuck_threshold=4)
+
+    assert detector.inspect((320.2, 240.4)) is None
+    assert detector.inspect((320.2, 240.4)) == REPEATED_GAZE_SAMPLE
+    assert detector.inspect((320.3, 240.1)) == REPEATED_GAZE_SAMPLE
+    assert detector.inspect((320.4, 240.2)) == STUCK_GAZE_SAMPLE
+    assert detector.summary() == {
+        "repeated_gaze_sample_count": 2,
+        "stuck_gaze_sample_count": 1,
+    }
+
+
+def test_evaluation_counters_include_sample_health_totals() -> None:
+    counters = EvaluationCounters()
+    target = counters.begin_target(1, 100, 100)
+    for _ in range(4):
+        reason = counters.inspect_observed_sample((100.0, 100.0))
+        if reason:
+            target.reject(reason)
+
+    summary = counters.summary(hold_threshold_px=120.0)
+
+    assert summary["repeated_gaze_sample_count"] == 2
+    assert summary["stuck_gaze_sample_count"] == 1
+    assert summary["rejected_by_reason"] == {
+        REPEATED_GAZE_SAMPLE: 2,
+        STUCK_GAZE_SAMPLE: 1,
+    }

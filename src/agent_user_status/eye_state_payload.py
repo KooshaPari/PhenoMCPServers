@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import math
 from datetime import UTC, datetime
 from typing import Any
@@ -72,7 +71,9 @@ def build_eye_record(payload: dict[str, Any]) -> dict[str, Any]:
         )
         if payload.get("observed_screen_y") is not None
         else None,
-        "projection_error_px": bounded_float(payload.get("projection_error_px"), 0.0, 0.0, 100000.0, "projection_error_px")
+        "projection_error_px": bounded_float(
+            payload.get("projection_error_px"), 0.0, 0.0, 100000.0, "projection_error_px"
+        )
         if payload.get("projection_error_px") is not None
         else None,
         "projection_offscreen_px": bounded_float(

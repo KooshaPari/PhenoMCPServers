@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -10,8 +9,11 @@ from agent_user_status.eye_smoothing import projection_error
 
 
 class ScreenLike(Protocol):
-    width: int
-    height: int
+    @property
+    def width(self) -> int: ...
+
+    @property
+    def height(self) -> int: ...
 
 
 @dataclass(frozen=True)
@@ -44,7 +46,11 @@ class StableSampleGate:
 
     def update(self, confidence: float) -> bool:
         if confidence >= self.min_confidence:
-            if self.last_confidence is not None and self.frames > 0 and abs(confidence - self.last_confidence) > self.max_confidence_delta:
+            if (
+                self.last_confidence is not None
+                and self.frames > 0
+                and abs(confidence - self.last_confidence) > self.max_confidence_delta
+            ):
                 self.frames = 0
             else:
                 self.frames += 1
@@ -209,7 +215,8 @@ class ProjectionHoldGate:
             )
         if reason == "unstable_projection":
             return (
-                f"projection is unstable; slow down head motion and keep gaze steady for {effective_release_frames} frames "
+                "projection is unstable; slow down head motion and keep gaze steady for "
+                f"{effective_release_frames} frames "
                 f"({self.release_threshold_px:.0f}px release / {self.hold_threshold_px:.0f}px hold)"
             )
         if reason == "projection_outlier":
@@ -220,7 +227,8 @@ class ProjectionHoldGate:
         if budget_frames > 0:
             return (
                 f"hold budget is {budget_frames} frames before degraded release; "
-                f"recalibrate if the fit stays poor ({self.release_threshold_px:.0f}px release / {self.hold_threshold_px:.0f}px hold)"
+                "recalibrate if the fit stays poor "
+                f"({self.release_threshold_px:.0f}px release / {self.hold_threshold_px:.0f}px hold)"
             )
         return "freeze at the last trusted point until the projection returns in bounds"
 
@@ -240,7 +248,11 @@ class ProjectionHoldGate:
         recovery_signal = raw_in_bounds and (
             error_px <= self.release_threshold_px
             or (improving and error_px <= self.hold_threshold_px * 1.15)
-            or (confidence >= self.min_confidence + 0.06 and stability_score >= 0.33 and error_px <= self.hold_threshold_px)
+            or (
+                confidence >= self.min_confidence + 0.06
+                and stability_score >= 0.33
+                and error_px <= self.hold_threshold_px
+            )
         )
         self.last_error_px = error_px
         anchor_point = self._anchor_point(fallback_point, screen)
@@ -315,7 +327,10 @@ class ProjectionHoldGate:
                 hold_threshold_px=round(self.hold_threshold_px, 2),
                 release_threshold_px=round(self.release_threshold_px, 2),
                 recovery_score=round(
-                    max(self.recovery_frames / effective_release_frames, self._recovery_score(error_px, confidence, stability_score)),
+                    max(
+                        self.recovery_frames / effective_release_frames,
+                        self._recovery_score(error_px, confidence, stability_score),
+                    ),
                     4,
                 ),
                 stable_frames=self.recovery_frames,

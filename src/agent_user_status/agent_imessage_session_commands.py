@@ -9,6 +9,7 @@ import json
 from agent_user_status.session_registry import (
     append_session_event,
     append_session_heartbeat,
+    recent_session_events,
     session_summaries,
     session_timeline,
 )
@@ -71,6 +72,12 @@ def command_session_scan(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_session_events(args: argparse.Namespace) -> int:
+    payload = recent_session_events(limit=args.limit, kind=args.kind)
+    print(json.dumps({"ok": True, "events": payload}, indent=2))
+    return 0
+
+
 def add_session_parsers(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     sessions = sub.add_parser("sessions", help="Inspect privacy-safe local agent sessions")
     sessions.add_argument("--session-id")
@@ -80,6 +87,11 @@ def add_session_parsers(sub: argparse._SubParsersAction[argparse.ArgumentParser]
     scan = sub.add_parser("session-scan", help="Scan local agent processes without raw args")
     scan.add_argument("--include-cwd", action="store_true", help="Include full cwd paths in local output")
     scan.set_defaults(func=command_session_scan)
+
+    events = sub.add_parser("session-events", help="Inspect in-process session event ring")
+    events.add_argument("--limit", type=int, default=80)
+    events.add_argument("--kind", choices=["heartbeat", "event"])
+    events.set_defaults(func=command_session_events)
 
     session_heartbeat = sub.add_parser("session-heartbeat", help="Record an agent session heartbeat")
     session_heartbeat.add_argument("--session-id", required=True)

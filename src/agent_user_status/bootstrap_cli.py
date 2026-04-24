@@ -374,7 +374,9 @@ def setup_eye_tracker_command(_: argparse.Namespace) -> int:
 
     paths = resolve_paths()
     default_bootstrap = shutil.which("python3.11") or str(detect_python())
-    eye_bootstrap_python = Path(os.environ.get("AGENT_USER_STATUS_EYE_BOOTSTRAP_PYTHON", default_bootstrap)).expanduser()
+    eye_bootstrap_python = Path(
+        os.environ.get("AGENT_USER_STATUS_EYE_BOOTSTRAP_PYTHON", default_bootstrap)
+    ).expanduser()
     if not eye_bootstrap_python.exists():
         raise SystemExit(
             f"missing Python 3.11 at {eye_bootstrap_python}\n"

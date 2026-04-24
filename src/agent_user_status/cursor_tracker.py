@@ -12,7 +12,7 @@ import json
 import time
 import urllib.request
 
-from AppKit import NSEvent, NSScreen
+from AppKit import NSEvent, NSScreen  # type: ignore[reportAttributeAccessIssue]
 
 ACTION_URL = "http://127.0.0.1:8765/action"
 CORRECTION_URL = "http://127.0.0.1:8765/correction/event"

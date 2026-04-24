@@ -8,7 +8,9 @@ import pytest
 from agent_user_status.session_registry import (
     append_session_event,
     append_session_heartbeat,
+    recent_session_events,
     recent_session_records,
+    session_event_ring,
     session_summaries,
     session_timeline,
 )
@@ -104,3 +106,14 @@ def test_session_timeline_returns_oldest_to_newest_for_one_session(tmp_path) -> 
 
     assert [record["kind"] for record in timeline] == ["heartbeat", "event"]
     assert timeline[-1]["event_type"] == "implementation"
+
+
+def test_session_event_ring_returns_recent_records(tmp_path) -> None:
+    store_path = tmp_path / "sessions.jsonl"
+    heartbeat = append_session_heartbeat("codex-ring", status="working", store_path=store_path)
+    event = append_session_event("codex-ring", "checkpoint", state="tests_running", store_path=store_path)
+
+    assert session_event_ring(limit=2)[-2:] == [heartbeat, event]
+    assert recent_session_events(store_path=store_path, limit=2)[-2:] == [heartbeat, event]
+    assert session_event_ring(limit=2, kind="event")[-1]["event_type"] == "checkpoint"
+    assert event["schema_version"] == 1

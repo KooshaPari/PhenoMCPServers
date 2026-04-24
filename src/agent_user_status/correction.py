@@ -6,17 +6,23 @@ from __future__ import annotations
 import json
 import math
 import os
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 
+from agent_user_status.agent_imessage_learning import action_environment_context
 from agent_user_status.gaze_context import annotate_event_with_gaze, is_gaze_reliable_event
 from agent_user_status.gaze_drift_correction import persist_drift_correction
-from agent_user_status.agent_imessage_learning import action_environment_context
 
 STATE_DIR = Path(os.environ.get("AGENT_IMESSAGE_STATE_DIR", "~/.local/share/agent-imessage/state")).expanduser()
 CORRECTION_EVENTS_PATH = STATE_DIR / "correction_events.jsonl"
+
+
+@dataclass(frozen=True)
+class CorrectionScreen:
+    width: int
+    height: int
 
 
 def now_iso() -> str:
@@ -105,7 +111,7 @@ def store_correction_event(payload: dict[str, Any]) -> dict[str, Any]:
     screen_width = event.get("gaze_screen_width") or event.get("screen_width")
     screen_height = event.get("gaze_screen_height") or event.get("screen_height")
     if isinstance(screen_width, (int, float)) and isinstance(screen_height, (int, float)):
-        screen = SimpleNamespace(width=int(screen_width), height=int(screen_height))
+        screen = CorrectionScreen(width=int(screen_width), height=int(screen_height))
         persist_drift_correction(recent_correction_events(limit=120), screen)
     return event
 

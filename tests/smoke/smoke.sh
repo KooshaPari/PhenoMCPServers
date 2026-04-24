@@ -201,6 +201,11 @@ curl -fsS -X POST http://127.0.0.1:8765/dev/eye \
   | tee /tmp/agent-user-status-smoke-hook-decision.json \
   | grep -q '"kind": "agent_waiting_user"'
 grep -q '"attribution":' /tmp/agent-user-status-smoke-hook-decision.json
+grep -q '"session_event":' /tmp/agent-user-status-smoke-hook-decision.json
+
+curl -fsS 'http://127.0.0.1:8765/session/events?limit=20' \
+  | tee /tmp/agent-user-status-smoke-session-events.json \
+  | grep -q '"event_type": "agent_waiting_user"'
 
 ~/.local/bin/agent-imessage log-response 7 \
   --source smoke \

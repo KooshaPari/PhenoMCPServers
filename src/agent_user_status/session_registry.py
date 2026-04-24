@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from collections import deque
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
@@ -18,6 +19,9 @@ STATE_DIR = Path(os.environ.get("AGENT_IMESSAGE_STATE_DIR", "~/.local/share/agen
 SESSION_LOG_PATH = Path(
     os.environ.get("AGENT_USER_STATUS_SESSION_LOG", STATE_DIR / "agent_sessions.jsonl")
 ).expanduser()
+SESSION_RING_MAX = int(os.environ.get("AGENT_USER_STATUS_SESSION_RING_MAX", "120"))
+SESSION_SCHEMA_VERSION = 1
+_SESSION_RING: deque[dict[str, Any]] = deque(maxlen=max(10, min(SESSION_RING_MAX, 1000)))
 
 
 def now_iso() -> str:
@@ -58,9 +62,11 @@ def append_session_record(record: dict[str, Any], store_path: Path | None = None
     path = _session_path(store_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = dict(record)
+    payload["schema_version"] = SESSION_SCHEMA_VERSION
     payload["record_id"] = record_id({key: value for key, value in payload.items() if key != "record_id"})
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(payload, sort_keys=True) + "\n")
+    _SESSION_RING.append(payload)
     return payload
 
 
@@ -149,6 +155,33 @@ def recent_session_records(
             continue
         records.append(record)
     return records
+
+
+def session_event_ring(*, limit: int = 80, kind: str | None = None) -> list[dict[str, Any]]:
+    """Return newest in-process session records from the bounded event ring."""
+    bounded_limit = max(1, min(int(limit), _SESSION_RING.maxlen or 120))
+    records = list(_SESSION_RING)[-bounded_limit:]
+    if kind is not None:
+        records = [record for record in records if record.get("kind") == kind]
+    return records
+
+
+def recent_session_events(
+    *,
+    store_path: Path | None = None,
+    limit: int = 80,
+    kind: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return recent session records across process boundaries, with ring records preferred."""
+    bounded_limit = max(1, min(int(limit), 2000))
+    records_by_id: dict[str, dict[str, Any]] = {}
+    for record in recent_session_records(store_path=store_path, limit=bounded_limit, kind=kind):
+        records_by_id[str(record.get("record_id") or record_id(record))] = record
+    for record in session_event_ring(limit=bounded_limit, kind=kind):
+        records_by_id[str(record.get("record_id") or record_id(record))] = record
+    records = list(records_by_id.values())
+    records.sort(key=lambda item: str(item.get("observed_at", "")))
+    return records[-bounded_limit:]
 
 
 def session_timeline(

@@ -15,7 +15,11 @@ def test_coarse_attribution_marks_unresolved_terminal_as_uncertain(monkeypatch) 
             "gaze_targeting_reliable": False,
         },
     )
-    monkeypatch.setattr(learning, "hook_configuration_context", lambda: {"claude_stop_hook": False, "codex_hook_guidance": False})
+    monkeypatch.setattr(
+        learning,
+        "hook_configuration_context",
+        lambda: {"claude_stop_hook": False, "codex_hook_guidance": False},
+    )
 
     attribution = learning.coarse_attribution_context()
 
@@ -37,7 +41,11 @@ def test_coarse_attribution_marks_gui_chat_without_terminal_guessing(monkeypatch
             "gaze_targeting_reliable": True,
         },
     )
-    monkeypatch.setattr(learning, "hook_configuration_context", lambda: {"claude_stop_hook": True, "codex_hook_guidance": True})
+    monkeypatch.setattr(
+        learning,
+        "hook_configuration_context",
+        lambda: {"claude_stop_hook": True, "codex_hook_guidance": True},
+    )
 
     attribution = learning.coarse_attribution_context()
 
@@ -48,6 +56,9 @@ def test_coarse_attribution_marks_gui_chat_without_terminal_guessing(monkeypatch
 
 
 def test_classify_window_role_prefers_terminal_and_chat_contexts() -> None:
-    assert learning.classify_window_role("Ghostty", {"agent": ["codex"], "coding": ["python"]}) == "multi_agent_terminal"
+    assert (
+        learning.classify_window_role("Ghostty", {"agent": ["codex"], "coding": ["python"]})
+        == "multi_agent_terminal"
+    )
     assert learning.classify_window_role("Messages", {"agent": ["claude"], "coding": []}) == "gui_chat"
     assert learning.classify_window_role("Safari", {}) == "browser"

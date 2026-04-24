@@ -7,7 +7,7 @@ import argparse
 import json
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from agent_user_status.agent_imessage_core import (
@@ -42,12 +42,12 @@ from agent_user_status.agent_imessage_learning import (
     recent_action_records,
     update_action_learning,
 )
+from agent_user_status.agent_imessage_session_commands import add_session_parsers
 from agent_user_status.agent_imessage_status import (
     estimate_status,
     hook_decision_result,
     status_from_override,
 )
-from agent_user_status.agent_imessage_session_commands import add_session_parsers
 
 
 def command_notify(args: argparse.Namespace) -> int:
@@ -104,7 +104,7 @@ def command_set_status(args: argparse.Namespace) -> int:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     until: str | None = None
     if args.minutes:
-        until = (datetime.now(timezone.utc) + timedelta(minutes=args.minutes)).isoformat()
+        until = (datetime.now(UTC) + timedelta(minutes=args.minutes)).isoformat()
     confidence = args.confidence
     if confidence is None:
         confidence = {

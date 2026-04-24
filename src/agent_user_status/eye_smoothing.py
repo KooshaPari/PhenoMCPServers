@@ -8,8 +8,11 @@ from typing import Protocol
 
 
 class ScreenLike(Protocol):
-    width: int
-    height: int
+    @property
+    def width(self) -> int: ...
+
+    @property
+    def height(self) -> int: ...
 
 
 def projection_error(point_xy: tuple[float, float], screen: ScreenLike) -> float:

@@ -99,8 +99,9 @@ def parse_tmux_panes(text: str, *, include_cwd: bool = False) -> list[dict[str, 
 def scan_tmux(*, include_cwd: bool = False) -> list[dict[str, Any]]:
     if not os.environ.get("TMUX") and not shutil.which("tmux"):
         return []
+    pane_format = "#{session_name}\t#{window_index}\t#{pane_index}\t#{pane_pid}\t#{pane_current_path}"
     result = subprocess.run(
-        ["tmux", "list-panes", "-a", "-F", "#{session_name}\t#{window_index}\t#{pane_index}\t#{pane_pid}\t#{pane_current_path}"],
+        ["tmux", "list-panes", "-a", "-F", pane_format],
         capture_output=True,
         text=True,
         check=False,

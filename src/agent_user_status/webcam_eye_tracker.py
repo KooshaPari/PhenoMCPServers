@@ -180,7 +180,11 @@ def command_run(args: argparse.Namespace) -> int:
                         smoother.current(),
                     )
                     if decision.should_reset:
-                        smoother.reset(decision.smooth_point or decision.publish_point, time.monotonic(), confidence=confidence)
+                        smoother.reset(
+                            decision.smooth_point or decision.publish_point,
+                            time.monotonic(),
+                            confidence=confidence,
+                        )
                     if decision.smooth_point is None:
                         smoothed = decision.publish_point
                         stability = {
@@ -211,7 +215,9 @@ def command_run(args: argparse.Namespace) -> int:
                                 "correction_offset_x_px": correction.get("screen_x_offset_px") if correction else None,
                                 "correction_offset_y_px": correction.get("screen_y_offset_px") if correction else None,
                                 "correction_sample_count": correction.get("sample_count") if correction else None,
-                                "correction_reliability_score": correction.get("reliability_score") if correction else None,
+                                "correction_reliability_score": (
+                                    correction.get("reliability_score") if correction else None
+                                ),
                                 "correction_updated_at": correction.get("created_at") if correction else None,
                                 "projection_error_px": decision.projection_error_px,
                                 "projection_offscreen_px": decision.projection_offscreen_px,
@@ -223,8 +229,12 @@ def command_run(args: argparse.Namespace) -> int:
                                 "projection_release_threshold_px": decision.release_threshold_px,
                                 "projection_recovery_score": decision.recovery_score,
                                 "projection_hold_budget_frames": decision.hold_budget_frames,
-                                "projection_anchor_x": round(decision.anchor_point[0], 2) if decision.anchor_point else None,
-                                "projection_anchor_y": round(decision.anchor_point[1], 2) if decision.anchor_point else None,
+                                "projection_anchor_x": (
+                                    round(decision.anchor_point[0], 2) if decision.anchor_point else None
+                                ),
+                                "projection_anchor_y": (
+                                    round(decision.anchor_point[1], 2) if decision.anchor_point else None
+                                ),
                                 "projection_recommended_action": calibration_quality.get(
                                     "calibration_recommended_action"
                                 ),
@@ -299,6 +309,10 @@ def command_evaluate(args: argparse.Namespace) -> int:
                     continue
 
                 observed = predict(calibration, sample.features)
+                sample_health = counters.inspect_observed_sample(observed)
+                if sample_health:
+                    target.reject(sample_health)
+                    continue
                 target.accept(observed)
 
                 canvas = cv2.UMat(screen.height, screen.width, cv2.CV_8UC3).get()

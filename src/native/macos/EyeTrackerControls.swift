@@ -108,8 +108,13 @@ final class CalibrationEvalController: NSObject {
             guard self.index < self.points.count else { return }
             let eye = model.eye
             if eye.fresh, eye.targetingReliable, eye.confidence >= 0.35 {
-                self.samples.append((self.points[self.index], model.rawEyePoint()))
-                self.evalStats.accept(index: self.index)
+                let point = model.rawEyePoint()
+                if let reason = self.evalStats.inspectSample(index: self.index, point: point, observedAt: eye.observedAt) {
+                    self.evalStats.reject(index: self.index, reason: reason)
+                } else {
+                    self.samples.append((self.points[self.index], point))
+                    self.evalStats.accept(index: self.index)
+                }
             } else {
                 self.evalStats.reject(index: self.index, reason: self.rejectReason(for: eye))
             }
