@@ -63,6 +63,11 @@ final class CalibrationEvalController: NSObject {
     private var points: [CGPoint] = []
     private var index = 0
     private var started = Date()
+    private var discardedSamples = 0
+    private var isRefreshing = false
+    private let settleSeconds: TimeInterval = 0.7
+    private let secondsPerPoint: TimeInterval = 2.0
+    private let minSamplesPerPoint = 4
 
     func start(model: StatusModel) {
         self.model = model
@@ -71,6 +76,8 @@ final class CalibrationEvalController: NSObject {
         samples = []
         index = 0
         started = Date()
+        discardedSamples = 0
+        isRefreshing = false
         let panel = NSPanel(contentRect: screen, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.backgroundColor = .black
         panel.level = .statusBar
@@ -83,16 +90,36 @@ final class CalibrationEvalController: NSObject {
         window = panel
         view = evalView
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 0.08, repeats: true) { _ in self.tick() }
+        timer = Timer.scheduledTimer(withTimeInterval: 0.12, repeats: true) { _ in self.tick() }
     }
 
     private func tick() {
         guard let model, let view else { return }
-        if Date().timeIntervalSince(started) < 1.25 {
+        if isRefreshing {
             return
         }
-        let observed = model.eyePoint()
-        samples.append((points[index], observed))
+        let elapsed = Date().timeIntervalSince(started)
+        if elapsed < settleSeconds {
+            return
+        }
+        isRefreshing = true
+        model.refreshEye {
+            self.isRefreshing = false
+            guard self.index < self.points.count else { return }
+            let eye = model.eye
+            if eye.fresh, eye.targetingReliable, eye.confidence >= 0.35 {
+                self.samples.append((self.points[self.index], model.rawEyePoint()))
+            } else {
+                self.discardedSamples += 1
+            }
+
+            if Date().timeIntervalSince(self.started) >= self.secondsPerPoint {
+                self.advancePoint(view: view)
+            }
+        }
+    }
+
+    private func advancePoint(view: CalibrationEvalView) {
         index += 1
         if index >= points.count {
             finish()
@@ -109,13 +136,28 @@ final class CalibrationEvalController: NSObject {
         timer = nil
         window?.close()
         window = nil
-        guard !samples.isEmpty else { return }
+        guard !samples.isEmpty else {
+            showAlert(
+                title: "Calibration Evaluation",
+                detail: "No fresh reliable gaze samples were available.\nDiscarded samples: \(discardedSamples)\nStart or recalibrate the eye tracker, then retry."
+            )
+            return
+        }
         let errors = samples.map { hypot($0.target.x - $0.observed.x, $0.target.y - $0.observed.y) }.sorted()
         let mean = errors.reduce(0, +) / CGFloat(errors.count)
         let p95 = errors[min(errors.count - 1, Int(Double(errors.count - 1) * 0.95))]
+        let expectedSamples = points.count * minSamplesPerPoint
+        let quality = errors.count >= expectedSamples ? "usable sample volume" : "low sample volume"
+        showAlert(
+            title: "Calibration Evaluation",
+            detail: "Mean error: \(Int(mean)) px\nP95 error: \(Int(p95)) px\nSamples: \(errors.count) (\(quality))\nDiscarded stale/unreliable samples: \(discardedSamples)"
+        )
+    }
+
+    private func showAlert(title: String, detail: String) {
         let alert = NSAlert()
-        alert.messageText = "Calibration Evaluation"
-        alert.informativeText = "Mean error: \(Int(mean)) px\nP95 error: \(Int(p95)) px\nSamples: \(errors.count)"
+        alert.messageText = title
+        alert.informativeText = detail
         alert.addButton(withTitle: "OK")
         alert.runModal()
     }

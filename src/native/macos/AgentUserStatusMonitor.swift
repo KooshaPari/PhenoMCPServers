@@ -179,15 +179,20 @@ final class StatusModel {
 
     private static func parseEye(payload: [String: Any]) -> EyeState {
         guard let eye = payload["eye"] as? [String: Any] else { return EyeState() }
+        let screen = NSScreen.main?.frame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
+        let x = localScreenCoordinate(eye["screen_x"], origin: screen.minX)
+        let y = localScreenCoordinate(eye["screen_y"], origin: screen.minY)
+        let observedX = localScreenCoordinate(eye["observed_screen_x"], origin: screen.minX)
+        let observedY = localScreenCoordinate(eye["observed_screen_y"], origin: screen.minY)
         return EyeState(
             score: eye["score"] as? Double ?? 0,
             confidence: eye["confidence"] as? Double ?? (eye["score"] as? Double ?? 0),
             state: eye["state"] as? String ?? "unknown",
             screenZone: eye["screen_zone"] as? String ?? "center",
-            x: eye["screen_x"] as? Double,
-            y: eye["screen_y"] as? Double,
-            observedX: eye["observed_screen_x"] as? Double,
-            observedY: eye["observed_screen_y"] as? Double,
+            x: x,
+            y: y,
+            observedX: observedX,
+            observedY: observedY,
             screenWidth: eye["screen_width"] as? Double,
             screenHeight: eye["screen_height"] as? Double,
             stabilityScore: eye["stability_score"] as? Double ?? 0,
@@ -212,6 +217,13 @@ final class StatusModel {
             fresh: eye["fresh"] as? Bool ?? false,
             observedAt: eye["observed_at"] as? String ?? "-"
         )
+    }
+
+    private static func localScreenCoordinate(_ value: Any?, origin: CGFloat) -> Double? {
+        guard let coordinate = value as? Double else {
+            return nil
+        }
+        return Double(origin) + coordinate
     }
 
     private static func parseStatus(payload: [String: Any]) -> UserStatus {
