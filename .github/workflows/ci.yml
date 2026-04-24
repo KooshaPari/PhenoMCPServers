@@ -72,24 +72,7 @@ jobs:
             cat /tmp/agent-user-statusd.log
             exit 1
           fi
-          curl -fsS http://127.0.0.1:8765/health >/dev/null
-          status_code="$(curl -s -o /tmp/raw.json -w '%{http_code}' \
-            -X POST http://127.0.0.1:8765/dev/eye \
-            -H 'content-type: application/json' \
-            -d '{"score":0.5,"state":"raw_camera_frame"}')"
-          test "${status_code}" = "422"
-          curl -fsS -X POST http://127.0.0.1:8765/dev/eye \
-            -H 'content-type: application/json' \
-            -d '{"screen_x":720,"screen_y":450,"screen_width":1440,"screen_height":900,"score":0.9,"confidence":0.92,"stability_score":0.91,"targeting_reliable":true,"filter_mode":"tracking","state":"looking_at_screen:ci","max_age_seconds":60}' \
-            | grep -q 'looking_at_screen:ci'
-          status_code="$(curl -s -o /tmp/correction.json -w '%{http_code}' \
-            -X POST http://127.0.0.1:8765/correction/event \
-            -H 'content-type: application/json' \
-            -d '{"kind":"cursor_click","score":0.9,"state":"ci_cursor_click","harmony_hint":true,"max_age_seconds":30,"screen_x":780,"screen_y":430,"screen_width":1440,"screen_height":900}')"
-          test "${status_code}" = "200"
-          grep -q '"learnable": true' /tmp/correction.json
-          curl -fsS 'http://127.0.0.1:8765/correction/events?limit=20&reliable_only=true' \
-            | grep -q 'ci_cursor_click'
+          AGENT_USER_STATUS_SMOKE_SKIP_IMESSAGE=1 bash -x ./tests/smoke/smoke.sh
           if ! kill -0 "$(cat /tmp/agent-user-statusd.pid)" 2>/dev/null; then
             cat /tmp/agent-user-statusd.log
             exit 1
