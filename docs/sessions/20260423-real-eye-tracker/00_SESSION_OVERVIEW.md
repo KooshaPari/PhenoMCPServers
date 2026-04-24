@@ -13,3 +13,10 @@ Current status:
 - GitHub auth is available.
 - Session README already exists and covers the eye-tracker workstream.
 - GitHub workflow and issue/PR templates are being added as part of the repo bootstrap.
+
+Post-bootstrap state:
+- Remote: `https://github.com/KooshaPari/agent-user-status`
+- Default branch: `main`
+- Visibility: private
+- Branch protection requires `CI / unit-tests`.
+- CI now includes unit tests and a backend smoke job.

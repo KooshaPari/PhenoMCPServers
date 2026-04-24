@@ -28,3 +28,54 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m pytest tests/unit -q
+
+  backend-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install runtime without launch services
+        env:
+          AGENT_USER_STATUS_STRICT: "0"
+        run: ./scripts/install.sh --no-start
+
+      - name: Run backend smoke checks
+        run: |
+          ~/.local/bin/agent-user-statusd serve > /tmp/agent-user-statusd.log 2>&1 &
+          echo "$!" > /tmp/agent-user-statusd.pid
+          trap 'kill "$(cat /tmp/agent-user-statusd.pid)" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 15); do
+            set +e
+            curl -fsS --max-time 3 http://127.0.0.1:8765/health >/tmp/agent-user-statusd-health.out 2>/tmp/agent-user-statusd-health.err
+            curl_status="$?"
+            set -e
+            if [ "${curl_status}" = "0" ]; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$(cat /tmp/agent-user-statusd.pid)" 2>/dev/null; then
+              cat /tmp/agent-user-statusd-health.err
+              cat /tmp/agent-user-statusd.log
+              exit 1
+            fi
+            sleep 1
+          done
+          if [ "${ready}" != "1" ]; then
+            cat /tmp/agent-user-statusd-health.err
+            cat /tmp/agent-user-statusd.log
+            exit 1
+          fi
+          AGENT_USER_STATUS_SMOKE_SKIP_IMESSAGE=1 bash -x ./tests/smoke/smoke.sh
+          if ! kill -0 "$(cat /tmp/agent-user-statusd.pid)" 2>/dev/null; then
+            cat /tmp/agent-user-statusd.log
+            exit 1
+          fi
+          echo "backend smoke passed"
+          exit 0

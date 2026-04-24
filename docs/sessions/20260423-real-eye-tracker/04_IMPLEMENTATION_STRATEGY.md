@@ -11,6 +11,8 @@ For GitHub setup:
 - make the first commit include the docs/session scaffold
 - publish the initial tree before any broader cleanup or restructuring
 - add a lightweight CI workflow for unit tests
+- add a backend smoke CI job that starts `agent-user-statusd` directly
 - add issue and PR templates so the remote is usable immediately
+- add Dependabot, CODEOWNERS, CONTRIBUTING, and SECURITY surfaces
 
 No runtime behavior changes are needed for this setup pass.

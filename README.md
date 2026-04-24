@@ -56,6 +56,33 @@ The bootstrap CLI stages the console-script entrypoints into `~/.local/bin`,
 copies support modules into the same prefix, installs LaunchAgents into
 `~/Library/LaunchAgents`, builds the Swift monitor, and restarts launchd jobs.
 
+## CLI & Lifecycle
+
+The shell scripts are compatibility wrappers around the packaged CLI:
+
+```bash
+agent-user-status install --help
+agent-user-status uninstall --help
+agent-user-status doctor --help
+agent-user-status setup-eye-tracker --help
+```
+
+Useful lifecycle flags:
+
+- `agent-user-status install --no-start` installs files and LaunchAgents without
+  starting services.
+- `AGENT_USER_STATUS_STRICT=0 agent-user-status install --no-start` skips the
+  post-install doctor check, which is useful in CI or packaging dry runs.
+- `agent-user-status uninstall --no-remove` stops services without removing
+  installed files.
+- `agent-user-status uninstall --dry-run` prints planned removals.
+- `agent-user-status uninstall --purge` removes state and logs as well as
+  installed files.
+
+The native monitor, LaunchAgents, camera permissions, and strict doctor checks
+are macOS-focused. The Linux CI path validates the Python unit suite and starts
+the loopback backend directly for HTTP smoke checks.
+
 ## Webcam Eye Tracking
 
 The real webcam tracker is opt-in and runs separately from the status daemon.
@@ -97,6 +124,7 @@ diagnostic state without raw sensor storage.
 
 ```bash
 curl -s http://127.0.0.1:8765/health
+curl -s http://127.0.0.1:8765/privacy
 curl -s http://127.0.0.1:8765/status
 curl -s http://127.0.0.1:8765/dev/state
 ```

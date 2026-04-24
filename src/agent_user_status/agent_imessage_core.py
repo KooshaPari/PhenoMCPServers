@@ -100,6 +100,13 @@ def run_cmd(args: list[str], timeout: int = 5) -> subprocess.CompletedProcess[st
             stdout=stdout,
             stderr=f"timed out after {timeout}s",
         )
+    except FileNotFoundError as exc:
+        return subprocess.CompletedProcess(
+            args=args,
+            returncode=127,
+            stdout="",
+            stderr=str(exc),
+        )
 
 
 def parse_dt(value: str | None) -> datetime | None:

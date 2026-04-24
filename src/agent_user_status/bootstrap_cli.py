@@ -355,9 +355,15 @@ def doctor_command(_: argparse.Namespace) -> int:
                 raise RuntimeError("backend health")
 
     check("python syntax", check_python)
-    check("swift compile", check_swift)
+    if sys.platform == "darwin":
+        check("swift compile", check_swift)
+    else:
+        print("skip swift compile (macOS only)")
     check("installed runtime layout", check_layout)
-    check("plists", check_plists)
+    if sys.platform == "darwin":
+        check("plists", check_plists)
+    else:
+        print("skip plists (macOS only)")
     if shutil.which("curl"):
         check("backend health", check_backend)
     if ok:
@@ -367,10 +373,12 @@ def doctor_command(_: argparse.Namespace) -> int:
 
 
 def setup_eye_tracker_command(_: argparse.Namespace) -> int:
+    if sys.platform != "darwin":
+        raise SystemExit("webcam eye-tracker setup is currently supported only on macOS")
+
     paths = resolve_paths()
-    eye_bootstrap_python = Path(
-        os.environ.get("AGENT_USER_STATUS_EYE_BOOTSTRAP_PYTHON", "/opt/homebrew/bin/python3.11")
-    ).expanduser()
+    default_bootstrap = shutil.which("python3.11") or str(detect_python())
+    eye_bootstrap_python = Path(os.environ.get("AGENT_USER_STATUS_EYE_BOOTSTRAP_PYTHON", default_bootstrap)).expanduser()
     if not eye_bootstrap_python.exists():
         raise SystemExit(
             f"missing Python 3.11 at {eye_bootstrap_python}\n"
