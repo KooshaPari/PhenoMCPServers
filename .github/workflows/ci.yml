@@ -47,7 +47,7 @@ jobs:
 
       - name: Start backend
         run: |
-          ~/.local/bin/agent-user-statusd > /tmp/agent-user-statusd.log 2>&1 &
+          ~/.local/bin/agent-user-statusd serve > /tmp/agent-user-statusd.log 2>&1 &
           echo "$!" > /tmp/agent-user-statusd.pid
           for attempt in $(seq 1 15); do
             if curl -fsS http://127.0.0.1:8765/health >/dev/null; then
