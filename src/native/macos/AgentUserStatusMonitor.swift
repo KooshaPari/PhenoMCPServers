@@ -69,6 +69,7 @@ final class StatusModel {
     var eye = EyeState()
     var status = UserStatus()
     var target = WindowTarget()
+    var sessionSnapshot = AgentSessionSnapshot()
     var commandStatus = "Tools ready"
     private let visualFilter = VisualGazeFilter()
     private var visualPoint: CGPoint?
@@ -84,6 +85,10 @@ final class StatusModel {
         group.enter()
         fetchJSON(path: "/status") { payload in
             self.status = Self.parseStatus(payload: payload)
+            group.leave()
+        }
+        group.enter()
+        refreshSessions {
             group.leave()
         }
         group.notify(queue: .main) {
@@ -105,11 +110,18 @@ final class StatusModel {
     }
 
     func refreshStatus(completion: @escaping () -> Void) {
+        let group = DispatchGroup()
+        group.enter()
         fetchJSON(path: "/status") { payload in
             self.status = Self.parseStatus(payload: payload)
-            DispatchQueue.main.async {
-                completion()
-            }
+            group.leave()
+        }
+        group.enter()
+        refreshSessions {
+            group.leave()
+        }
+        group.notify(queue: .main) {
+            completion()
         }
     }
 
@@ -162,8 +174,10 @@ final class StatusModel {
         target = annotateWorkspace(frontmost)
     }
 
-    private func fetchJSON(path: String, completion: @escaping ([String: Any]) -> Void) {
-        let url = baseURL.appendingPathComponent(path.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
+    func fetchJSON(path: String, completion: @escaping ([String: Any]) -> Void) {
+        let cleanedPath = path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let url = URL(string: cleanedPath, relativeTo: baseURL)?.absoluteURL ??
+            baseURL.appendingPathComponent(cleanedPath)
         var request = URLRequest(url: url)
         request.cachePolicy = .reloadIgnoringLocalCacheData
         Self.session.dataTask(with: request) { data, _, _ in
@@ -332,7 +346,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupPanel() {
         let screen = NSScreen.main?.visibleFrame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
-        let frame = CGRect(x: screen.maxX - 430, y: screen.maxY - 428, width: 410, height: 408)
+        let frame = CGRect(x: screen.maxX - 430, y: screen.maxY - 540, width: 410, height: 520)
         panelWindow = NSPanel(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panelWindow.backgroundColor = .clear
         panelWindow.isOpaque = false
@@ -452,15 +466,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func updatePopupMenuState() {
         popupMenuItem.title = popupVisible ? "Hide Popup View" : "Show Popup View"
         popupMenuItem.state = popupVisible ? .on : .off
-    }
-}
-
-@main
-struct AgentUserStatusApp {
-    static func main() {
-        let app = NSApplication.shared
-        let delegate = AppDelegate()
-        app.delegate = delegate
-        app.run()
     }
 }

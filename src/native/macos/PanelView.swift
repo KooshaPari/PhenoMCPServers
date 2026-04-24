@@ -37,7 +37,17 @@ final class PanelView: NSView {
         drawText("ETA \(model.status.eta)", x: panel.minX + 16, y: y, size: 11, color: NSColor(calibratedWhite: 0.82, alpha: 1))
         drawText("Confidence \(fmt(model.status.confidence))", x: panel.maxX - 162, y: y, size: 11, color: NSColor(calibratedWhite: 0.82, alpha: 1))
 
-        let calibrationTop = panel.maxY - 100
+        let sessionTop = panel.maxY - 74
+        let sessionBottom = sessionTop - 106
+        drawSection(
+            title: "Agent Sessions",
+            frame: CGRect(x: panel.minX + 10, y: sessionBottom, width: panel.width - 20, height: 106),
+            accent: model.sessionSnapshot.activeCount > 0 ? NSColor.systemGreen : NSColor.systemGray
+        ) { section in
+            drawSessionSummary(in: section)
+        }
+
+        let calibrationTop = sessionBottom - 102
         drawSection(
             title: "Calibration",
             frame: CGRect(x: panel.minX + 10, y: calibrationTop, width: panel.width - 20, height: 98),
@@ -139,6 +149,36 @@ final class PanelView: NSView {
         drawText(value, x: x + width * 0.45, y: y, size: 11, color: .white, maxWidth: width * 0.55)
     }
 
+    private func drawSessionSummary(in section: CGRect) {
+        let snapshot = model.sessionSnapshot
+        drawMetricGrid(
+            in: CGRect(x: section.minX, y: section.maxY - 44, width: section.width, height: 44),
+            left: [
+                ("ACTIVE", "\(snapshot.activeCount)"),
+                ("CHILD", "\(snapshot.childAgentCount)")
+            ],
+            right: [
+                ("STALE HOOKS", "\(snapshot.staleHookCount)"),
+                ("ATTR CONF", snapshot.attributionConfidenceText)
+            ]
+        )
+
+        let rows = Array(snapshot.sessions.prefix(2))
+        var y = section.minY + 14
+        if rows.isEmpty {
+            drawText("No session heartbeats", x: section.minX, y: y, size: 11, color: NSColor(calibratedWhite: 0.78, alpha: 1), maxWidth: section.width)
+            return
+        }
+        for session in rows.reversed() {
+            let marker = session.fresh ? "live" : "stale"
+            let event = session.latestEventType == "-" ? session.state : session.latestEventType
+            let child = session.isChildAgent ? " child" : ""
+            let text = "\(marker) \(session.agentID)\(child) \(short(session.sessionID)): \(event)"
+            drawText(text, x: section.minX, y: y, size: 11, color: .white, maxWidth: section.width)
+            y += 16
+        }
+    }
+
     private func drawPill(text: String, frame: CGRect, fill: NSColor) {
         fill.withAlphaComponent(0.22).setFill()
         NSBezierPath(roundedRect: frame, xRadius: 10, yRadius: 10).fill()
@@ -155,6 +195,13 @@ final class PanelView: NSView {
 
     private func fmt(_ value: Double) -> String {
         String(format: "%.2f", value)
+    }
+
+    private func short(_ value: String) -> String {
+        if value.count <= 14 {
+            return value
+        }
+        return String(value.prefix(11)) + "..."
     }
 
     private func drawText(

@@ -43,6 +43,7 @@ from agent_user_status.agent_imessage_learning import (
     update_action_learning,
 )
 from agent_user_status.agent_imessage_session_commands import add_session_parsers
+from agent_user_status.agent_imessage_state_commands import add_state_parsers
 from agent_user_status.agent_imessage_status import (
     estimate_status,
     hook_decision_result,
@@ -397,6 +398,7 @@ def build_parser() -> argparse.ArgumentParser:
     wait.set_defaults(func=command_wait)
 
     add_session_parsers(sub)
+    add_state_parsers(sub)
 
     return parser
 

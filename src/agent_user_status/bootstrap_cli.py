@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shlex
 import shutil
@@ -27,6 +28,7 @@ from agent_user_status.bootstrap_support import (
     native_app_paths,
     native_monitor_paths,
     resolve_paths,
+    runtime_paths_metadata,
     source_runtime_paths,
 )
 
@@ -142,6 +144,7 @@ def install_launchd_plists(paths: BootstrapPaths, python_bin: Path, eye_python_b
             "{{AGENT_USER_STATUS_WEBCAM_EYE_TRACKER}}": str(paths.bin_dir / "agent-user-status-webcam-eye-tracker"),
             "{{AGENT_USER_STATUS_NATIVE_MONITOR}}": str(native_app_executable(paths)),
             "{{STATE_DIR}}": str(paths.state_dir),
+            "{{RUNTIME_PATHS_JSON}}": str(paths.state_dir / "runtime_paths.json"),
             "{{LAUNCHD_PATH}}": launchd_path(paths, python_bin),
         }
         replace_template(template, generated, replacements)
@@ -178,6 +181,14 @@ def install_launchd_plists(paths: BootstrapPaths, python_bin: Path, eye_python_b
 
     if template_count == 0:
         log("warn", f"no LaunchAgent templates found in {paths.launchd_src}.")
+
+
+def write_runtime_paths_metadata(paths: BootstrapPaths, python_bin: Path, eye_python_bin: Path) -> Path:
+    metadata_path = paths.state_dir / "runtime_paths.json"
+    payload = runtime_paths_metadata(paths, python_bin, eye_python_bin)
+    metadata_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    metadata_path.chmod(0o600)
+    return metadata_path
 
 
 def remove_path(path: Path, dry_run: bool) -> None:
@@ -220,6 +231,7 @@ def install_command(args: argparse.Namespace) -> int:
     install_bootstrap_wrapper(paths, python_bin)
     install_python_support_modules(paths)
     install_native_monitor(paths, log)
+    runtime_metadata = write_runtime_paths_metadata(paths, python_bin, eye_python_bin)
     install_launchd_plists(paths, python_bin, eye_python_bin, start_services=start_services)
     if not start_services:
         log("info", "installed launch agents; set AGENT_USER_STATUS_START_SERVICES=1 to auto-start.")
@@ -228,6 +240,7 @@ def install_command(args: argparse.Namespace) -> int:
     else:
         log("info", "installed launch agents and attempted service startup.")
     log("info", f"native monitor sources: {paths.share_dir / 'native-monitor'}")
+    log("info", f"runtime path metadata: {runtime_metadata}")
     if strict:
         return doctor_command(argparse.Namespace())
     return 0

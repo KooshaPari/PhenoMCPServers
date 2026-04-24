@@ -30,8 +30,8 @@
    - update LaunchAgent tray launch to app-bundle executable or intentional
      `open -a` flow. Done with direct app-bundle executable launch.
    - macOS `.pkg` dry-run packaging with signing/notarization hooks. Metadata
-     scaffold and build helper done; signing/notarization remain opt-in release
-     inputs.
+     scaffold, payload staging, validators, and build helper done;
+     signing/notarization remain opt-in release inputs.
    - Windows WinUI 3/MSIX manifest plan and installer scaffold. Done.
    - Linux GTK4/libadwaita `.desktop` and AppStream scaffold. Done.
 15. Build the scoped sponsor/user messaging lane:
@@ -45,21 +45,27 @@
    - `POST /session/heartbeat`, `GET /sessions`, and `POST /event`. Done.
    - in-memory event ring plus schema-versioned JSONL. Done.
    - hook/subagent spawn/close event publishing. Stop-hook event publishing done;
-     subagent spawn/close requires wrapper integration.
+     explicit child spawn/close CLI events done.
    - policy guidance for when to text versus use subagents. Done in long-term
      architecture guidance.
 17. Build the quality-gate lane:
    - close current Ruff findings. Done.
    - close current Pyright findings. Done.
    - enable lint/type CI gates after green. Done.
-18. Build the modularity lane for files above the 350-line target after gates
+18. Build the state-retention/privacy lane:
+   - derived JSON/JSONL export, delete, and age-retention helpers. Done.
+   - backend route coverage for raw sensor/audio/session payload rejection. Done.
+19. Build the native monitor session lane:
+   - runtime metadata loading for eye tracker controls. Done.
+   - active session/stale hook/child-agent display in native panel. Done.
+20. Build the modularity lane for files above the 350-line target after gates
    are stable.
 
 Critical path:
 - Governance template hardening blocks consistent review of privacy-sensitive
   telemetry and runtime changes.
-- Packaging/runtime path centralization blocks reliable non-default install
-  prefixes and doctor coverage.
-- Subagent wrapper integration still blocks automatic spawn/close session events.
+- The live `~/.local` install must be refreshed before `doctor` can pass the
+  installed-layout check for newly added support/native files.
+- Subagent wrappers still need to call the new child lifecycle helpers.
 - Full release distribution still needs real signing identities, notarization
   credentials, icon assets, and final install-channel manifests.

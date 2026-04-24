@@ -6,11 +6,13 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from agent_user_status.session_registry import (
+    append_child_session_event,
     append_session_event,
     append_session_heartbeat,
     recent_session_events,
     recent_session_records,
     session_event_ring,
+    session_snapshot,
     session_summaries,
     session_timeline,
 )
@@ -117,3 +119,39 @@ def test_session_event_ring_returns_recent_records(tmp_path) -> None:
     assert recent_session_events(store_path=store_path, limit=2)[-2:] == [heartbeat, event]
     assert session_event_ring(limit=2, kind="event")[-1]["event_type"] == "checkpoint"
     assert event["schema_version"] == 1
+
+
+def test_session_snapshot_includes_summaries_events_and_timeline(tmp_path) -> None:
+    store_path = tmp_path / "sessions.jsonl"
+    append_session_heartbeat("parent", status="working", store_path=store_path)
+    append_session_event("parent", "checkpoint", state="implementation", store_path=store_path)
+    append_session_event("other", "noise", store_path=store_path)
+
+    snapshot = session_snapshot(session_id="parent", store_path=store_path, event_limit=10)
+
+    assert [summary["session_id"] for summary in snapshot["sessions"]] == ["parent"]
+    assert [event["session_id"] for event in snapshot["events"]] == ["parent", "parent"]
+    assert [record["kind"] for record in snapshot["timeline"]] == ["heartbeat", "event"]
+    assert snapshot["generated_at"]
+
+
+def test_child_session_events_are_structured_and_privacy_safe(tmp_path) -> None:
+    store_path = tmp_path / "sessions.jsonl"
+
+    record = append_child_session_event(
+        "parent",
+        "child-a",
+        "spawn",
+        agent_id="codex-manager",
+        child_agent_id="worker-a",
+        metadata={"repo": "agent-user-status"},
+        store_path=store_path,
+    )
+
+    assert record["session_id"] == "parent"
+    assert record["event_type"] == "child_spawn"
+    assert record["metadata"] == {
+        "child_agent_id": "worker-a",
+        "child_session_id": "child-a",
+        "repo": "agent-user-status",
+    }

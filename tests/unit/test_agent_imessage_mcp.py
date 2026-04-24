@@ -91,3 +91,54 @@ def test_wait_for_user_reply_forwards_scoped_recipient(monkeypatch) -> None:
             25,
         )
     ]
+
+
+def test_session_tools_are_exposed() -> None:
+    names = {tool["name"] for tool in mcp.TOOLS}
+
+    assert {"sessions", "session_heartbeat", "session_event", "session_scan", "session_events"} <= names
+
+
+def test_session_heartbeat_tool_forwards_structured_cli_event(monkeypatch) -> None:
+    calls = []
+    monkeypatch.setattr(mcp, "call_agent_imessage", lambda args: calls.append(args) or {"ok": True})
+
+    result = mcp.tool_call(
+        "session_heartbeat",
+        {
+            "session_id": "codex-123",
+            "agent": "codex",
+            "status": "working",
+            "state": "implementation",
+            "repo": "agent-user-status",
+            "ttl_seconds": 60,
+        },
+    )
+
+    assert result == {"ok": True}
+    assert calls == [
+        [
+            "session-heartbeat",
+            "--session-id",
+            "codex-123",
+            "--agent",
+            "codex",
+            "--status",
+            "working",
+            "--ttl-seconds",
+            "60",
+            "--state",
+            "implementation",
+            "--repo",
+            "agent-user-status",
+        ]
+    ]
+
+
+def test_session_events_tool_forwards_filters(monkeypatch) -> None:
+    calls = []
+    monkeypatch.setattr(mcp, "call_agent_imessage", lambda args: calls.append(args) or {"ok": True})
+
+    assert mcp.tool_call("session_events", {"session_id": "codex-123", "kind": "event", "limit": 5}) == {"ok": True}
+
+    assert calls == [["session-events", "--limit", "5", "--kind", "event", "--session-id", "codex-123"]]

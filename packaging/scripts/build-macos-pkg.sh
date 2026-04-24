@@ -64,18 +64,44 @@ require_tool() {
 }
 
 optional_lint() {
+  "${ROOT}/packaging/scripts/validate-packaging.sh" macos
+}
+
+validate_payload_contents() {
+  local root="$1"
+  local app="$root/Applications/Agent User Status.app"
+  local monitor="$app/Contents/MacOS/AgentUserStatusMonitor"
+  local info="$app/Contents/Info.plist"
+  local binary
+
+  [[ -d "$root" ]] || fail "payload root does not exist: $root"
+  [[ -d "$app" ]] || fail "payload missing app bundle: $app"
+  [[ -f "$info" ]] || fail "payload missing app Info.plist: $info"
+  [[ -x "$monitor" ]] || fail "payload missing executable monitor: $monitor"
+
+  for binary in agent-user-status agent-imessage agent-user-statusd; do
+    [[ -x "$root/usr/local/bin/$binary" ]] || fail "payload missing executable: /usr/local/bin/$binary"
+  done
+
   if command -v plutil >/dev/null 2>&1; then
-    plutil -lint "${ROOT}/packaging/macos/Info.plist" >/dev/null
-    plutil -lint "${ROOT}/packaging/macos/entitlements.plist" >/dev/null
-  else
-    log "warning: plutil not found; Python metadata validation will still parse plists"
+    plutil -lint "$info" >/dev/null
   fi
 
-  if command -v xmllint >/dev/null 2>&1; then
-    xmllint --noout "${ROOT}/packaging/macos/pkg/Distribution.xml"
-  else
-    log "warning: xmllint not found; Python metadata validation will still parse XML"
-  fi
+  python3 - "$ROOT" "$info" <<'PY'
+import plistlib
+import sys
+import tomllib
+from pathlib import Path
+
+root = Path(sys.argv[1])
+info_path = Path(sys.argv[2])
+project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+info = plistlib.loads(info_path.read_bytes())
+if info["CFBundleIdentifier"] != "com.phenotype.agent-user-status":
+    raise SystemExit(f"payload app bundle id mismatch: {info['CFBundleIdentifier']}")
+if info["CFBundleShortVersionString"] != project["version"]:
+    raise SystemExit("payload app version does not match pyproject")
+PY
 }
 
 metadata_value() {
@@ -272,6 +298,13 @@ log "work dir: ${WORK_DIR}"
 log "output: ${OUTPUT}"
 
 if [[ "$MODE" == "dry-run" ]]; then
+  if [[ -d "$PAYLOAD_ROOT/Applications/Agent User Status.app" ]]; then
+    validate_payload_contents "$PAYLOAD_ROOT"
+    log "payload contents ok"
+  else
+    log "payload root is not staged yet; create it with:"
+    quote_cmd "${ROOT}/packaging/scripts/stage-macos-payload.sh" --stage --payload-root "$PAYLOAD_ROOT"
+  fi
   log "dry run only; no files will be created"
   log "component command:"
   quote_cmd "${PKGBUILD_CMD[@]}"
@@ -291,8 +324,8 @@ fi
 [[ "$MODE" == "build" ]] || fail "invalid mode: $MODE"
 require_tool pkgbuild
 require_tool productbuild
-[[ -d "$PAYLOAD_ROOT" ]] || fail "payload root does not exist: $PAYLOAD_ROOT"
 [[ -d "$RESOURCES" ]] || fail "resources directory does not exist: $RESOURCES"
+validate_payload_contents "$PAYLOAD_ROOT"
 
 mkdir -p "$WORK_DIR" "$(dirname "$OUTPUT")"
 rm -f "$COMPONENT_PKG" "$OUTPUT"
@@ -302,6 +335,11 @@ log "building component package"
 
 log "building product archive"
 "${PRODUCTBUILD_CMD[@]}"
+
+if command -v pkgutil >/dev/null 2>&1; then
+  log "validating product archive payload listing"
+  pkgutil --payload-files "$OUTPUT" >/dev/null
+fi
 
 if [[ ${#NOTARY_CMD[@]} -gt 0 ]]; then
   require_tool xcrun

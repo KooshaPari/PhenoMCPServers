@@ -5,17 +5,30 @@ This folder is a metadata scaffold for a signed product archive. The helper at
 commands by default, and builds only when `--build` is passed.
 
 Safe package assembly should use staged roots and must not overwrite the live
-`~/.local` install unless the operator explicitly chooses that target. Prefer a
-current-user package root such as:
+`~/.local` install. The staging helper copies current install artifacts into a
+disposable root under `build/`:
 
-```text
-~/Applications/Agent User Status.app
-~/.local/bin/agent-user-status
-~/.local/share/agent-imessage
+```bash
+packaging/scripts/stage-macos-payload.sh --stage
 ```
 
-The product archive should be built from a disposable staging directory. Dry-run
-validation is side-effect free:
+The staged package payload currently uses system package paths:
+
+```text
+/Applications/Agent User Status.app
+/usr/local/bin/agent-user-status
+/usr/local/bin/agent-imessage
+/usr/local/bin/agent-user-statusd
+```
+
+The helper intentionally does not copy the live
+`~/.local/share/agent-imessage` support directory because it can contain local
+state, logs, virtual environments, and calibration artifacts. Future signed and
+package-manager routes should assemble clean support files from source or build
+outputs, not from the operator's runtime state directory.
+
+The product archive should always be built from that disposable staging
+directory. Dry-run validation is side-effect free:
 
 ```bash
 packaging/scripts/build-macos-pkg.sh --dry-run

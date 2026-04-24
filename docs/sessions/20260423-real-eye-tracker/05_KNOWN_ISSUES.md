@@ -7,18 +7,25 @@
   functioning correctly. Treat mean/P95 error above a few hundred pixels as
   calibration/model failure or intentional look-away, not as an acceptable
   smoothing artifact.
+- Webcam tracker publishing now treats backend socket resets as transient
+  publish failures instead of terminating the tracker loop.
+- Missing-presence tracker updates use the derived state `presence_missing` so
+  the backend can stay fresh without accepting raw face/biometric wording.
 - Native and CLI evaluation both report per-target accepted/rejected sample
   counts, rejection reasons, and repeated/stuck sample detection.
-- Runtime executable lookup is centralized for Python/MCP wrappers. The native
-  calibration/evaluation controls still use the installed eye-tracker venv path
-  and should gain an override-aware source of truth before non-default native
-  install prefixes become common.
+- Runtime executable lookup is centralized for Python/MCP wrappers and the
+  native calibration/evaluation controls now read bootstrap-generated
+  `runtime_paths.json` metadata with environment overrides.
 - The macOS tray now builds into `Agent User Status.app`, and the pkg helper can
   dry-run/build staged product archives. Package signing, notarization, icon
   assets, and `/Applications`/Homebrew cask installation are still pending.
-- Session heartbeats/events now have a privacy-safe JSONL store and HTTP/CLI
-  surfaces. Passive process/tmux session scanning is available through
-  `agent-imessage session-scan`. Stop-hook event publishing is done; automatic
-  subagent spawn/close events still require wrapper integration.
+- Session heartbeats/events now have privacy-safe JSONL, HTTP, CLI, MCP, and
+  native monitor surfaces. Passive process/tmux scanning is available through
+  `agent-imessage session-scan`; child-agent lifecycle can be recorded through
+  `session-child-spawn` and `session-child-close`.
+- The live checkout passes unit tests, Ruff, Pyright, Swift compile, packaging
+  metadata validation, Python dist build validation, and backend smoke. The
+  local `doctor` gate fails until the live `~/.local` install is refreshed with
+  the newly added support/native files.
 
 These do not affect the validated local runtime.

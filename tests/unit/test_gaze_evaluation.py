@@ -63,3 +63,29 @@ def test_evaluation_counters_include_sample_health_totals() -> None:
         REPEATED_GAZE_SAMPLE: 2,
         STUCK_GAZE_SAMPLE: 1,
     }
+
+
+def test_stuck_detector_reset_starts_new_sample_sequence() -> None:
+    detector = GazeSampleStuckDetector(repeated_threshold=2, stuck_threshold=3)
+
+    assert detector.inspect((10.0, 10.0)) is None
+    assert detector.inspect((10.0, 10.0)) == REPEATED_GAZE_SAMPLE
+    detector.reset()
+
+    assert detector.inspect((10.0, 10.0)) is None
+    assert detector.summary() == {
+        "repeated_gaze_sample_count": 1,
+        "stuck_gaze_sample_count": 0,
+    }
+
+
+def test_stuck_detector_precision_buckets_nearby_derived_coordinates() -> None:
+    detector = GazeSampleStuckDetector(
+        repeated_threshold=2,
+        stuck_threshold=4,
+        coordinate_precision_px=5.0,
+    )
+
+    assert detector.inspect((100.1, 200.2)) is None
+    assert detector.inspect((101.9, 199.7)) == REPEATED_GAZE_SAMPLE
+    assert detector.inspect((107.0, 199.7)) is None

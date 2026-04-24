@@ -57,5 +57,5 @@ def post_eye(
     try:
         with urllib.request.urlopen(req, timeout=config.timeout_seconds) as response:
             response.read()
-    except (urllib.error.URLError, TimeoutError) as exc:
+    except (OSError, urllib.error.URLError, TimeoutError) as exc:
         raise PublishError(f"statusd publish failed: {exc}") from exc

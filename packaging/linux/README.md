@@ -23,6 +23,10 @@ discoverability.
 ## Validation
 
 ```bash
+packaging/scripts/validate-packaging.sh linux
 desktop-file-validate packaging/linux/agent-user-status.desktop
 appstreamcli validate --no-net packaging/linux/com.phenotype.AgentUserStatus.metainfo.xml
 ```
+
+The repository validator runs Python fallback checks when freedesktop or
+AppStream tools are not installed on the host.

@@ -129,6 +129,39 @@ def append_session_event(
     return append_session_record(record, store_path=store_path)
 
 
+def append_child_session_event(
+    parent_session_id: str,
+    child_session_id: str,
+    lifecycle: str,
+    *,
+    agent_id: str = "agent",
+    child_agent_id: str | None = None,
+    state: str | None = None,
+    note: str | None = None,
+    metadata: Mapping[str, Any] | None = None,
+    observed_at: str | None = None,
+    store_path: Path | None = None,
+) -> dict[str, Any]:
+    """Record a structured child-agent lifecycle event on the parent session."""
+    lifecycle_text = safe_text(lifecycle, "lifecycle", 40)
+    if lifecycle_text not in {"spawn", "close"}:
+        raise ValueError("lifecycle must be spawn or close")
+    child_metadata: dict[str, Any] = dict(metadata or {})
+    child_metadata["child_session_id"] = safe_text(child_session_id, "child_session_id", 120)
+    if child_agent_id is not None:
+        child_metadata["child_agent_id"] = safe_text(child_agent_id, "child_agent_id", 80)
+    return append_session_event(
+        parent_session_id,
+        f"child_{lifecycle_text}",
+        agent_id=agent_id,
+        state=state,
+        note=note,
+        metadata=child_metadata,
+        observed_at=observed_at,
+        store_path=store_path,
+    )
+
+
 def recent_session_records(
     *,
     store_path: Path | None = None,
@@ -171,13 +204,21 @@ def recent_session_events(
     store_path: Path | None = None,
     limit: int = 80,
     kind: str | None = None,
+    session_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """Return recent session records across process boundaries, with ring records preferred."""
     bounded_limit = max(1, min(int(limit), 2000))
     records_by_id: dict[str, dict[str, Any]] = {}
-    for record in recent_session_records(store_path=store_path, limit=bounded_limit, kind=kind):
+    for record in recent_session_records(
+        store_path=store_path,
+        session_id=session_id,
+        limit=bounded_limit,
+        kind=kind,
+    ):
         records_by_id[str(record.get("record_id") or record_id(record))] = record
     for record in session_event_ring(limit=bounded_limit, kind=kind):
+        if session_id is not None and record.get("session_id") != session_id:
+            continue
         records_by_id[str(record.get("record_id") or record_id(record))] = record
     records = list(records_by_id.values())
     records.sort(key=lambda item: str(item.get("observed_at", "")))
@@ -220,3 +261,35 @@ def session_summaries(*, store_path: Path | None = None, limit: int = 200) -> li
         output.append(summary)
     output.sort(key=lambda item: str(item["latest"].get("observed_at", "")), reverse=True)
     return output
+
+
+def session_snapshot(
+    *,
+    store_path: Path | None = None,
+    session_id: str | None = None,
+    session_limit: int = 200,
+    event_limit: int = 80,
+    kind: str | None = None,
+) -> dict[str, Any]:
+    """Return a live privacy-safe snapshot of current session summaries and events."""
+    if session_id:
+        sessions = [
+            summary
+            for summary in session_summaries(store_path=store_path, limit=session_limit)
+            if summary.get("session_id") == session_id
+        ]
+        timeline = session_timeline(session_id, store_path=store_path, limit=session_limit)
+    else:
+        sessions = session_summaries(store_path=store_path, limit=session_limit)
+        timeline = []
+    return {
+        "generated_at": now_iso(),
+        "sessions": sessions,
+        "events": recent_session_events(
+            store_path=store_path,
+            limit=event_limit,
+            kind=kind,
+            session_id=session_id,
+        ),
+        "timeline": timeline,
+    }

@@ -27,13 +27,8 @@ from agent_user_status.eye_state_payload import bounded_float, bounded_int, buil
 from agent_user_status.gaze_context import as_bool
 from agent_user_status.gaze_drift_correction import load_drift_correction
 from agent_user_status.monitor_html import MONITOR_HTML
-from agent_user_status.session_registry import (
-    append_session_event,
-    append_session_heartbeat,
-    recent_session_events,
-    session_summaries,
-    session_timeline,
-)
+from agent_user_status.state_retention import delete_state, export_state, retain_recent_state
+from agent_user_status.statusd_sessions import parsed_query, session_get_payload, session_post_payload
 
 HOST = os.environ.get("AGENT_USER_STATUSD_HOST", "127.0.0.1")
 PORT = int(os.environ.get("AGENT_USER_STATUSD_PORT", "8765"))
@@ -44,7 +39,7 @@ MAX_BODY_BYTES = 16_384
 EYE_SIGNAL_INTERVAL_SECONDS = float(os.environ.get("AGENT_USER_STATUSD_EYE_SIGNAL_INTERVAL_SECONDS", "1.0"))
 RAW_SENSOR_PATTERNS = re.compile(
     r"(^|[^a-z0-9])(raw|frame|image|photo|screenshot|face|facial|biometric|"
-    r"pupil|retina|iris|embedding|landmark|camera|webcam|transcript|waveform|"
+    r"pupil|retina|iris|embedding|landmarks?|camera|webcam|audio|transcript|waveform|"
     r"typed_text|key_name|keystroke|keycode)($|[^a-z0-9])",
     re.IGNORECASE,
 )
@@ -275,6 +270,20 @@ class Handler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             pass
 
+    def send_sse(self, payloads: list[dict[str, Any]]) -> None:
+        try:
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Connection", "keep-alive")
+            self.end_headers()
+            for payload in payloads:
+                body = json.dumps(payload, sort_keys=True)
+                self.wfile.write(f"event: session\ndata: {body}\n\n".encode())
+                self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+
     def read_json(self) -> dict[str, Any]:
         length = int(self.headers.get("Content-Length", "0"))
         if length > MAX_BODY_BYTES:
@@ -295,6 +304,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_html(200, MONITOR_HTML)
             elif path == "/privacy":
                 self.send_json(200, {"ok": True, "policy": PRIVACY_POLICY})
+            elif path == "/state/export":
+                self.send_json(200, {"ok": True, "export": export_state(STATE_DIR)})
             elif path == "/dev/state":
                 self.send_json(200, {"ok": True, **dev_state()})
             elif path == "/dev/eye":
@@ -311,19 +322,16 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/actions":
                 result = run_agent(["actions"], timeout=4)
                 self.send_json(200 if result.get("ok") else 502, result)
-            elif path == "/sessions":
-                query = parse_qs(parsed.query)
-                limit = bounded_int(query.get("limit", [200])[0], 200, 1, 2000, "limit")
-                session_id = query.get("session_id", [None])[0]
-                if session_id:
-                    self.send_json(200, {"ok": True, "records": session_timeline(session_id, limit=limit)})
-                else:
-                    self.send_json(200, {"ok": True, "sessions": session_summaries(limit=limit)})
-            elif path == "/session/events":
+            elif path == "/events/stream":
                 query = parse_qs(parsed.query)
                 limit = bounded_int(query.get("limit", [80])[0], 80, 1, 500, "limit")
-                kind = query.get("kind", [None])[0]
-                self.send_json(200, {"ok": True, "events": recent_session_events(limit=limit, kind=kind)})
+                session_payload = session_get_payload(
+                    "/session/snapshot",
+                    {"event_limit": [str(limit)], "session_limit": [str(limit)]},
+                )
+                self.send_sse([session_payload or {"ok": True, "snapshot": {}}])
+            elif session_payload := session_get_payload(path, parsed_query(parsed.query)):
+                self.send_json(200, session_payload)
             elif path == "/correction/events":
                 query = parse_qs(parsed.query)
                 limit = bounded_int(query.get("limit", [80])[0], 80, 1, 500, "limit")
@@ -373,27 +381,15 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(200, {"ok": True, **store_eye_payload(payload)})
             elif path == "/correction/event":
                 self.send_json(200, {"ok": True, "event": store_correction_event(payload)})
-            elif path == "/session/heartbeat":
-                record = append_session_heartbeat(
-                    str(payload["session_id"]),
-                    agent_id=str(payload.get("agent_id") or payload.get("agent_kind") or "agent"),
-                    status=str(payload.get("status") or "active"),
-                    state=str(payload["state"]) if payload.get("state") is not None else None,
-                    note=str(payload["note"]) if payload.get("note") is not None else None,
-                    metadata=payload.get("metadata") if isinstance(payload.get("metadata"), dict) else None,
-                    ttl_seconds=bounded_int(payload.get("ttl_seconds"), 300, 1, 86400, "ttl_seconds"),
-                )
-                self.send_json(200, {"ok": True, "record": record})
-            elif path in {"/event", "/session/event"}:
-                record = append_session_event(
-                    str(payload["session_id"]),
-                    str(payload["event_type"]),
-                    agent_id=str(payload.get("agent_id") or payload.get("agent_kind") or "agent"),
-                    state=str(payload["state"]) if payload.get("state") is not None else None,
-                    note=str(payload["note"]) if payload.get("note") is not None else None,
-                    metadata=payload.get("metadata") if isinstance(payload.get("metadata"), dict) else None,
-                )
-                self.send_json(200, {"ok": True, "record": record})
+            elif session_payload := session_post_payload(path, payload):
+                self.send_json(200, session_payload)
+            elif path == "/state/delete":
+                names = payload.get("names")
+                selected = [str(name) for name in names] if isinstance(names, list) else None
+                self.send_json(200, {"ok": True, **delete_state(STATE_DIR, names=selected)})
+            elif path == "/state/retention":
+                max_age = bounded_int(payload.get("max_age_seconds"), 86400, 1, 31_536_000, "max_age_seconds")
+                self.send_json(200, {"ok": True, **retain_recent_state(STATE_DIR, max_age_seconds=max_age)})
             elif path == "/action":
                 max_age = bounded_int(payload.get("max_age_seconds"), 120, 1, 3600, "max_age_seconds")
                 command = [

@@ -255,7 +255,7 @@ def command_run(args: argparse.Namespace) -> int:
                             0.0,
                             max_age=2,
                             config=publisher,
-                            state="no_face",
+                            state="presence_missing",
                         )
                     except PublishError:
                         pass

@@ -27,9 +27,17 @@ device or library capabilities without a reviewed privacy and threat model.
 
 ## Validation
 
-Use Windows SDK tools on a Windows host:
+Run the repository metadata validator on any host:
+
+```bash
+packaging/scripts/validate-packaging.sh windows
+```
+
+Use Windows SDK tools on a Windows host for the actual MSIX package and
+signature path:
 
 ```powershell
+MakeAppx.exe validate /v /m .\packaging\windows\msix\AppxManifest.xml
 MakeAppx.exe pack /d .\staging /p .\AgentUserStatus.msix
 SignTool.exe sign /fd SHA256 /a .\AgentUserStatus.msix
 ```

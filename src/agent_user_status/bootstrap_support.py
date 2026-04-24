@@ -24,7 +24,9 @@ SUPPORT_MODULES = [
     "bootstrap_support.py",
     "agent_imessage_core.py",
     "agent_imessage_learning.py",
+    "agent_imessage_mcp_sessions.py",
     "agent_imessage_session_commands.py",
+    "agent_imessage_state_commands.py",
     "agent_imessage_status.py",
     "agent_imessage_commands.py",
     "bootstrap_native.py",
@@ -42,6 +44,8 @@ SUPPORT_MODULES = [
     "eye_publish.py",
     "eye_smoothing.py",
     "monitor_html.py",
+    "state_retention.py",
+    "statusd_sessions.py",
     "bootstrap_cli.py",
 ]
 
@@ -62,10 +66,13 @@ RUNTIME_BIN_SPECS = [
 
 NATIVE_MONITOR_FILES = [
     "AgentUserStatusMonitor.swift",
+    "AgentUserStatusApp.swift",
+    "AgentSessions.swift",
     "CalibrationEvalStats.swift",
     "EyeTrackerControls.swift",
     "MonitorStatusSummary.swift",
     "MonitorUIStateStore.swift",
+    "NativeRuntimePaths.swift",
     "WorkspaceAttribution.swift",
     "VisualGazeFilter.swift",
     "WindowTracking.swift",
@@ -192,3 +199,18 @@ def native_app_paths(paths: Any) -> list[Path]:
         app / "Contents" / "Info.plist",
         native_app_executable(paths),
     ]
+
+
+def runtime_paths_metadata(paths: BootstrapPaths, python_bin: Path, eye_python_bin: Path) -> dict[str, str]:
+    """Return install metadata consumed by native controls and diagnostics."""
+    return {
+        "bin_dir": str(paths.bin_dir),
+        "share_dir": str(paths.share_dir),
+        "state_dir": str(paths.state_dir),
+        "launchd_dir": str(paths.launchd_dir),
+        "python_bin": str(python_bin),
+        "eye_python_bin": str(eye_python_bin),
+        "webcam_eye_tracker_bin": str(paths.bin_dir / "agent-user-status-webcam-eye-tracker"),
+        "native_monitor_bin": str(native_app_executable(paths)),
+        "eye_calibration_path": str(paths.state_dir / "eye_calibration.json"),
+    }

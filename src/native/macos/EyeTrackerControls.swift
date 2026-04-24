@@ -5,9 +5,7 @@ private let statusdLabel = "com.phenotype.agent-user-statusd"
 private let trayLabel = "com.phenotype.agent-user-status-tray"
 private let cursorLabel = "com.phenotype.agent-user-status-cursor-tracker"
 private let eyeTrackerLabel = "com.phenotype.agent-user-status-webcam-eye-tracker"
-private let eyePython = "\(NSHomeDirectory())/.local/share/agent-imessage/eye-tracker-venv/bin/python"
-private let eyeTracker = "\(NSHomeDirectory())/.local/bin/agent-user-status-webcam-eye-tracker"
-private let userLaunchAgentsDir = "\(NSHomeDirectory())/Library/LaunchAgents"
+private let runtimePaths = NativeRuntimePaths.load()
 
 private enum ServiceAction: String {
     case start
@@ -22,7 +20,7 @@ private struct ManagedService {
 
     init(_ label: String) {
         self.label = label
-        self.plistPath = "\(userLaunchAgentsDir)/\(label).plist"
+        self.plistPath = "\(runtimePaths.launchAgentsDir)/\(label).plist"
     }
 
     func arguments(for action: ServiceAction) -> [String] {
@@ -241,8 +239,8 @@ extension AppDelegate {
         _ = runLaunchctl(eyeTrackerService.arguments(for: .kill))
         _ = runShell("sleep 1")
         let calibration = [
-            shellQuote(eyePython),
-            shellQuote(eyeTracker),
+            shellQuote(runtimePaths.eyePython),
+            shellQuote(runtimePaths.eyeTracker),
             "calibrate",
             "--camera",
             shellQuote(eyeCameraIndex()),
