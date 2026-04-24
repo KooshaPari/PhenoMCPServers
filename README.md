@@ -96,9 +96,10 @@ metadata scaffolds:
   Windows shell.
 - `packaging/linux`: Freedesktop `.desktop` and AppStream metainfo scaffold.
 
-These files do not replace the current installer yet. They define the app
-identity and package metadata needed for Spotlight, Start Menu, Linux desktop
-menus, and package-manager flows.
+The installer now builds `Agent User Status.app` under the runtime share
+directory and launches the tray from the app bundle executable. The legacy
+`agent-user-status-native-monitor` binary is still staged as a compatibility
+entrypoint.
 
 ## Install Prefixes
 
@@ -215,11 +216,15 @@ Agents can also publish privacy-safe session state:
 agent-imessage session-heartbeat --session-id codex-123 --agent codex --cwd "$PWD"
 agent-imessage session-event --session-id codex-123 --event-type validation --state pytest_passed
 agent-imessage sessions --limit 20
+agent-imessage session-scan
 ```
 
 The backend exposes the same store through `POST /session/heartbeat`,
 `POST /event`, and `GET /sessions`. Session records reject raw transcripts,
 prompt text, screenshots, camera data, keystrokes, and audio-like payloads.
+`session-scan` discovers likely local agent processes and tmux panes without raw
+command arguments or full cwd paths by default. Use `--include-cwd` only for
+explicit local debugging.
 
 ## Long-Term Architecture
 

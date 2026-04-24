@@ -24,11 +24,14 @@ SUPPORT_MODULES = [
     "bootstrap_support.py",
     "agent_imessage_core.py",
     "agent_imessage_learning.py",
+    "agent_imessage_session_commands.py",
     "agent_imessage_status.py",
     "agent_imessage_commands.py",
+    "bootstrap_native.py",
     "correction.py",
     "session_privacy.py",
     "session_registry.py",
+    "session_scan.py",
     "gaze_context.py",
     "gaze_drift_correction.py",
     "gaze_evaluation.py",
@@ -59,6 +62,7 @@ RUNTIME_BIN_SPECS = [
 
 NATIVE_MONITOR_FILES = [
     "AgentUserStatusMonitor.swift",
+    "CalibrationEvalStats.swift",
     "EyeTrackerControls.swift",
     "MonitorStatusSummary.swift",
     "MonitorUIStateStore.swift",
@@ -67,6 +71,9 @@ NATIVE_MONITOR_FILES = [
     "WindowTracking.swift",
     "PanelView.swift",
 ]
+
+NATIVE_APP_NAME = "Agent User Status.app"
+NATIVE_APP_EXECUTABLE = "AgentUserStatusMonitor"
 
 
 def env_path(name: str, default: Path) -> Path:
@@ -169,3 +176,19 @@ def installed_support_paths(paths: Any) -> list[Path]:
 def native_monitor_paths(paths: Any) -> list[Path]:
     share_dir = paths.share_dir
     return [share_dir / "native-monitor" / filename for filename in NATIVE_MONITOR_FILES]
+
+
+def native_app_bundle(paths: Any) -> Path:
+    return paths.share_dir / NATIVE_APP_NAME
+
+
+def native_app_executable(paths: Any) -> Path:
+    return native_app_bundle(paths) / "Contents" / "MacOS" / NATIVE_APP_EXECUTABLE
+
+
+def native_app_paths(paths: Any) -> list[Path]:
+    app = native_app_bundle(paths)
+    return [
+        app / "Contents" / "Info.plist",
+        native_app_executable(paths),
+    ]

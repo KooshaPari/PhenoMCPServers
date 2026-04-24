@@ -47,12 +47,7 @@ from agent_user_status.agent_imessage_status import (
     hook_decision_result,
     status_from_override,
 )
-from agent_user_status.session_registry import (
-    append_session_event,
-    append_session_heartbeat,
-    session_summaries,
-    session_timeline,
-)
+from agent_user_status.agent_imessage_session_commands import add_session_parsers
 
 
 def command_notify(args: argparse.Namespace) -> int:
@@ -319,64 +314,6 @@ def command_wait(args: argparse.Namespace) -> int:
     return 124
 
 
-def command_session_heartbeat(args: argparse.Namespace) -> int:
-    metadata = {
-        key: value
-        for key, value in {
-            "pid": args.pid,
-            "cwd": args.cwd,
-            "repo": args.repo,
-            "tty": args.tty,
-            "tmux_pane": args.tmux_pane,
-        }.items()
-        if value is not None
-    }
-    record = append_session_heartbeat(
-        args.session_id,
-        agent_id=args.agent,
-        status=args.status,
-        state=args.state,
-        note=args.note,
-        metadata=metadata,
-        ttl_seconds=args.ttl_seconds,
-    )
-    print(json.dumps({"ok": True, "record": record}, indent=2))
-    return 0
-
-
-def command_session_event(args: argparse.Namespace) -> int:
-    metadata = {
-        key: value
-        for key, value in {
-            "pid": args.pid,
-            "cwd": args.cwd,
-            "repo": args.repo,
-            "tty": args.tty,
-            "tmux_pane": args.tmux_pane,
-        }.items()
-        if value is not None
-    }
-    record = append_session_event(
-        args.session_id,
-        args.event_type,
-        agent_id=args.agent,
-        state=args.state,
-        note=args.note,
-        metadata=metadata,
-    )
-    print(json.dumps({"ok": True, "record": record}, indent=2))
-    return 0
-
-
-def command_sessions(args: argparse.Namespace) -> int:
-    if args.session_id:
-        payload = {"ok": True, "records": session_timeline(args.session_id, limit=args.limit)}
-    else:
-        payload = {"ok": True, "sessions": session_summaries(limit=args.limit)}
-    print(json.dumps(payload, indent=2))
-    return 0
-
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Agent iMessage helper")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -459,37 +396,7 @@ def build_parser() -> argparse.ArgumentParser:
     wait.add_argument("--include-existing", action="store_true")
     wait.set_defaults(func=command_wait)
 
-    sessions = sub.add_parser("sessions", help="Inspect privacy-safe local agent sessions")
-    sessions.add_argument("--session-id")
-    sessions.add_argument("--limit", type=int, default=200)
-    sessions.set_defaults(func=command_sessions)
-
-    session_heartbeat = sub.add_parser("session-heartbeat", help="Record an agent session heartbeat")
-    session_heartbeat.add_argument("--session-id", required=True)
-    session_heartbeat.add_argument("--agent", default="agent")
-    session_heartbeat.add_argument("--status", default="active")
-    session_heartbeat.add_argument("--state")
-    session_heartbeat.add_argument("--note")
-    session_heartbeat.add_argument("--pid")
-    session_heartbeat.add_argument("--cwd")
-    session_heartbeat.add_argument("--repo")
-    session_heartbeat.add_argument("--tty")
-    session_heartbeat.add_argument("--tmux-pane")
-    session_heartbeat.add_argument("--ttl-seconds", type=int, default=300)
-    session_heartbeat.set_defaults(func=command_session_heartbeat)
-
-    session_event = sub.add_parser("session-event", help="Record a privacy-safe agent session event")
-    session_event.add_argument("--session-id", required=True)
-    session_event.add_argument("--event-type", required=True)
-    session_event.add_argument("--agent", default="agent")
-    session_event.add_argument("--state")
-    session_event.add_argument("--note")
-    session_event.add_argument("--pid")
-    session_event.add_argument("--cwd")
-    session_event.add_argument("--repo")
-    session_event.add_argument("--tty")
-    session_event.add_argument("--tmux-pane")
-    session_event.set_defaults(func=command_session_event)
+    add_session_parsers(sub)
 
     return parser
 

@@ -63,7 +63,7 @@ final class CalibrationEvalController: NSObject {
     private var points: [CGPoint] = []
     private var index = 0
     private var started = Date()
-    private var discardedSamples = 0
+    private var evalStats = CalibrationEvalStats(targetCount: 0)
     private var isRefreshing = false
     private let settleSeconds: TimeInterval = 0.7
     private let secondsPerPoint: TimeInterval = 2.0
@@ -76,7 +76,7 @@ final class CalibrationEvalController: NSObject {
         samples = []
         index = 0
         started = Date()
-        discardedSamples = 0
+        evalStats = CalibrationEvalStats(targetCount: points.count)
         isRefreshing = false
         let panel = NSPanel(contentRect: screen, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.backgroundColor = .black
@@ -109,8 +109,9 @@ final class CalibrationEvalController: NSObject {
             let eye = model.eye
             if eye.fresh, eye.targetingReliable, eye.confidence >= 0.35 {
                 self.samples.append((self.points[self.index], model.rawEyePoint()))
+                self.evalStats.accept(index: self.index)
             } else {
-                self.discardedSamples += 1
+                self.evalStats.reject(index: self.index, reason: self.rejectReason(for: eye))
             }
 
             if Date().timeIntervalSince(self.started) >= self.secondsPerPoint {
@@ -139,7 +140,7 @@ final class CalibrationEvalController: NSObject {
         guard !samples.isEmpty else {
             showAlert(
                 title: "Calibration Evaluation",
-                detail: "No fresh reliable gaze samples were available.\nDiscarded samples: \(discardedSamples)\nStart or recalibrate the eye tracker, then retry."
+                detail: "No fresh reliable gaze samples were available.\nRejected samples: \(evalStats.rejected)\n\(evalStats.summary())\nStart or recalibrate the eye tracker, then retry."
             )
             return
         }
@@ -150,8 +151,21 @@ final class CalibrationEvalController: NSObject {
         let quality = errors.count >= expectedSamples ? "usable sample volume" : "low sample volume"
         showAlert(
             title: "Calibration Evaluation",
-            detail: "Mean error: \(Int(mean)) px\nP95 error: \(Int(p95)) px\nSamples: \(errors.count) (\(quality))\nDiscarded stale/unreliable samples: \(discardedSamples)"
+            detail: "Mean error: \(Int(mean)) px\nP95 error: \(Int(p95)) px\nSamples: \(errors.count) (\(quality))\nRejected samples: \(evalStats.rejected)\n\(evalStats.summary())"
         )
+    }
+
+    private func rejectReason(for eye: EyeState) -> String {
+        if !eye.fresh {
+            return "stale"
+        }
+        if !eye.targetingReliable {
+            return "unreliable"
+        }
+        if eye.confidence < 0.35 {
+            return "low_confidence"
+        }
+        return "unknown"
     }
 
     private func showAlert(title: String, detail: String) {
