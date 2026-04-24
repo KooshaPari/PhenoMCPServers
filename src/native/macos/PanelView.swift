@@ -3,6 +3,7 @@ import Foundation
 
 final class PanelView: NSView {
     let model: StatusModel
+    var onCalibrationAction: (() -> Void)?
 
     init(model: StatusModel) {
         self.model = model
@@ -20,6 +21,20 @@ final class PanelView: NSView {
         drawPanel()
     }
 
+    override func mouseDown(with event: NSEvent) {
+        let point = convert(event.locationInWindow, from: nil)
+        if calibrationActionFrame().contains(point) || calibrationBadgeFrame().contains(point) {
+            onCalibrationAction?()
+            return
+        }
+        super.mouseDown(with: event)
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(calibrationActionFrame(), cursor: .pointingHand)
+        addCursorRect(calibrationBadgeFrame(), cursor: .pointingHand)
+    }
+
     private func drawPanel() {
         let panel = bounds.insetBy(dx: 10, dy: 10)
         NSColor(calibratedRed: 0.10, green: 0.11, blue: 0.14, alpha: 0.97).setFill()
@@ -30,7 +45,7 @@ final class PanelView: NSView {
         let badgeText = model.eye.calibrationBannerText
         drawPill(
             text: badgeText,
-            frame: CGRect(x: panel.maxX - 118, y: y - 2, width: 96, height: 20),
+            frame: calibrationBadgeFrame(in: panel, y: y),
             fill: badgeText == "Tracking" ? NSColor.systemGreen : (badgeText == "Projection hold" ? NSColor.systemOrange : NSColor.systemRed)
         )
         y -= 28
@@ -71,6 +86,7 @@ final class PanelView: NSView {
                     ("DETAIL", model.eye.calibrationDetailText)
                 ]
             )
+            drawActionButton(model.eye.calibrationPrimaryActionTitle, frame: calibrationActionFrame(in: section))
         }
 
         drawSection(
@@ -187,6 +203,39 @@ final class PanelView: NSView {
         path.lineWidth = 1
         path.stroke()
         drawText(text, x: frame.minX, y: frame.minY + 4, size: 9, weight: .semibold, color: fill, maxWidth: frame.width, center: true)
+    }
+
+    private func drawActionButton(_ text: String, frame: CGRect) {
+        let fill = model.eye.calibrationPrimaryActionTitle == "Recalibrate" ? NSColor.systemRed : NSColor.systemBlue
+        fill.withAlphaComponent(0.28).setFill()
+        NSBezierPath(roundedRect: frame, xRadius: 6, yRadius: 6).fill()
+        fill.withAlphaComponent(0.95).setStroke()
+        let outline = NSBezierPath(roundedRect: frame, xRadius: 6, yRadius: 6)
+        outline.lineWidth = 1
+        outline.stroke()
+        drawText(text, x: frame.minX, y: frame.minY + 7, size: 10, weight: .semibold, color: .white, maxWidth: frame.width, center: true)
+    }
+
+    private func calibrationBadgeFrame() -> CGRect {
+        let panel = bounds.insetBy(dx: 10, dy: 10)
+        return calibrationBadgeFrame(in: panel, y: panel.maxY - 32)
+    }
+
+    private func calibrationBadgeFrame(in panel: CGRect, y: CGFloat) -> CGRect {
+        CGRect(x: panel.maxX - 118, y: y - 2, width: 96, height: 20)
+    }
+
+    private func calibrationActionFrame() -> CGRect {
+        let panel = bounds.insetBy(dx: 10, dy: 10)
+        let sessionTop = panel.maxY - 74
+        let sessionBottom = sessionTop - 106
+        let calibrationTop = sessionBottom - 102
+        let section = CGRect(x: panel.minX + 22, y: calibrationTop + 18, width: panel.width - 44, height: 62)
+        return calibrationActionFrame(in: section)
+    }
+
+    private func calibrationActionFrame(in section: CGRect) -> CGRect {
+        CGRect(x: section.maxX - 84, y: section.minY + 2, width: 78, height: 24)
     }
 
     private func coord(_ point: CGPoint) -> String {

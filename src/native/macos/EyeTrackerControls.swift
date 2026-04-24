@@ -231,13 +231,12 @@ extension AppDelegate {
     }
 
     @objc func recalibrateEyeTracker() {
-        setCommandStatus("Calibration running in background")
+        setCommandStatus("Calibration starting")
         guard let eyeTrackerService = managedServices[eyeTrackerLabel] else {
             setCommandStatus("Unknown service: \(eyeTrackerLabel)")
             return
         }
         _ = runLaunchctl(eyeTrackerService.arguments(for: .kill))
-        _ = runShell("sleep 1")
         let calibration = [
             shellQuote(runtimePaths.eyePython),
             shellQuote(runtimePaths.eyeTracker),
@@ -253,13 +252,19 @@ extension AppDelegate {
             "--settle-seconds",
             "0.7",
         ].joined(separator: " ")
-        if runShell(calibration) {
-            setCommandStatus("Calibration complete; restarting eye tracker")
-        } else {
-            setCommandStatus("Calibration failed; restarting eye tracker")
+        DispatchQueue.global(qos: .userInitiated).async {
+            Thread.sleep(forTimeInterval: 1)
+            let ok = self.runShell(calibration)
+            self.setCommandStatus(ok ? "Calibration complete; restarting eye tracker" : "Calibration failed; restarting eye tracker")
+            _ = self.runLaunchctl(eyeTrackerService.arguments(for: .start))
+            _ = self.runLaunchctl(eyeTrackerService.restartArguments())
+            DispatchQueue.main.async {
+                self.model.refresh {
+                    self.panelView.needsDisplay = true
+                    self.overlayView.needsDisplay = true
+                }
+            }
         }
-        _ = runLaunchctl(eyeTrackerService.arguments(for: .start))
-        _ = runLaunchctl(eyeTrackerService.restartArguments())
     }
 
     @objc func evaluateCalibration() {

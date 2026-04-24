@@ -40,6 +40,8 @@ SUPPORT_MODULES = [
     "gaze_calibration.py",
     "gaze_projection.py",
     "eye_state_payload.py",
+    "webcam_probe.py",
+    "webcam_runtime.py",
     "webcam_support.py",
     "eye_publish.py",
     "eye_smoothing.py",

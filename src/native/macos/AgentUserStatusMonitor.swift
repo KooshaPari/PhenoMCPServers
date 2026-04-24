@@ -356,6 +356,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panelWindow.level = .statusBar
         panelWindow.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         panelView = PanelView(model: model)
+        panelView.onCalibrationAction = { [weak self] in
+            self?.performCalibrationPanelAction()
+        }
         panelWindow.contentView = panelView
         if popupVisible {
             panelWindow.orderFrontRegardless()
@@ -425,6 +428,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func togglePopupView() {
         setPopupVisible(!popupVisible, shouldRefresh: true)
+    }
+
+    @objc private func performCalibrationPanelAction() {
+        if model.eye.calibrationPrimaryActionTitle == "Recalibrate" {
+            recalibrateEyeTracker()
+        } else {
+            evaluateCalibration()
+        }
     }
 
     @objc private func openWebMonitor() {

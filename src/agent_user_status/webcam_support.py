@@ -24,6 +24,13 @@ class GazeSample:
     confidence: float
 
 
+@dataclass(frozen=True)
+class FaceTrackerThresholds:
+    detection: float = 0.2
+    presence: float = 0.2
+    tracking: float = 0.2
+
+
 class TrackerError(RuntimeError):
     pass
 
@@ -117,7 +124,8 @@ def ensure_face_landmarker_model() -> Path:
 
 
 class FaceTracker:
-    def __init__(self) -> None:
+    def __init__(self, thresholds: FaceTrackerThresholds | None = None) -> None:
+        thresholds = thresholds or FaceTrackerThresholds()
         self.mp = import_mediapipe()
         model_path = ensure_face_landmarker_model()
         BaseOptions = self.mp.tasks.BaseOptions
@@ -128,9 +136,9 @@ class FaceTracker:
             base_options=BaseOptions(model_asset_path=str(model_path)),
             running_mode=VisionRunningMode.VIDEO,
             num_faces=1,
-            min_face_detection_confidence=0.55,
-            min_face_presence_confidence=0.55,
-            min_tracking_confidence=0.55,
+            min_face_detection_confidence=thresholds.detection,
+            min_face_presence_confidence=thresholds.presence,
+            min_tracking_confidence=thresholds.tracking,
         )
         self.landmarker = FaceLandmarker.create_from_options(options)
         self.last_timestamp_ms = 0
@@ -147,11 +155,11 @@ class FaceTracker:
         return self.landmarker.detect_for_video(mp_image, timestamp_ms)
 
 
-def create_face_mesh() -> FaceTracker:
+def create_face_mesh(thresholds: FaceTrackerThresholds | None = None) -> FaceTracker:
     mp = import_mediapipe()
     if not hasattr(mp, "tasks"):
         raise TrackerError("installed mediapipe package does not expose the Tasks API")
-    return FaceTracker()
+    return FaceTracker(thresholds)
 
 
 def point(landmarks: list[Any], index: int) -> tuple[float, float]:

@@ -6,6 +6,9 @@ extension EyeState {
     }
 
     var calibrationActionText: String {
+        if passiveCorrectionActive {
+            return "Passive correction active"
+        }
         if calibrationRecommendedAction == "recalibrate" {
             return "Recalibrate now"
         }
@@ -16,6 +19,20 @@ extension EyeState {
             return "Keep waiting"
         }
         return "Tracking stable"
+    }
+
+    var passiveCorrectionActive: Bool {
+        if calibrationRecommendedAction == "recalibrate" || calibrationQualityLabel == "poor" {
+            return false
+        }
+        return (correctionReliabilityScore ?? 0) >= 0.7 && (correctionSampleCount ?? 0) >= 3
+    }
+
+    var calibrationPrimaryActionTitle: String {
+        if calibrationRecommendedAction == "recalibrate" || calibrationQualityLabel == "poor" {
+            return "Recalibrate"
+        }
+        return "Evaluate"
     }
 
     var calibrationSummaryText: String {
@@ -46,7 +63,8 @@ extension EyeState {
                 let updated = correctionUpdatedAt ?? "unknown"
                 return " Correction \(sampleCount) samples, reliability \(score), updated \(updated)."
             } ?? ""
-            return "\(action): \(calibrationSummaryText).\(correctionText)"
+            let passiveText = passiveCorrectionActive ? " Passive correction is active." : ""
+            return "\(action): \(calibrationSummaryText).\(correctionText)\(passiveText)"
         }
         return action
     }

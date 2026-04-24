@@ -110,12 +110,14 @@ def learn_drift_correction(events: list[dict[str, Any]], screen: ScreenLike) -> 
     for event in reversed(events[-180:]):
         if not isinstance(event, dict):
             continue
-        if event.get("learnable") is False:
-            continue
         if not bool(event.get("harmony_hint", False)) and str(event.get("kind") or "") != "explicit_alignment":
             continue
         kind = str(event.get("kind") or "")
         if kind not in {"cursor_click", "cursor_target", "explicit_alignment"}:
+            continue
+        if kind == "explicit_alignment" and event.get("gaze_fresh") is False:
+            continue
+        if event.get("learnable") is False and kind != "explicit_alignment":
             continue
 
         gaze = _gaze_point(event)
