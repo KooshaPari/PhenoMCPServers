@@ -5,13 +5,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
+from agent_user_status.bootstrap_support import agent_imessage_bin
 
-AGENT_IMESSAGE = str(Path("~/.local/bin/agent-imessage").expanduser())
+AGENT_IMESSAGE = str(agent_imessage_bin())
 SERVER_NAME = "agent-imessage"
 MESSAGES_SERVER_ARGS = [
     "uvx",
@@ -21,6 +23,18 @@ MESSAGES_SERVER_ARGS = [
     "git+https://github.com/carterlasalle/mac_messages_mcp.git",
     "mac-messages-mcp",
 ]
+UNREDACTED_STATUS_KEYS = {"latest_inbound_preview", "chat"}
+
+
+def redact_agent_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    redacted = dict(payload)
+    data = redacted.get("data")
+    if isinstance(data, dict):
+        data = dict(data)
+        for key in UNREDACTED_STATUS_KEYS:
+            data.pop(key, None)
+        redacted["data"] = data
+    return redacted
 
 
 def run(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess[str]:
@@ -168,7 +182,7 @@ TOOLS: list[dict[str, Any]] = [
 
 def tool_call(name: str, args: dict[str, Any]) -> dict[str, Any]:
     if name == "user_status":
-        return call_agent_imessage(["status", "--json"])
+        return redact_agent_payload(call_agent_imessage(["status", "--json"]))
     if name == "hook_decision":
         return call_agent_imessage(["hook-decision", "--text", str(args["text"])])
     if name == "notify_user":
@@ -319,6 +333,12 @@ def install_messages_mcp(client: str) -> dict[str, Any]:
 
 
 def command_install(args: argparse.Namespace) -> int:
+    if args.with_messages and os.environ.get("AGENT_IMESSAGE_ALLOW_GENERIC_MESSAGES_MCP") != "1":
+        raise SystemExit(
+            "--with-messages registers a generic Messages MCP and is disabled by default. "
+            "Set AGENT_IMESSAGE_ALLOW_GENERIC_MESSAGES_MCP=1 only for explicit local admin repair."
+        )
+
     results: list[dict[str, Any]] = []
     if args.client in {"codex", "both"}:
         results.append(install_codex())

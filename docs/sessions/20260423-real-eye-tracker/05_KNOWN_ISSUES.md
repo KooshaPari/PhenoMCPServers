@@ -13,8 +13,12 @@
 - Native evaluation now normalizes backend gaze coordinates into AppKit screen
   coordinates and reports discarded stale/unreliable samples, but follow-up work
   still needs per-target rejection reasons and parity with CLI evaluation.
-- Runtime executable lookup still has hard-coded default paths in several
-  modules. Centralize path resolution before expanding install prefixes.
-- Branch protection should require backend smoke after PR #1 is green and merged.
+- Runtime executable lookup is centralized for Python/MCP wrappers. The native
+  calibration/evaluation controls still use the installed eye-tracker venv path
+  and should gain an override-aware source of truth before non-default native
+  install prefixes become common.
+- Governance templates now require explicit privacy classification, but automated
+  lint/type gates are still pending until existing Ruff and Pyright findings are
+  closed.
 
 These do not affect the validated local runtime.

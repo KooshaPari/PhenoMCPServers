@@ -83,6 +83,26 @@ The native monitor, LaunchAgents, camera permissions, and strict doctor checks
 are macOS-focused. The Linux CI path validates the Python unit suite and starts
 the loopback backend directly for HTTP smoke checks.
 
+## Install Prefixes
+
+Runtime executable lookup is centralized. Use these environment variables for a
+non-default prefix:
+
+- `AGENT_USER_STATUS_BIN_DIR`: installed console commands. Defaults to
+  `~/.local/bin`.
+- `AGENT_USER_STATUS_SHARE_DIR`: shared runtime assets and native monitor bundle.
+  Defaults to `~/.local/share/agent-imessage`.
+- `AGENT_IMESSAGE_STATE_DIR`: state and short-lived derived signal files.
+  Defaults to `$AGENT_USER_STATUS_SHARE_DIR/state`.
+- `AGENT_USER_STATUS_LAUNCHD_DIR`: LaunchAgent install location. Defaults to
+  `~/Library/LaunchAgents`.
+- `AGENT_USER_STATUS_EYE_VENV`: dedicated webcam tracker virtualenv. Defaults to
+  `~/.local/share/agent-imessage/eye-tracker-venv`.
+- `AGENT_IMESSAGE_BIN`: explicit `agent-imessage` binary used by wrappers.
+  Defaults to `$AGENT_USER_STATUS_BIN_DIR/agent-imessage`.
+- `IMSG_BIN`: explicit `imsg` binary used for Messages access. Defaults to
+  `$AGENT_USER_STATUS_BIN_DIR/imsg`.
+
 ## Webcam Eye Tracking
 
 The real webcam tracker is opt-in and runs separately from the status daemon.

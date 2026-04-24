@@ -16,3 +16,15 @@ For GitHub setup:
 - add Dependabot, CODEOWNERS, CONTRIBUTING, and SECURITY surfaces
 
 No runtime behavior changes are needed for this setup pass.
+
+For the next architecture pass:
+- build macOS packaging first because it is the live platform and already has a
+  native monitor;
+- keep app packaging metadata platform-native rather than hiding GUI apps behind
+  shell scripts;
+- keep the sponsor/user messaging layer recipient-scoped and redacted by
+  default;
+- add a lightweight session registry inside `statusd` before introducing NATS
+  or another external bus;
+- prefer self-registration from agent hooks/wrappers over fragile passive
+  process guessing, then use passive process/tmux scans to fill gaps.

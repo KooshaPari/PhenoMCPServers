@@ -13,10 +13,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from agent_user_status.bootstrap_support import imsg_bin
 
 CONFIG_PATH = Path(os.environ.get("AGENT_IMESSAGE_ENV", "~/.config/phenotype/agent-imessage.env")).expanduser()
 STATE_DIR = Path(os.environ.get("AGENT_IMESSAGE_STATE_DIR", "~/.local/share/agent-imessage/state")).expanduser()
-IMSG = Path(os.environ.get("IMSG_BIN", "~/.local/bin/imsg")).expanduser()
+IMSG = imsg_bin()
 OVERRIDE_PATH = STATE_DIR / "presence_override.json"
 SIGNALS_PATH = STATE_DIR / "signals.json"
 ACTION_LOG_PATH = STATE_DIR / "action_events.jsonl"

@@ -27,3 +27,33 @@ Operational findings:
 
 Next setup step:
 - Keep automation and docs aligned as setup expands.
+
+Packaging and app-discoverability findings:
+- The current macOS monitor is compiled directly to
+  `~/.local/bin/agent-user-status-native-monitor`; it is not an `.app` bundle
+  and is therefore not a normal Spotlight/Finder application.
+- LaunchAgents are already template-driven and validated, but the tray job
+  launches the bare executable instead of an app bundle executable.
+- Platform guidance:
+  - Apple distribution should use a proper app bundle and Developer ID
+    notarization for software distributed outside the App Store.
+  - Microsoft documents MSIX as the modern Windows app package format and the
+    right first target for Start Menu/package-manager discoverability.
+  - Freedesktop/AppStream guidance requires `.desktop` entries and AppStream
+    metadata for Linux desktop/menu/software-center discoverability.
+
+Sponsor messaging findings:
+- The default CLI/MCP surface is mostly scoped: `notify`, `inbox`, and `wait`
+  resolve the configured recipient and do not expose arbitrary contact search.
+- The generic `messages` MCP path is the main leak risk because it can expose
+  non-scoped Messages access. It is now admin-gated by
+  `AGENT_IMESSAGE_ALLOW_GENERIC_MESSAGES_MCP=1`.
+- MCP `user_status` now redacts message preview and chat metadata by default.
+
+Session-bus findings:
+- Existing process attribution is coarse and global-process based; it does not
+  yet map agent processes to TTYs, tmux panes, repos, cwd, or session files.
+- `statusd` is the right control-plane anchor, but it currently bridges to the
+  CLI rather than owning a session registry.
+- The next session layer should add self-registration/heartbeat first, then
+  passive process/tmux discovery, and only later evaluate SSE/UDS/NATS.

@@ -71,6 +71,26 @@ def env_path(name: str, default: Path) -> Path:
     return Path(value).expanduser() if value else default
 
 
+def runtime_bin_dir() -> Path:
+    return env_path("AGENT_USER_STATUS_BIN_DIR", Path.home() / ".local" / "bin")
+
+
+def runtime_bin_path(executable: str, override_env: str | None = None) -> Path:
+    if override_env:
+        override = os.environ.get(override_env)
+        if override:
+            return Path(override).expanduser()
+    return runtime_bin_dir() / executable
+
+
+def agent_imessage_bin() -> Path:
+    return runtime_bin_path("agent-imessage", "AGENT_IMESSAGE_BIN")
+
+
+def imsg_bin() -> Path:
+    return runtime_bin_path("imsg", "IMSG_BIN")
+
+
 def env_bool(name: str, default: bool) -> bool:
     value = os.environ.get(name)
     if value is None:
@@ -88,7 +108,10 @@ def locate_source_root() -> Path:
     here = Path(__file__).resolve()
     for candidate in [Path.cwd(), *Path.cwd().parents, here.parent, *here.parents]:
         root = candidate.resolve()
-        if (root / "src" / "agent_user_status").exists() and (root / "scripts" / "install.sh").exists():
+        if (
+            (root / "src" / "agent_user_status").exists()
+            and (root / "scripts" / "install.sh").exists()
+        ):
             return root
 
     raise SystemExit("Could not locate the source checkout. Set AGENT_USER_STATUS_SOURCE_ROOT.")
@@ -96,14 +119,20 @@ def locate_source_root() -> Path:
 
 def resolve_paths() -> BootstrapPaths:
     root = locate_source_root()
-    share_dir = env_path("AGENT_USER_STATUS_SHARE_DIR", Path.home() / ".local" / "share" / "agent-imessage")
+    share_dir = env_path(
+        "AGENT_USER_STATUS_SHARE_DIR",
+        Path.home() / ".local" / "share" / "agent-imessage",
+    )
     return BootstrapPaths(
         root=root,
         src=root / "src",
         launchd_src=root / "launchd",
-        bin_dir=env_path("AGENT_USER_STATUS_BIN_DIR", Path.home() / ".local" / "bin"),
+        bin_dir=runtime_bin_dir(),
         share_dir=share_dir,
-        launchd_dir=env_path("AGENT_USER_STATUS_LAUNCHD_DIR", Path.home() / "Library" / "LaunchAgents"),
+        launchd_dir=env_path(
+            "AGENT_USER_STATUS_LAUNCHD_DIR",
+            Path.home() / "Library" / "LaunchAgents",
+        ),
         state_dir=env_path("AGENT_IMESSAGE_STATE_DIR", share_dir / "state"),
         eye_venv=env_path(
             "AGENT_USER_STATUS_EYE_VENV",

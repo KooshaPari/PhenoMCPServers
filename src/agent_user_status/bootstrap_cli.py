@@ -348,6 +348,21 @@ def doctor_command(_: argparse.Namespace) -> int:
         for plist in paths.launchd_src.glob("*.plist"):
             if subprocess.run(["plutil", "-lint", str(plist)], check=False).returncode != 0:
                 raise RuntimeError(f"plist {plist.name}")
+        missing = []
+        unresolved = []
+        for name in PLIST_NAMES:
+            installed = paths.launchd_dir / name
+            if not installed.exists():
+                missing.append(str(installed))
+                continue
+            if subprocess.run(["plutil", "-lint", str(installed)], check=False).returncode != 0:
+                raise RuntimeError(f"installed plist {name}")
+            if "{{" in installed.read_text(encoding="utf-8"):
+                unresolved.append(str(installed))
+        if missing:
+            raise RuntimeError("installed plists missing\n" + "\n".join(missing))
+        if unresolved:
+            raise RuntimeError("installed plists contain unresolved tokens\n" + "\n".join(unresolved))
 
     def check_backend() -> None:
         with urllib.request.urlopen("http://127.0.0.1:8765/health", timeout=5) as response:

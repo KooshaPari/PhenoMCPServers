@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
+from agent_user_status.bootstrap_support import agent_imessage_bin
 from agent_user_status.correction import recent_correction_events, store_correction_event
 from agent_user_status.gaze_context import as_bool
 from agent_user_status.gaze_drift_correction import load_drift_correction
@@ -29,7 +30,7 @@ from agent_user_status.monitor_html import MONITOR_HTML
 
 HOST = os.environ.get("AGENT_USER_STATUSD_HOST", "127.0.0.1")
 PORT = int(os.environ.get("AGENT_USER_STATUSD_PORT", "8765"))
-AGENT_IMESSAGE = str(Path("~/.local/bin/agent-imessage").expanduser())
+AGENT_IMESSAGE = str(agent_imessage_bin())
 STATE_DIR = Path(os.environ.get("AGENT_IMESSAGE_STATE_DIR", "~/.local/share/agent-imessage/state")).expanduser()
 DEV_STATE_PATH = STATE_DIR / "dev_monitor_state.json"
 MAX_BODY_BYTES = 16_384
