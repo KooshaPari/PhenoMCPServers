@@ -8,11 +8,12 @@ def test_parse_ps_output_keeps_agent_processes_without_args() -> None:
       10     1    10 ??       /usr/local/bin/codex
       11     1    11 ??       /bin/launchd
       12    10    10 ttys001  /opt/homebrew/bin/claude
+      13     1    13 ??       /Users/me/Agent User Status.app/Contents/MacOS/AgentUserStatusMonitor
     """
 
     records = parse_ps_output(output)
 
-    assert [record["process"] for record in records] == ["codex", "claude"]
+    assert [record["process"] for record in records] == ["codex", "claude", "AgentUserStatusMonitor"]
     assert records[0]["pid"] == 10
     assert all("args" not in record for record in records)
 

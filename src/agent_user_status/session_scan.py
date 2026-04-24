@@ -9,7 +9,14 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-AGENT_PROCESS_TOKENS = ("codex", "claude", "agent-user-status", "agent-imessage", "tmux")
+AGENT_PROCESS_TOKENS = (
+    "codex",
+    "claude",
+    "agent-user-status",
+    "agentuserstatus",
+    "agent-imessage",
+    "tmux",
+)
 
 
 def path_summary(path: str | None, *, include_cwd: bool = False) -> dict[str, Any]:
