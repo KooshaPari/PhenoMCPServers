@@ -45,12 +45,16 @@ jobs:
           AGENT_USER_STATUS_STRICT: "0"
         run: ./scripts/install.sh --no-start
 
-      - name: Start backend
+      - name: Run backend smoke checks
+        env:
+          AGENT_USER_STATUS_SMOKE_SKIP_IMESSAGE: "1"
         run: |
           ~/.local/bin/agent-user-statusd serve > /tmp/agent-user-statusd.log 2>&1 &
           echo "$!" > /tmp/agent-user-statusd.pid
+          trap 'kill "$(cat /tmp/agent-user-statusd.pid)" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 15); do
             if curl -fsS http://127.0.0.1:8765/health >/dev/null; then
+              ./tests/smoke/smoke.sh
               exit 0
             fi
             if ! kill -0 "$(cat /tmp/agent-user-statusd.pid)" 2>/dev/null; then
@@ -61,15 +65,3 @@ jobs:
           done
           cat /tmp/agent-user-statusd.log
           exit 1
-
-      - name: Run smoke checks
-        env:
-          AGENT_USER_STATUS_SMOKE_SKIP_IMESSAGE: "1"
-        run: ./tests/smoke/smoke.sh
-
-      - name: Stop backend
-        if: always()
-        run: |
-          if [ -f /tmp/agent-user-statusd.pid ]; then
-            kill "$(cat /tmp/agent-user-statusd.pid)" || true
-          fi
