@@ -1,28 +1,20 @@
 name: CodeQL
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   schedule:
-    - cron: '0 6 * * 1'
-permissions:
-  actions: read
-  contents: read
-  security-events: write
+    - cron: '17 4 * * 1'
+
 jobs:
   analyze:
-    name: Analyze (${{ matrix.language }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ["python"]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-      - uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{ matrix.language }}"
+    uses: KooshaPari/phenoShared/.github/workflows/reusable/codeql.yml@30358ce629168f0e1ec3699706cb73d1f77cb751
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    with:
+      languages: '["actions"]'
+      build-mode: 'none'
