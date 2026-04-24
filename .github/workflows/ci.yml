@@ -49,6 +49,18 @@ jobs:
         run: |
           ~/.local/bin/agent-user-statusd > /tmp/agent-user-statusd.log 2>&1 &
           echo "$!" > /tmp/agent-user-statusd.pid
+          for attempt in $(seq 1 15); do
+            if curl -fsS http://127.0.0.1:8765/health >/dev/null; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat /tmp/agent-user-statusd.pid)" 2>/dev/null; then
+              cat /tmp/agent-user-statusd.log
+              exit 1
+            fi
+            sleep 1
+          done
+          cat /tmp/agent-user-statusd.log
+          exit 1
 
       - name: Run smoke checks
         run: ./tests/smoke/smoke.sh

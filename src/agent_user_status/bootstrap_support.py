@@ -21,12 +21,14 @@ class BootstrapPaths:
 
 SUPPORT_MODULES = [
     "bootstrap.py",
+    "bootstrap_support.py",
     "agent_imessage_core.py",
     "agent_imessage_learning.py",
     "agent_imessage_status.py",
     "agent_imessage_commands.py",
     "correction.py",
     "gaze_context.py",
+    "gaze_drift_correction.py",
     "gaze_calibration.py",
     "gaze_projection.py",
     "eye_state_payload.py",
