@@ -18,6 +18,11 @@ confidential local data.
 
 - Backend binds to `127.0.0.1`.
 - `/dev/eye` accepts `POST` only for mutation.
+- `/privacy` exposes the active privacy policy served by the local backend.
+- `/status` returns redacted status and removes message preview/chat metadata.
+- `/signals` and `/actions` expose derived signal/action records only.
+- `/correction/events` returns derived correction anchors and supports
+  `reliable_only=true`.
 - Raw sensor payloads are rejected.
 - Numeric scores are bounded.
 - `/status` served by `statusd` redacts message preview and chat metadata.

@@ -9,7 +9,8 @@ Repo-local findings:
 
 Operational findings:
 - `gh auth status` succeeds for `KooshaPari`.
-- The repo name `agent-user-status` is available to use as the remote target.
+- The repo name `agent-user-status` was used as the remote target.
+- GitHub Actions successfully ran the initial `CI / unit-tests` check.
 
 Next setup step:
-- Create or attach `origin`, then publish the initial repository state.
+- Keep automation and docs aligned as setup expands.

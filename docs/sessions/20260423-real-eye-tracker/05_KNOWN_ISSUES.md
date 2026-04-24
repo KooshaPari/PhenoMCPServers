@@ -1,7 +1,8 @@
 # Known Issues
 
-- The repository does not yet have a GitHub remote configured.
-- The checkout is still in its initial unpublished state.
-- The session docs scaffold was missing and is now being added.
+- Ruff is configured but not yet enforced because the current tree has existing
+  style findings.
+- `doctor` remains a local/macOS validation gate because it checks Swift/AppKit,
+  LaunchAgent layout, and the live local backend.
 
-None of these affect the validated local runtime.
+These do not affect the validated local runtime.

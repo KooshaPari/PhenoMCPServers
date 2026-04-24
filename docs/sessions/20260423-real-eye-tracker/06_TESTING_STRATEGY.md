@@ -9,3 +9,5 @@ For the setup pass itself, the only required checks are:
 - repo/remote wiring
 - clean commit state
 - successful push to GitHub
+- GitHub Actions unit-test workflow
+- GitHub Actions backend smoke workflow
