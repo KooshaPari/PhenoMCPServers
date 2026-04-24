@@ -19,7 +19,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install quality dependencies
-        run: python -m pip install --upgrade pip ruff pyright
+        run: python -m pip install --upgrade pip ruff pyright pytest numpy
 
       - name: Ruff
         env:
