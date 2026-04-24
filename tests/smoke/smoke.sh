@@ -53,7 +53,7 @@ grep -q '"projection_hold_budget_frames": 2' /tmp/agent-user-status-smoke-recove
 
 curl -fsS -X POST http://127.0.0.1:8765/dev/eye \
   -H 'content-type: application/json' \
-  -d '{"screen_x":720,"screen_y":450,"screen_width":1440,"screen_height":900,"score":0.9,"confidence":0.92,"stability_score":0.91,"targeting_reliable":true,"filter_mode":"tracking","state":"looking_at_screen:smoke_reliable","max_age_seconds":5}' \
+  -d '{"screen_x":720,"screen_y":450,"screen_width":1440,"screen_height":900,"score":0.9,"confidence":0.92,"stability_score":0.91,"targeting_reliable":true,"filter_mode":"tracking","state":"looking_at_screen:smoke_reliable","max_age_seconds":60}' \
   >/dev/null
 
 post_status_code /tmp/agent-user-status-smoke-cursor-click.json "200" \
@@ -145,7 +145,7 @@ fi
 
 curl -fsS -X POST http://127.0.0.1:8765/dev/eye \
   -H 'content-type: application/json' \
-  -d '{"screen_x":720,"screen_y":450,"screen_width":1440,"screen_height":900,"score":0.9,"confidence":0.92,"stability_score":0.91,"targeting_reliable":true,"filter_mode":"tracking","state":"looking_at_screen:smoke_reliable","max_age_seconds":5}' \
+  -d '{"screen_x":720,"screen_y":450,"screen_width":1440,"screen_height":900,"score":0.9,"confidence":0.92,"stability_score":0.91,"targeting_reliable":true,"filter_mode":"tracking","state":"looking_at_screen:smoke_reliable","max_age_seconds":60}' \
   >/dev/null
 
 if [ "${AGENT_USER_STATUS_SMOKE_SKIP_IMESSAGE:-0}" = "1" ]; then
@@ -163,6 +163,11 @@ fi
   --max-age-seconds 60 \
   --note smoke \
   | grep -q '"gaze_targeting_reliable": true'
+
+curl -fsS -X POST http://127.0.0.1:8765/dev/eye \
+  -H 'content-type: application/json' \
+  -d '{"screen_x":20,"screen_y":20,"screen_width":1440,"screen_height":900,"score":0.12,"confidence":0.08,"stability_score":0.1,"targeting_reliable":false,"filter_mode":"projection_hold","state":"looking_at_screen:smoke_unreliable","max_age_seconds":60}' \
+  >/dev/null
 
 ~/.local/bin/agent-imessage action output agent-complete \
   --state smoke_agent_complete_unreliable \
