@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-
 MCP_PATH = Path(__file__).resolve().parents[2] / "src" / "mcp" / "agent_imessage_mcp.py"
 SPEC = importlib.util.spec_from_file_location("agent_imessage_mcp_under_test", MCP_PATH)
 assert SPEC and SPEC.loader
@@ -53,3 +52,42 @@ def test_generic_messages_mcp_requires_explicit_admin_env(monkeypatch) -> None:
 
     with pytest.raises(SystemExit):
         mcp.command_install(args)
+
+
+def test_notify_user_defaults_to_koosha_role(monkeypatch) -> None:
+    calls = []
+    monkeypatch.setattr(mcp, "call_agent_imessage", lambda args: calls.append(args) or {"ok": True})
+
+    assert mcp.tool_call("notify_user", {"message": "hello"}) == {"ok": True}
+
+    assert calls == [["notify", "--recipient", "koosha", "hello"]]
+
+
+def test_notify_user_accepts_only_scoped_recipient_roles(monkeypatch) -> None:
+    calls = []
+    monkeypatch.setattr(mcp, "call_agent_imessage", lambda args: calls.append(args) or {"ok": True})
+
+    assert mcp.tool_call("notify_user", {"recipient": "sponsor", "message": "hello", "dry_run": True}) == {"ok": True}
+
+    assert calls == [["notify", "--recipient", "sponsor", "hello", "--dry-run"]]
+    with pytest.raises(ValueError):
+        mcp.tool_call("notify_user", {"recipient": "random-contact", "message": "hello"})
+
+
+def test_wait_for_user_reply_forwards_scoped_recipient(monkeypatch) -> None:
+    calls = []
+
+    def fake_call(args, timeout=60):
+        calls.append((args, timeout))
+        return {"ok": True}
+
+    monkeypatch.setattr(mcp, "call_agent_imessage", fake_call)
+
+    assert mcp.tool_call("wait_for_user_reply", {"recipient": "sponsor", "timeout": 5, "poll": 0.1}) == {"ok": True}
+
+    assert calls == [
+        (
+            ["wait", "--recipient", "sponsor", "--timeout", "5", "--poll", "0.1", "--json"],
+            25,
+        )
+    ]

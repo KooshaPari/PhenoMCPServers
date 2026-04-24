@@ -1,0 +1,106 @@
+from __future__ import annotations
+
+import json
+from datetime import UTC, datetime, timedelta
+
+import pytest
+
+from agent_user_status.session_registry import (
+    append_session_event,
+    append_session_heartbeat,
+    recent_session_records,
+    session_summaries,
+    session_timeline,
+)
+
+
+def test_heartbeat_appends_privacy_safe_jsonl(tmp_path) -> None:
+    store_path = tmp_path / "sessions.jsonl"
+
+    record = append_session_heartbeat(
+        session_id="codex-123",
+        agent_id="codex",
+        status="working",
+        note="editing scoped files",
+        metadata={"repo": "agent-user-status", "branch": "session-registry"},
+        store_path=store_path,
+    )
+
+    persisted = json.loads(store_path.read_text(encoding="utf-8").strip())
+    assert persisted == record
+    assert record["kind"] == "heartbeat"
+    assert record["session_id"] == "codex-123"
+    assert record["agent_id"] == "codex"
+    assert record["metadata"] == {"branch": "session-registry", "repo": "agent-user-status"}
+    assert "transcript" not in json.dumps(record)
+    assert "screenshot" not in json.dumps(record)
+
+
+def test_event_rejects_raw_transcript_or_screenshot_payloads(tmp_path) -> None:
+    store_path = tmp_path / "sessions.jsonl"
+
+    with pytest.raises(ValueError, match="raw session payload"):
+        append_session_event(
+            session_id="codex-123",
+            event_type="model_output",
+            metadata={"raw_transcript": "full conversation text"},
+            store_path=store_path,
+        )
+
+    with pytest.raises(ValueError, match="raw session payload"):
+        append_session_event(
+            session_id="codex-123",
+            event_type="artifact",
+            metadata={"artifact": "desktop screenshot captured"},
+            store_path=store_path,
+        )
+
+    assert not store_path.exists()
+
+
+def test_recent_records_skip_malformed_lines_and_filter(tmp_path) -> None:
+    store_path = tmp_path / "sessions.jsonl"
+    append_session_heartbeat("a", status="working", store_path=store_path)
+    with store_path.open("a", encoding="utf-8") as handle:
+        handle.write("{not-json\n")
+    append_session_event("b", "blocked", state="waiting_user", store_path=store_path)
+    append_session_event("a", "checkpoint", state="tests_running", store_path=store_path)
+
+    records = recent_session_records(store_path=store_path, session_id="a")
+
+    assert [record["session_id"] for record in records] == ["a", "a"]
+    assert [record["kind"] for record in records] == ["heartbeat", "event"]
+
+
+def test_session_summaries_use_latest_heartbeat_and_event(tmp_path) -> None:
+    store_path = tmp_path / "sessions.jsonl"
+    stale_time = (datetime.now(UTC) - timedelta(minutes=10)).isoformat()
+
+    append_session_heartbeat(
+        "codex-old",
+        status="working",
+        ttl_seconds=30,
+        observed_at=stale_time,
+        store_path=store_path,
+    )
+    append_session_heartbeat("codex-new", status="working", ttl_seconds=300, store_path=store_path)
+    append_session_event("codex-new", "validation", state="pytest_passed", store_path=store_path)
+
+    summaries = session_summaries(store_path=store_path)
+
+    assert [summary["session_id"] for summary in summaries] == ["codex-new", "codex-old"]
+    assert summaries[0]["fresh"] is True
+    assert summaries[0]["last_event"]["event_type"] == "validation"
+    assert summaries[1]["fresh"] is False
+
+
+def test_session_timeline_returns_oldest_to_newest_for_one_session(tmp_path) -> None:
+    store_path = tmp_path / "sessions.jsonl"
+    append_session_heartbeat("codex-123", status="starting", store_path=store_path)
+    append_session_event("other", "noise", store_path=store_path)
+    append_session_event("codex-123", "implementation", state="in_progress", store_path=store_path)
+
+    timeline = session_timeline("codex-123", store_path=store_path)
+
+    assert [record["kind"] for record in timeline] == ["heartbeat", "event"]
+    assert timeline[-1]["event_type"] == "implementation"

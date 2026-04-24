@@ -14,6 +14,8 @@ helpers that pin the source root and hand off to that CLI:
 - Cursor tracker for activity telemetry and click-only correction anchors.
 - Opt-in MacBook webcam tracker with local calibration and derived coordinates.
 - LaunchAgent templates, bootstrap/install scripts, smoke checks, and privacy docs.
+- Platform packaging metadata under `packaging/` for future app-store,
+  package-manager, and managed-install routes.
 
 The design goal is not a toy presence flag. The long-term target is a local event
 runtime that correlates input streams, output streams, environment state, and
@@ -83,6 +85,21 @@ The native monitor, LaunchAgents, camera permissions, and strict doctor checks
 are macOS-focused. The Linux CI path validates the Python unit suite and starts
 the loopback backend directly for HTTP smoke checks.
 
+## Packaging Metadata
+
+The `packaging/` directory contains side-effect-free discovery and installer
+metadata scaffolds:
+
+- `packaging/macos`: app `Info.plist`, entitlements, and `.pkg` distribution
+  metadata for a future `Agent User Status.app`.
+- `packaging/windows`: MSIX manifest scaffold for a future WinUI 3 or native
+  Windows shell.
+- `packaging/linux`: Freedesktop `.desktop` and AppStream metainfo scaffold.
+
+These files do not replace the current installer yet. They define the app
+identity and package metadata needed for Spotlight, Start Menu, Linux desktop
+menus, and package-manager flows.
+
 ## Install Prefixes
 
 Runtime executable lookup is centralized. Use these environment variables for a
@@ -133,6 +150,9 @@ from the tray controls; it does not open Terminal.
 Evaluation opens a native 9-point test canvas and reports mean/P95
 screen-coordinate error, projection-hold risk, and calibration quality without
 storing frames.
+The CLI evaluator also reports per-target accepted sample counts and rejection
+reasons such as settling, low confidence, no face sample, unstable confidence,
+or camera-frame unavailable.
 
 The tracker now uses a projection-hold recovery gate instead of freezing on a
 single outlier. Short outlier runs are smoothed through, while several stable
@@ -147,6 +167,7 @@ curl -s http://127.0.0.1:8765/health
 curl -s http://127.0.0.1:8765/privacy
 curl -s http://127.0.0.1:8765/status
 curl -s http://127.0.0.1:8765/dev/state
+curl -s http://127.0.0.1:8765/sessions
 ```
 
 Eye/cursor style derived coordinate updates:
@@ -174,6 +195,31 @@ so terminal-agent contexts can be labeled as plain terminal, coding terminal, or
 agent terminal without adding any raw terminal content capture.
 
 See [docs/security/PRIVACY.md](docs/security/PRIVACY.md).
+
+## Scoped Messaging And Sessions
+
+The messaging layer is intentionally scoped. CLI and MCP calls support only
+closed recipient roles:
+
+- `koosha`, configured by the existing `AGENT_IMESSAGE_*` keys.
+- `sponsor`, configured by `AGENT_IMESSAGE_SPONSOR_PHONE_E164`,
+  `AGENT_IMESSAGE_SPONSOR_EMAIL`, and `AGENT_IMESSAGE_SPONSOR_NAME`.
+
+There is no arbitrary contact search or `--to` surface. Generic direct Messages
+MCP registration is disabled unless `AGENT_IMESSAGE_ALLOW_GENERIC_MESSAGES_MCP=1`
+is set for explicit local admin repair.
+
+Agents can also publish privacy-safe session state:
+
+```bash
+agent-imessage session-heartbeat --session-id codex-123 --agent codex --cwd "$PWD"
+agent-imessage session-event --session-id codex-123 --event-type validation --state pytest_passed
+agent-imessage sessions --limit 20
+```
+
+The backend exposes the same store through `POST /session/heartbeat`,
+`POST /event`, and `GET /sessions`. Session records reject raw transcripts,
+prompt text, screenshots, camera data, keystrokes, and audio-like payloads.
 
 ## Long-Term Architecture
 

@@ -16,28 +16,31 @@
    - installed plist validation in doctor. Done.
    - documented environment override matrix. Done.
 13. Build the next eye-tracker quality lane:
-   - shared native/CLI evaluation counters,
-   - per-target accepted/rejected sample counts,
-   - stale/repeated sample rejection,
-   - projection-hold rejection metrics,
+   - shared native/CLI evaluation counters. CLI done; native parity pending.
+   - per-target accepted/rejected sample counts. CLI done.
+   - stale/repeated sample rejection. CLI confidence-settle reasons done;
+     native stale counters already present; deeper repeated-sample detection pending.
+   - projection-hold rejection metrics. CLI hold-candidate counts done.
    - coordinate parity tests,
    - stronger calibration collection/model upgrade.
 14. Build the app-packaging/discoverability lane:
-   - macOS `.app` bundle with `Info.plist`, icon, entitlements, and app identity,
+   - macOS `.app` bundle with `Info.plist`, icon, entitlements, and app identity.
+     Metadata scaffold done; actual app bundle build pending.
    - update LaunchAgent tray launch to app-bundle executable or intentional
      `open -a` flow,
-   - macOS `.pkg` dry-run packaging with signing/notarization hooks,
-   - Windows WinUI 3/MSIX manifest plan and installer scaffold,
-   - Linux GTK4/libadwaita `.desktop` and AppStream scaffold.
+   - macOS `.pkg` dry-run packaging with signing/notarization hooks. Metadata
+     scaffold done; build script pending.
+   - Windows WinUI 3/MSIX manifest plan and installer scaffold. Done.
+   - Linux GTK4/libadwaita `.desktop` and AppStream scaffold. Done.
 15. Build the scoped sponsor/user messaging lane:
-   - first-class recipient roles for `koosha` and `sponsor`,
-   - no arbitrary contact/search/send APIs,
-   - sync notify, async inbox, and wait APIs across CLI/MCP,
-   - redacted status by default with explicit local debug escape hatch only.
+   - first-class recipient roles for `koosha` and `sponsor`. Done.
+   - no arbitrary contact/search/send APIs. Done.
+   - sync notify, async inbox, and wait APIs across CLI/MCP. Done.
+   - redacted status by default with explicit local debug escape hatch only. Done.
 16. Build the agent-session bus lane:
    - `session-scan` command for process tree, TTY, cwd, repo, and tmux metadata,
-   - `POST /session/heartbeat`, `GET /sessions`, and `POST /event`,
-   - in-memory event ring plus schema-versioned JSONL,
+   - `POST /session/heartbeat`, `GET /sessions`, and `POST /event`. Done.
+   - in-memory event ring plus schema-versioned JSONL. JSONL done; ring pending.
    - hook/subagent spawn/close event publishing,
    - policy guidance for when to text versus use subagents.
 17. Build the quality-gate lane:
@@ -52,11 +55,10 @@ Critical path:
   telemetry and runtime changes.
 - Packaging/runtime path centralization blocks reliable non-default install
   prefixes and doctor coverage.
-- App bundle identity blocks Spotlight/Start Menu/app-grid discoverability.
-- Scoped recipient roles block polished sponsor/user messaging without contact
-  sprawl.
-- Agent session registry blocks reliable process-to-session attachment and
-  subagent/session coordination.
+- App bundle build scripts and LaunchAgent app-bundle launch still block
+  Spotlight-grade macOS runtime discoverability.
+- Session scan and hook event publishing still block reliable process-to-session
+  attachment and subagent/session coordination.
 - Eye-tracker evaluation counters block clear diagnosis of model noise versus
   calibration failure versus intentional look-away.
 - Lint/type cleanup blocks enabling stricter CI quality gates.

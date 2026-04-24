@@ -14,21 +14,23 @@ from agent_user_status.agent_imessage_core import (
     ACTION_LEARNING_PATH,
     LEARNING_PATH,
     OVERRIDE_PATH,
+    RECIPIENT_ROLES,
     RESPONSE_LOG_PATH,
     SIGNALS_PATH,
     STATE_DIR,
     clamp,
-    eta_label,
+    external_signal_records,
     frontmost_app_signal,
     idle_time_signal,
     inbound_messages,
     iso_now,
     load_config,
+    load_recipient_config,
     media_activity_signal,
     process_activity_signal,
-    external_signal_records,
     read_json_file,
     recent_messages,
+    recipient_send_address,
     run_imsg,
     validate_abstract_payload,
     write_json_file,
@@ -45,18 +47,29 @@ from agent_user_status.agent_imessage_status import (
     hook_decision_result,
     status_from_override,
 )
+from agent_user_status.session_registry import (
+    append_session_event,
+    append_session_heartbeat,
+    session_summaries,
+    session_timeline,
+)
 
 
 def command_notify(args: argparse.Namespace) -> int:
-    config = load_config()
+    config = load_recipient_config(args.recipient)
     message = args.message or sys.stdin.read().strip()
     if not message:
         print("No message provided", file=sys.stderr)
         return 2
+    try:
+        address = recipient_send_address(config)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     if args.dry_run:
-        print(json.dumps({"to": config.phone_e164, "message": message}, indent=2))
+        print(json.dumps({"recipient": config.role, "to": address, "name": config.name, "message": message}, indent=2))
         return 0
-    result = run_imsg(["send", "--to", config.phone_e164, "--text", message, "--service", "auto"], timeout=60)
+    result = run_imsg(["send", "--to", address, "--text", message, "--service", "auto"], timeout=60)
     if result.stdout:
         print(result.stdout, end="")
     if result.stderr:
@@ -65,14 +78,14 @@ def command_notify(args: argparse.Namespace) -> int:
 
 
 def command_inbox(args: argparse.Namespace) -> int:
-    config = load_config()
+    config = load_recipient_config(args.recipient)
     try:
         chat, messages = recent_messages(config, args.limit)
     except Exception as exc:
         print(str(exc), file=sys.stderr)
         return 1
     if args.json:
-        print(json.dumps({"chat": chat, "messages": messages}, indent=2))
+        print(json.dumps({"recipient": config.role, "chat": chat, "messages": messages}, indent=2))
         return 0
     for msg in messages:
         direction = "agent" if msg.get("is_from_me") else "user"
@@ -269,8 +282,8 @@ def command_hook_decision(args: argparse.Namespace) -> int:
 
 
 def command_wait(args: argparse.Namespace) -> int:
-    config = load_config()
-    state_file = STATE_DIR / "last_seen_message_id"
+    config = load_recipient_config(args.recipient)
+    state_file = STATE_DIR / f"last_seen_message_id_{config.role}"
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     start = time.monotonic()
     last_seen = state_file.read_text(encoding="utf-8").strip() if state_file.exists() else ""
@@ -306,16 +319,76 @@ def command_wait(args: argparse.Namespace) -> int:
     return 124
 
 
+def command_session_heartbeat(args: argparse.Namespace) -> int:
+    metadata = {
+        key: value
+        for key, value in {
+            "pid": args.pid,
+            "cwd": args.cwd,
+            "repo": args.repo,
+            "tty": args.tty,
+            "tmux_pane": args.tmux_pane,
+        }.items()
+        if value is not None
+    }
+    record = append_session_heartbeat(
+        args.session_id,
+        agent_id=args.agent,
+        status=args.status,
+        state=args.state,
+        note=args.note,
+        metadata=metadata,
+        ttl_seconds=args.ttl_seconds,
+    )
+    print(json.dumps({"ok": True, "record": record}, indent=2))
+    return 0
+
+
+def command_session_event(args: argparse.Namespace) -> int:
+    metadata = {
+        key: value
+        for key, value in {
+            "pid": args.pid,
+            "cwd": args.cwd,
+            "repo": args.repo,
+            "tty": args.tty,
+            "tmux_pane": args.tmux_pane,
+        }.items()
+        if value is not None
+    }
+    record = append_session_event(
+        args.session_id,
+        args.event_type,
+        agent_id=args.agent,
+        state=args.state,
+        note=args.note,
+        metadata=metadata,
+    )
+    print(json.dumps({"ok": True, "record": record}, indent=2))
+    return 0
+
+
+def command_sessions(args: argparse.Namespace) -> int:
+    if args.session_id:
+        payload = {"ok": True, "records": session_timeline(args.session_id, limit=args.limit)}
+    else:
+        payload = {"ok": True, "sessions": session_summaries(limit=args.limit)}
+    print(json.dumps(payload, indent=2))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Agent iMessage helper")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    notify = sub.add_parser("notify", help="Send a message to the configured user")
+    notify = sub.add_parser("notify", help="Send a message to a scoped configured recipient")
     notify.add_argument("message", nargs="?", help="Message text, or stdin when omitted")
+    notify.add_argument("--recipient", choices=RECIPIENT_ROLES, default="koosha")
     notify.add_argument("--dry-run", action="store_true")
     notify.set_defaults(func=command_notify)
 
-    inbox = sub.add_parser("inbox", help="Read recent configured-user conversation")
+    inbox = sub.add_parser("inbox", help="Read recent scoped-recipient conversation")
+    inbox.add_argument("--recipient", choices=RECIPIENT_ROLES, default="koosha")
     inbox.add_argument("--limit", type=int, default=20)
     inbox.add_argument("--json", action="store_true")
     inbox.set_defaults(func=command_inbox)
@@ -377,13 +450,46 @@ def build_parser() -> argparse.ArgumentParser:
     actions = sub.add_parser("actions", help="Inspect recent action events and per-action learning")
     actions.set_defaults(func=command_actions)
 
-    wait = sub.add_parser("wait", help="Wait for the next inbound message")
+    wait = sub.add_parser("wait", help="Wait for the next inbound message from a scoped recipient")
+    wait.add_argument("--recipient", choices=RECIPIENT_ROLES, default="koosha")
     wait.add_argument("--timeout", type=int, default=900)
     wait.add_argument("--poll", type=float, default=3.0)
     wait.add_argument("--limit", type=int, default=20)
     wait.add_argument("--json", action="store_true")
     wait.add_argument("--include-existing", action="store_true")
     wait.set_defaults(func=command_wait)
+
+    sessions = sub.add_parser("sessions", help="Inspect privacy-safe local agent sessions")
+    sessions.add_argument("--session-id")
+    sessions.add_argument("--limit", type=int, default=200)
+    sessions.set_defaults(func=command_sessions)
+
+    session_heartbeat = sub.add_parser("session-heartbeat", help="Record an agent session heartbeat")
+    session_heartbeat.add_argument("--session-id", required=True)
+    session_heartbeat.add_argument("--agent", default="agent")
+    session_heartbeat.add_argument("--status", default="active")
+    session_heartbeat.add_argument("--state")
+    session_heartbeat.add_argument("--note")
+    session_heartbeat.add_argument("--pid")
+    session_heartbeat.add_argument("--cwd")
+    session_heartbeat.add_argument("--repo")
+    session_heartbeat.add_argument("--tty")
+    session_heartbeat.add_argument("--tmux-pane")
+    session_heartbeat.add_argument("--ttl-seconds", type=int, default=300)
+    session_heartbeat.set_defaults(func=command_session_heartbeat)
+
+    session_event = sub.add_parser("session-event", help="Record a privacy-safe agent session event")
+    session_event.add_argument("--session-id", required=True)
+    session_event.add_argument("--event-type", required=True)
+    session_event.add_argument("--agent", default="agent")
+    session_event.add_argument("--state")
+    session_event.add_argument("--note")
+    session_event.add_argument("--pid")
+    session_event.add_argument("--cwd")
+    session_event.add_argument("--repo")
+    session_event.add_argument("--tty")
+    session_event.add_argument("--tmux-pane")
+    session_event.set_defaults(func=command_session_event)
 
     return parser
 

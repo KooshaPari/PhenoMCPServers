@@ -40,13 +40,36 @@ RAW_SENSOR_PATTERNS = re.compile(
 
 @dataclass(frozen=True)
 class Config:
+    role: str
     phone_e164: str
     phone_digits: str
     email: str
     name: str
 
 
-def load_config() -> Config:
+RECIPIENT_ROLES = ("koosha", "sponsor")
+RECIPIENT_ENV_PREFIXES = {
+    "koosha": "AGENT_IMESSAGE",
+    "sponsor": "AGENT_IMESSAGE_SPONSOR",
+}
+
+
+def require_recipient_role(role: str | None) -> str:
+    normalized = (role or "koosha").strip().lower()
+    if normalized not in RECIPIENT_ROLES:
+        raise ValueError(f"Unsupported recipient role: {role}. Use one of: {', '.join(RECIPIENT_ROLES)}")
+    return normalized
+
+
+def _recipient_value(values: dict[str, str], role: str, key: str, default: str = "") -> str:
+    prefix = RECIPIENT_ENV_PREFIXES[role]
+    if role == "koosha":
+        return values.get(f"{prefix}_{key}", default)
+    return values.get(f"{prefix}_{key}", default)
+
+
+def load_recipient_config(role: str | None = "koosha") -> Config:
+    recipient = require_recipient_role(role)
     values: dict[str, str] = {}
     if CONFIG_PATH.exists():
         for line in CONFIG_PATH.read_text(encoding="utf-8").splitlines():
@@ -56,14 +79,31 @@ def load_config() -> Config:
             key, value = line.split("=", 1)
             values[key.strip().removeprefix("export ")] = value.strip().strip("\"'")
 
-    phone_e164 = values.get("AGENT_IMESSAGE_PHONE_E164", "+14243305106")
+    phone_default = "+14243305106" if recipient == "koosha" else ""
+    phone_e164 = _recipient_value(values, recipient, "PHONE_E164", phone_default)
     digits = re.sub(r"\D", "", phone_e164)
     return Config(
+        role=recipient,
         phone_e164=phone_e164,
-        phone_digits=values.get("AGENT_IMESSAGE_PHONE_DIGITS", digits[-10:]),
-        email=values.get("AGENT_IMESSAGE_EMAIL", "kooshapari@gmail.com"),
-        name=values.get("AGENT_IMESSAGE_NAME", "Koosha"),
+        phone_digits=_recipient_value(values, recipient, "PHONE_DIGITS", digits[-10:]),
+        email=_recipient_value(values, recipient, "EMAIL", "kooshapari@gmail.com" if recipient == "koosha" else ""),
+        name=_recipient_value(values, recipient, "NAME", "Koosha" if recipient == "koosha" else "Sponsor"),
     )
+
+
+def load_config() -> Config:
+    return load_recipient_config("koosha")
+
+
+def recipient_send_address(config: Config) -> str:
+    address = config.phone_e164.strip() or config.email.strip()
+    if not address:
+        raise ValueError(
+            f"No contact configured for recipient role '{config.role}'. "
+            f"Set {RECIPIENT_ENV_PREFIXES[config.role]}_PHONE_E164 or "
+            f"{RECIPIENT_ENV_PREFIXES[config.role]}_EMAIL."
+        )
+    return address
 
 
 def run_imsg(args: list[str], timeout: int | None = 30) -> subprocess.CompletedProcess[str]:

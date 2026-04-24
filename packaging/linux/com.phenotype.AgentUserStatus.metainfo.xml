@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.phenotype.AgentUserStatus</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Proprietary</project_license>
+  <name>Agent User Status</name>
+  <summary>Privacy-first local status monitor for coding agents</summary>
+  <description>
+    <p>
+      Agent User Status provides a local status surface for coding agents, using
+      derived signals such as confidence, screen zone, and response estimates.
+    </p>
+    <p>
+      The app is designed for local-only operation and must not collect raw
+      camera frames, screenshots, facial landmarks, biometric embeddings, or raw
+      gaze streams.
+    </p>
+  </description>
+  <launchable type="desktop-id">agent-user-status.desktop</launchable>
+  <provides>
+    <binary>agent-user-status</binary>
+  </provides>
+  <categories>
+    <category>Development</category>
+    <category>Utility</category>
+  </categories>
+  <url type="homepage">https://github.com/KooshaPari/agent-user-status</url>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0" date="2026-04-23">
+      <description>
+        <p>Initial packaging metadata scaffold.</p>
+      </description>
+    </release>
+  </releases>
+</component>

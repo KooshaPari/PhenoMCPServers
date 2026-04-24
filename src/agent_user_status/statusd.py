@@ -27,6 +27,12 @@ from agent_user_status.gaze_context import as_bool
 from agent_user_status.gaze_drift_correction import load_drift_correction
 from agent_user_status.eye_state_payload import bounded_float, bounded_int, build_eye_record, now_iso
 from agent_user_status.monitor_html import MONITOR_HTML
+from agent_user_status.session_registry import (
+    append_session_event,
+    append_session_heartbeat,
+    session_summaries,
+    session_timeline,
+)
 
 HOST = os.environ.get("AGENT_USER_STATUSD_HOST", "127.0.0.1")
 PORT = int(os.environ.get("AGENT_USER_STATUSD_PORT", "8765"))
@@ -300,6 +306,14 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/actions":
                 result = run_agent(["actions"], timeout=4)
                 self.send_json(200 if result.get("ok") else 502, result)
+            elif path == "/sessions":
+                query = parse_qs(parsed.query)
+                limit = bounded_int(query.get("limit", [200])[0], 200, 1, 2000, "limit")
+                session_id = query.get("session_id", [None])[0]
+                if session_id:
+                    self.send_json(200, {"ok": True, "records": session_timeline(session_id, limit=limit)})
+                else:
+                    self.send_json(200, {"ok": True, "sessions": session_summaries(limit=limit)})
             elif path == "/correction/events":
                 query = parse_qs(parsed.query)
                 limit = bounded_int(query.get("limit", [80])[0], 80, 1, 500, "limit")
@@ -349,6 +363,27 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(200, {"ok": True, **store_eye_payload(payload)})
             elif path == "/correction/event":
                 self.send_json(200, {"ok": True, "event": store_correction_event(payload)})
+            elif path == "/session/heartbeat":
+                record = append_session_heartbeat(
+                    str(payload["session_id"]),
+                    agent_id=str(payload.get("agent_id") or payload.get("agent_kind") or "agent"),
+                    status=str(payload.get("status") or "active"),
+                    state=str(payload["state"]) if payload.get("state") is not None else None,
+                    note=str(payload["note"]) if payload.get("note") is not None else None,
+                    metadata=payload.get("metadata") if isinstance(payload.get("metadata"), dict) else None,
+                    ttl_seconds=bounded_int(payload.get("ttl_seconds"), 300, 1, 86400, "ttl_seconds"),
+                )
+                self.send_json(200, {"ok": True, "record": record})
+            elif path in {"/event", "/session/event"}:
+                record = append_session_event(
+                    str(payload["session_id"]),
+                    str(payload["event_type"]),
+                    agent_id=str(payload.get("agent_id") or payload.get("agent_kind") or "agent"),
+                    state=str(payload["state"]) if payload.get("state") is not None else None,
+                    note=str(payload["note"]) if payload.get("note") is not None else None,
+                    metadata=payload.get("metadata") if isinstance(payload.get("metadata"), dict) else None,
+                )
+                self.send_json(200, {"ok": True, "record": record})
             elif path == "/action":
                 max_age = bounded_int(payload.get("max_age_seconds"), 120, 1, 3600, "max_age_seconds")
                 command = [

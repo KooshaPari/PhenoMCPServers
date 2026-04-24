@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 import signal
 import sys
@@ -23,6 +22,7 @@ from agent_user_status.gaze_calibration import (
     projection_thresholds,
 )
 from agent_user_status.gaze_drift_correction import apply_drift_correction, load_drift_correction
+from agent_user_status.gaze_evaluation import EvaluationCounters
 from agent_user_status.gaze_projection import ProjectionHoldGate, StableSampleGate
 from agent_user_status.webcam_support import (
     TrackerError,
@@ -266,7 +266,7 @@ def command_evaluate(args: argparse.Namespace) -> int:
     hold_threshold_px, release_threshold_px = projection_thresholds(calibration, screen)
     cap = open_camera(args.camera, args.width, args.height)
     face_mesh = create_face_mesh()
-    samples: list[float] = []
+    counters = EvaluationCounters()
     sample_gate = StableSampleGate(args.min_sample_confidence, args.min_consecutive_frames)
     window_name = "Agent User Status Eye Evaluation"
     points = calibration_points(screen)
@@ -276,17 +276,30 @@ def command_evaluate(args: argparse.Namespace) -> int:
     try:
         for idx, (target_x, target_y) in enumerate(points, start=1):
             started = time.monotonic()
+            target = counters.begin_target(idx, target_x, target_y)
             while time.monotonic() - started < args.seconds_per_point:
                 ok, frame = cap.read()
                 if not ok or frame is None:
+                    target.reject("camera_frame_unavailable")
                     continue
                 sample = frame_sample(face_mesh, frame)
-                if sample is not None and sample.confidence >= args.min_sample_confidence:
-                    if time.monotonic() - started > args.settle_seconds and sample_gate.update(sample.confidence):
-                        observed = predict(calibration, sample.features)
-                        samples.append(math.hypot(observed[0] - target_x, observed[1] - target_y))
-                else:
+                if sample is None:
+                    target.reject("no_face_sample")
                     sample_gate.reset()
+                    continue
+                if sample.confidence < args.min_sample_confidence:
+                    target.reject("low_confidence")
+                    sample_gate.reset()
+                    continue
+                if time.monotonic() - started <= args.settle_seconds:
+                    target.reject("settling")
+                    continue
+                if not sample_gate.update(sample.confidence):
+                    target.reject("unstable_confidence")
+                    continue
+
+                observed = predict(calibration, sample.features)
+                target.accept(observed)
 
                 canvas = cv2.UMat(screen.height, screen.width, cv2.CV_8UC3).get()
                 canvas[:] = (18, 18, 18)
@@ -306,16 +319,12 @@ def command_evaluate(args: argparse.Namespace) -> int:
                 if cv2.waitKey(1) == 27:
                     raise TrackerError("evaluation cancelled")
 
-        summary = summarize_errors(samples)
-        projection_hold_rate = 0.0
-        if samples:
-            projection_hold_rate = sum(1 for error in samples if error > hold_threshold_px) / len(samples)
+        summary = summarize_errors(counters.errors)
         summary.update(
             {
                 "hold_threshold_px": round(hold_threshold_px, 2),
                 "release_threshold_px": round(release_threshold_px, 2),
-                "projection_hold_rate": round(projection_hold_rate, 4),
-                "sample_count": len(samples),
+                **counters.summary(hold_threshold_px),
                 **load_calibration_quality(calibration, screen),
             }
         )

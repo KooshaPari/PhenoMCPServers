@@ -143,6 +143,28 @@ if grep -q '"smoke_cursor_click_unstable"' /tmp/agent-user-status-smoke-correcti
   false
 fi
 
+post_status_code /tmp/agent-user-status-smoke-session-heartbeat.json "200" \
+  -X POST http://127.0.0.1:8765/session/heartbeat \
+  -H 'content-type: application/json' \
+  -d '{"session_id":"smoke-session","agent_id":"codex","status":"working","state":"smoke_active","metadata":{"repo":"agent-user-status"},"ttl_seconds":60}'
+grep -q '"session_id": "smoke-session"' /tmp/agent-user-status-smoke-session-heartbeat.json
+grep -q '"repo": "agent-user-status"' /tmp/agent-user-status-smoke-session-heartbeat.json
+
+post_status_code /tmp/agent-user-status-smoke-session-raw.json "422" \
+  -X POST http://127.0.0.1:8765/session/heartbeat \
+  -H 'content-type: application/json' \
+  -d '{"session_id":"smoke-session","agent_id":"codex","status":"working","metadata":{"raw_transcript":"private text"}}'
+
+post_status_code /tmp/agent-user-status-smoke-session-event.json "200" \
+  -X POST http://127.0.0.1:8765/event \
+  -H 'content-type: application/json' \
+  -d '{"session_id":"smoke-session","event_type":"validation","state":"smoke_passed"}'
+grep -q '"event_type": "validation"' /tmp/agent-user-status-smoke-session-event.json
+
+status_code="$(curl -s -o /tmp/agent-user-status-smoke-sessions.json -w '%{http_code}' 'http://127.0.0.1:8765/sessions?limit=20')"
+test "${status_code}" = "200"
+grep -q '"session_id": "smoke-session"' /tmp/agent-user-status-smoke-sessions.json
+
 curl -fsS -X POST http://127.0.0.1:8765/dev/eye \
   -H 'content-type: application/json' \
   -d '{"screen_x":720,"screen_y":450,"screen_width":1440,"screen_height":900,"score":0.9,"confidence":0.92,"stability_score":0.91,"targeting_reliable":true,"filter_mode":"tracking","state":"looking_at_screen:smoke_reliable","max_age_seconds":60}' \

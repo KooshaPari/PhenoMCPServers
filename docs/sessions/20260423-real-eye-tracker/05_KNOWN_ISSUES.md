@@ -13,10 +13,17 @@
 - Native evaluation now normalizes backend gaze coordinates into AppKit screen
   coordinates and reports discarded stale/unreliable samples, but follow-up work
   still needs per-target rejection reasons and parity with CLI evaluation.
+  The CLI evaluator now reports per-target accepted/rejected counts and rejection
+  reasons.
 - Runtime executable lookup is centralized for Python/MCP wrappers. The native
   calibration/evaluation controls still use the installed eye-tracker venv path
   and should gain an override-aware source of truth before non-default native
   install prefixes become common.
+- App packaging metadata exists, but the macOS tray is still built as a bare
+  executable rather than an installed `.app` bundle.
+- Session heartbeats/events now have a privacy-safe JSONL store and HTTP/CLI
+  surfaces, but passive process/tmux session scanning and hook/subagent event
+  publishing are still pending.
 - Governance templates now require explicit privacy classification, but automated
   lint/type gates are still pending until existing Ruff and Pyright findings are
   closed.
