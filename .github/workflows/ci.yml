@@ -7,6 +7,44 @@ on:
       - main
 
 jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install quality dependencies
+        run: python -m pip install --upgrade pip ruff pyright pytest numpy
+
+      - name: Ruff
+        env:
+          PYTHONPATH: src
+        run: python -m ruff check .
+
+      - name: Pyright
+        run: pyright
+
+  package-metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate macOS package helper
+        run: |
+          bash -n packaging/scripts/build-macos-pkg.sh
+          bash -n packaging/scripts/stage-macos-payload.sh
+          bash -n packaging/scripts/validate-packaging.sh
+          bash -n packaging/scripts/validate-python-dist.sh
+          packaging/scripts/validate-packaging.sh all
+          packaging/scripts/validate-python-dist.sh --dry-run
+          packaging/scripts/build-macos-pkg.sh --dry-run
+
   unit-tests:
     runs-on: ubuntu-latest
     steps:

@@ -3,6 +3,7 @@ import Foundation
 
 final class PanelView: NSView {
     let model: StatusModel
+    var onCalibrationAction: (() -> Void)?
 
     init(model: StatusModel) {
         self.model = model
@@ -20,6 +21,20 @@ final class PanelView: NSView {
         drawPanel()
     }
 
+    override func mouseDown(with event: NSEvent) {
+        let point = convert(event.locationInWindow, from: nil)
+        if calibrationActionFrame().contains(point) || calibrationBadgeFrame().contains(point) {
+            onCalibrationAction?()
+            return
+        }
+        super.mouseDown(with: event)
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(calibrationActionFrame(), cursor: .pointingHand)
+        addCursorRect(calibrationBadgeFrame(), cursor: .pointingHand)
+    }
+
     private func drawPanel() {
         let panel = bounds.insetBy(dx: 10, dy: 10)
         NSColor(calibratedRed: 0.10, green: 0.11, blue: 0.14, alpha: 0.97).setFill()
@@ -30,14 +45,24 @@ final class PanelView: NSView {
         let badgeText = model.eye.calibrationBannerText
         drawPill(
             text: badgeText,
-            frame: CGRect(x: panel.maxX - 118, y: y - 2, width: 96, height: 20),
+            frame: calibrationBadgeFrame(in: panel, y: y),
             fill: badgeText == "Tracking" ? NSColor.systemGreen : (badgeText == "Projection hold" ? NSColor.systemOrange : NSColor.systemRed)
         )
         y -= 28
         drawText("ETA \(model.status.eta)", x: panel.minX + 16, y: y, size: 11, color: NSColor(calibratedWhite: 0.82, alpha: 1))
         drawText("Confidence \(fmt(model.status.confidence))", x: panel.maxX - 162, y: y, size: 11, color: NSColor(calibratedWhite: 0.82, alpha: 1))
 
-        let calibrationTop = panel.maxY - 100
+        let sessionTop = panel.maxY - 74
+        let sessionBottom = sessionTop - 106
+        drawSection(
+            title: "Agent Sessions",
+            frame: CGRect(x: panel.minX + 10, y: sessionBottom, width: panel.width - 20, height: 106),
+            accent: model.sessionSnapshot.activeCount > 0 ? NSColor.systemGreen : NSColor.systemGray
+        ) { section in
+            drawSessionSummary(in: section)
+        }
+
+        let calibrationTop = sessionBottom - 102
         drawSection(
             title: "Calibration",
             frame: CGRect(x: panel.minX + 10, y: calibrationTop, width: panel.width - 20, height: 98),
@@ -61,6 +86,7 @@ final class PanelView: NSView {
                     ("DETAIL", model.eye.calibrationDetailText)
                 ]
             )
+            drawActionButton(model.eye.calibrationPrimaryActionTitle, frame: calibrationActionFrame(in: section))
         }
 
         drawSection(
@@ -73,12 +99,14 @@ final class PanelView: NSView {
                 left: [
                     ("JUMP", "\(Int(model.eye.jumpPx)) px"),
                     ("JITTER", "\(Int(model.eye.jitterPx)) px"),
-                    ("VELOCITY", "\(Int(model.eye.velocityPxS)) px/s")
+                    ("VELOCITY", "\(Int(model.eye.velocityPxS)) px/s"),
+                    ("HEAD", model.eye.headPoseSummaryText)
                 ],
                 right: [
                     ("TARGET", model.eye.targetingReliable ? "reliable" : "held"),
                     ("COORD", coord(model.eyePoint())),
-                    ("SCORE", fmt(model.eye.stabilityScore))
+                    ("SCORE", fmt(model.eye.stabilityScore)),
+                    ("FRAME", model.eye.framingSummaryText)
                 ]
             )
         }
@@ -139,6 +167,36 @@ final class PanelView: NSView {
         drawText(value, x: x + width * 0.45, y: y, size: 11, color: .white, maxWidth: width * 0.55)
     }
 
+    private func drawSessionSummary(in section: CGRect) {
+        let snapshot = model.sessionSnapshot
+        drawMetricGrid(
+            in: CGRect(x: section.minX, y: section.maxY - 44, width: section.width, height: 44),
+            left: [
+                ("ACTIVE", "\(snapshot.activeCount)"),
+                ("CHILD", "\(snapshot.childAgentCount)")
+            ],
+            right: [
+                ("STALE HOOKS", "\(snapshot.staleHookCount)"),
+                ("ATTR CONF", snapshot.attributionConfidenceText)
+            ]
+        )
+
+        let rows = Array(snapshot.sessions.prefix(2))
+        var y = section.minY + 14
+        if rows.isEmpty {
+            drawText("No session heartbeats", x: section.minX, y: y, size: 11, color: NSColor(calibratedWhite: 0.78, alpha: 1), maxWidth: section.width)
+            return
+        }
+        for session in rows.reversed() {
+            let marker = session.fresh ? "live" : "stale"
+            let event = session.latestEventType == "-" ? session.state : session.latestEventType
+            let child = session.isChildAgent ? " child" : ""
+            let text = "\(marker) \(session.agentID)\(child) \(short(session.sessionID)): \(event)"
+            drawText(text, x: section.minX, y: y, size: 11, color: .white, maxWidth: section.width)
+            y += 16
+        }
+    }
+
     private func drawPill(text: String, frame: CGRect, fill: NSColor) {
         fill.withAlphaComponent(0.22).setFill()
         NSBezierPath(roundedRect: frame, xRadius: 10, yRadius: 10).fill()
@@ -149,12 +207,52 @@ final class PanelView: NSView {
         drawText(text, x: frame.minX, y: frame.minY + 4, size: 9, weight: .semibold, color: fill, maxWidth: frame.width, center: true)
     }
 
+    private func drawActionButton(_ text: String, frame: CGRect) {
+        let fill = model.eye.calibrationPrimaryActionTitle == "Recalibrate" ? NSColor.systemRed : NSColor.systemBlue
+        fill.withAlphaComponent(0.28).setFill()
+        NSBezierPath(roundedRect: frame, xRadius: 6, yRadius: 6).fill()
+        fill.withAlphaComponent(0.95).setStroke()
+        let outline = NSBezierPath(roundedRect: frame, xRadius: 6, yRadius: 6)
+        outline.lineWidth = 1
+        outline.stroke()
+        drawText(text, x: frame.minX, y: frame.minY + 7, size: 10, weight: .semibold, color: .white, maxWidth: frame.width, center: true)
+    }
+
+    private func calibrationBadgeFrame() -> CGRect {
+        let panel = bounds.insetBy(dx: 10, dy: 10)
+        return calibrationBadgeFrame(in: panel, y: panel.maxY - 32)
+    }
+
+    private func calibrationBadgeFrame(in panel: CGRect, y: CGFloat) -> CGRect {
+        CGRect(x: panel.maxX - 118, y: y - 2, width: 96, height: 20)
+    }
+
+    private func calibrationActionFrame() -> CGRect {
+        let panel = bounds.insetBy(dx: 10, dy: 10)
+        let sessionTop = panel.maxY - 74
+        let sessionBottom = sessionTop - 106
+        let calibrationTop = sessionBottom - 102
+        let section = CGRect(x: panel.minX + 22, y: calibrationTop + 18, width: panel.width - 44, height: 62)
+        return calibrationActionFrame(in: section)
+    }
+
+    private func calibrationActionFrame(in section: CGRect) -> CGRect {
+        CGRect(x: section.maxX - 84, y: section.minY + 2, width: 78, height: 24)
+    }
+
     private func coord(_ point: CGPoint) -> String {
         "\(Int(point.x)), \(Int(point.y))"
     }
 
     private func fmt(_ value: Double) -> String {
         String(format: "%.2f", value)
+    }
+
+    private func short(_ value: String) -> String {
+        if value.count <= 14 {
+            return value
+        }
+        return String(value.prefix(11)) + "..."
     }
 
     private func drawText(

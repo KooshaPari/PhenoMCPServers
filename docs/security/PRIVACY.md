@@ -52,3 +52,11 @@ confidential local data.
 - Add schema-versioned event envelopes.
 - Add local-only auth token before any non-loopback transport exists.
 - Add explicit retention/delete/export commands.
+
+## Review Gate
+
+Every pull request that changes telemetry, native permissions, launchd behavior,
+local storage, or HTTP routes must classify its data tier and confirm that no raw
+sensor, prompt, keyboard, message, or audio payload is accepted. Reviewers should
+block changes that add raw-data storage or non-loopback transport without an
+explicit threat model, authentication design, and local consent path.

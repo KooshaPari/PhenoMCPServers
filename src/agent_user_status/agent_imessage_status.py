@@ -3,23 +3,24 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import os
+from datetime import UTC, datetime
 from typing import Any
 
 from agent_user_status.agent_imessage_core import (
-    Config,
     STATE_DIR,
     WAITING_PATTERNS,
+    Config,
     clamp,
     eta_label,
     external_signal_records,
+    frontmost_app_signal,
+    idle_time_signal,
     inbound_messages,
     load_config,
-    idle_time_signal,
     media_activity_signal,
-    frontmost_app_signal,
-    process_activity_signal,
     parse_dt,
+    process_activity_signal,
     read_presence_override,
     recent_messages,
     recommendation_for,
@@ -31,10 +32,11 @@ from agent_user_status.agent_imessage_learning import (
     append_action_event,
     attribution_status_text,
     coarse_attribution_context,
-    learning_prior,
     learned_eta_from_signals,
+    learning_prior,
     weighted_average,
 )
+from agent_user_status.session_registry import append_session_event
 
 
 def status_from_override(override: dict[str, Any]) -> dict[str, Any]:
@@ -63,7 +65,7 @@ def estimate_status(config: Config) -> dict[str, Any]:
     if override:
         return status_from_override(override)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     signals = [
         idle_time_signal(),
         frontmost_app_signal(),
@@ -214,6 +216,22 @@ def hook_decision_result(text: str) -> dict[str, Any]:
         max_age_seconds=900,
         note="stop_hook",
     )
+    session_event = append_session_event(
+        os.environ.get("AGENT_USER_STATUS_SESSION_ID", "local-stop-hook"),
+        event_kind,
+        agent_id=os.environ.get("AGENT_USER_STATUS_AGENT_ID", "agent-imessage-hook"),
+        state=event_state,
+        note="stop_hook",
+        metadata={
+            "decision": decision,
+            "waiting_detected": waiting,
+            "attribution_surface": attribution.get("surface"),
+            "attribution_reliable": attribution.get("reliable"),
+            "hook_status": attribution.get("hook_status"),
+            "status": status.get("status"),
+            "estimated_response": status.get("estimated_response"),
+        },
+    )
 
     return {
         "ok": True,
@@ -223,5 +241,6 @@ def hook_decision_result(text: str) -> dict[str, Any]:
         "status": status,
         "attribution": attribution,
         "action_event": action_event,
+        "session_event": session_event,
         "fingerprint": fingerprint if waiting else None,
     }

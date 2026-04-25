@@ -7,28 +7,30 @@ import argparse
 import json
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from agent_user_status.agent_imessage_core import (
     ACTION_LEARNING_PATH,
     LEARNING_PATH,
     OVERRIDE_PATH,
+    RECIPIENT_ROLES,
     RESPONSE_LOG_PATH,
     SIGNALS_PATH,
     STATE_DIR,
     clamp,
-    eta_label,
+    external_signal_records,
     frontmost_app_signal,
     idle_time_signal,
     inbound_messages,
     iso_now,
     load_config,
+    load_recipient_config,
     media_activity_signal,
     process_activity_signal,
-    external_signal_records,
     read_json_file,
     recent_messages,
+    recipient_send_address,
     run_imsg,
     validate_abstract_payload,
     write_json_file,
@@ -40,6 +42,8 @@ from agent_user_status.agent_imessage_learning import (
     recent_action_records,
     update_action_learning,
 )
+from agent_user_status.agent_imessage_session_commands import add_session_parsers
+from agent_user_status.agent_imessage_state_commands import add_state_parsers
 from agent_user_status.agent_imessage_status import (
     estimate_status,
     hook_decision_result,
@@ -48,15 +52,20 @@ from agent_user_status.agent_imessage_status import (
 
 
 def command_notify(args: argparse.Namespace) -> int:
-    config = load_config()
+    config = load_recipient_config(args.recipient)
     message = args.message or sys.stdin.read().strip()
     if not message:
         print("No message provided", file=sys.stderr)
         return 2
+    try:
+        address = recipient_send_address(config)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     if args.dry_run:
-        print(json.dumps({"to": config.phone_e164, "message": message}, indent=2))
+        print(json.dumps({"recipient": config.role, "to": address, "name": config.name, "message": message}, indent=2))
         return 0
-    result = run_imsg(["send", "--to", config.phone_e164, "--text", message, "--service", "auto"], timeout=60)
+    result = run_imsg(["send", "--to", address, "--text", message, "--service", "auto"], timeout=60)
     if result.stdout:
         print(result.stdout, end="")
     if result.stderr:
@@ -65,14 +74,14 @@ def command_notify(args: argparse.Namespace) -> int:
 
 
 def command_inbox(args: argparse.Namespace) -> int:
-    config = load_config()
+    config = load_recipient_config(args.recipient)
     try:
         chat, messages = recent_messages(config, args.limit)
     except Exception as exc:
         print(str(exc), file=sys.stderr)
         return 1
     if args.json:
-        print(json.dumps({"chat": chat, "messages": messages}, indent=2))
+        print(json.dumps({"recipient": config.role, "chat": chat, "messages": messages}, indent=2))
         return 0
     for msg in messages:
         direction = "agent" if msg.get("is_from_me") else "user"
@@ -96,7 +105,7 @@ def command_set_status(args: argparse.Namespace) -> int:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     until: str | None = None
     if args.minutes:
-        until = (datetime.now(timezone.utc) + timedelta(minutes=args.minutes)).isoformat()
+        until = (datetime.now(UTC) + timedelta(minutes=args.minutes)).isoformat()
     confidence = args.confidence
     if confidence is None:
         confidence = {
@@ -269,8 +278,8 @@ def command_hook_decision(args: argparse.Namespace) -> int:
 
 
 def command_wait(args: argparse.Namespace) -> int:
-    config = load_config()
-    state_file = STATE_DIR / "last_seen_message_id"
+    config = load_recipient_config(args.recipient)
+    state_file = STATE_DIR / f"last_seen_message_id_{config.role}"
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     start = time.monotonic()
     last_seen = state_file.read_text(encoding="utf-8").strip() if state_file.exists() else ""
@@ -310,12 +319,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Agent iMessage helper")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    notify = sub.add_parser("notify", help="Send a message to the configured user")
+    notify = sub.add_parser("notify", help="Send a message to a scoped configured recipient")
     notify.add_argument("message", nargs="?", help="Message text, or stdin when omitted")
+    notify.add_argument("--recipient", choices=RECIPIENT_ROLES, default="koosha")
     notify.add_argument("--dry-run", action="store_true")
     notify.set_defaults(func=command_notify)
 
-    inbox = sub.add_parser("inbox", help="Read recent configured-user conversation")
+    inbox = sub.add_parser("inbox", help="Read recent scoped-recipient conversation")
+    inbox.add_argument("--recipient", choices=RECIPIENT_ROLES, default="koosha")
     inbox.add_argument("--limit", type=int, default=20)
     inbox.add_argument("--json", action="store_true")
     inbox.set_defaults(func=command_inbox)
@@ -377,13 +388,17 @@ def build_parser() -> argparse.ArgumentParser:
     actions = sub.add_parser("actions", help="Inspect recent action events and per-action learning")
     actions.set_defaults(func=command_actions)
 
-    wait = sub.add_parser("wait", help="Wait for the next inbound message")
+    wait = sub.add_parser("wait", help="Wait for the next inbound message from a scoped recipient")
+    wait.add_argument("--recipient", choices=RECIPIENT_ROLES, default="koosha")
     wait.add_argument("--timeout", type=int, default=900)
     wait.add_argument("--poll", type=float, default=3.0)
     wait.add_argument("--limit", type=int, default=20)
     wait.add_argument("--json", action="store_true")
     wait.add_argument("--include-existing", action="store_true")
     wait.set_defaults(func=command_wait)
+
+    add_session_parsers(sub)
+    add_state_parsers(sub)
 
     return parser
 

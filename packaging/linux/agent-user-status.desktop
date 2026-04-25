@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=Agent User Status
+GenericName=Local agent presence monitor
+Comment=Privacy-first local status monitor for coding agents
+Exec=agent-user-status
+Icon=com.phenotype.AgentUserStatus
+Terminal=false
+Categories=Development;Utility;
+Keywords=agent;presence;status;local;privacy;
+StartupNotify=false
+DBusActivatable=false

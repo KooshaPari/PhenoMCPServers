@@ -84,7 +84,12 @@ def gaze_targeting_reliable(eye: dict[str, Any] | None) -> bool:
             fresh = age_seconds <= float(max_age)
         else:
             fresh = age_seconds <= 5.0
-    return fresh and bool(eye.get("targeting_reliable", False)) and stability_score >= RELIABLE_STABILITY_SCORE and confidence >= RELIABLE_CONFIDENCE_SCORE
+    return (
+        fresh
+        and bool(eye.get("targeting_reliable", False))
+        and stability_score >= RELIABLE_STABILITY_SCORE
+        and confidence >= RELIABLE_CONFIDENCE_SCORE
+    )
 
 
 def current_gaze_context() -> dict[str, Any] | None:
@@ -121,7 +126,9 @@ def current_gaze_context() -> dict[str, Any] | None:
     if eye.get("calibration_quality_label") is not None:
         context["gaze_calibration_quality_label"] = str(eye.get("calibration_quality_label") or "unknown")[:80]
     if eye.get("calibration_recommended_action") is not None:
-        context["gaze_calibration_recommended_action"] = str(eye.get("calibration_recommended_action") or "unknown")[:80]
+        context["gaze_calibration_recommended_action"] = str(
+            eye.get("calibration_recommended_action") or "unknown"
+        )[:80]
     if eye.get("projection_recommended_action") is not None:
         context["gaze_projection_recommended_action"] = str(eye.get("projection_recommended_action") or "unknown")[:80]
     if eye.get("projection_hold_reason") is not None:

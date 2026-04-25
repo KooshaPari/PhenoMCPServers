@@ -27,6 +27,8 @@
     <string>{{LAUNCHD_PATH}}</string>
     <key>AGENT_IMESSAGE_STATE_DIR</key>
     <string>{{STATE_DIR}}</string>
+    <key>AGENT_USER_STATUS_RUNTIME_PATHS</key>
+    <string>{{RUNTIME_PATHS_JSON}}</string>
     <key>AGENT_USER_STATUS_EYE_CAMERA</key>
     <string>0</string>
   </dict>

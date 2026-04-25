@@ -4,9 +4,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
+from datetime import UTC, datetime
 from pathlib import Path
-from datetime import datetime, timezone
-from typing import Any, Iterable
+from typing import Any
 
 from agent_user_status.agent_imessage_core import (
     ACTION_LEARNING_PATH,
@@ -39,7 +40,7 @@ def read_action_events(limit: int = 200) -> list[dict[str, Any]]:
 
 
 def recent_action_records(reliable_only: bool = False) -> list[dict[str, Any]]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     fresh: list[dict[str, Any]] = []
     for event in read_action_events():
         observed_at = parse_dt(event.get("observed_at"))

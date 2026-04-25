@@ -29,6 +29,11 @@ struct EyeState {
     var correctionSampleCount: Int?
     var correctionReliabilityScore: Double?
     var correctionUpdatedAt: String?
+    var headYawDeg: Double?
+    var headPitchDeg: Double?
+    var headRollDeg: Double?
+    var framingQuality: Double?
+    var framingState: String = "unknown"
     var projectionHoldActive: Bool = false
     var projectionHoldReason: String = "unknown"
     var projectionHoldHint: String?
@@ -69,6 +74,7 @@ final class StatusModel {
     var eye = EyeState()
     var status = UserStatus()
     var target = WindowTarget()
+    var sessionSnapshot = AgentSessionSnapshot()
     var commandStatus = "Tools ready"
     private let visualFilter = VisualGazeFilter()
     private var visualPoint: CGPoint?
@@ -84,6 +90,10 @@ final class StatusModel {
         group.enter()
         fetchJSON(path: "/status") { payload in
             self.status = Self.parseStatus(payload: payload)
+            group.leave()
+        }
+        group.enter()
+        refreshSessions {
             group.leave()
         }
         group.notify(queue: .main) {
@@ -105,11 +115,18 @@ final class StatusModel {
     }
 
     func refreshStatus(completion: @escaping () -> Void) {
+        let group = DispatchGroup()
+        group.enter()
         fetchJSON(path: "/status") { payload in
             self.status = Self.parseStatus(payload: payload)
-            DispatchQueue.main.async {
-                completion()
-            }
+            group.leave()
+        }
+        group.enter()
+        refreshSessions {
+            group.leave()
+        }
+        group.notify(queue: .main) {
+            completion()
         }
     }
 
@@ -162,8 +179,10 @@ final class StatusModel {
         target = annotateWorkspace(frontmost)
     }
 
-    private func fetchJSON(path: String, completion: @escaping ([String: Any]) -> Void) {
-        let url = baseURL.appendingPathComponent(path.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
+    func fetchJSON(path: String, completion: @escaping ([String: Any]) -> Void) {
+        let cleanedPath = path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let url = URL(string: cleanedPath, relativeTo: baseURL)?.absoluteURL ??
+            baseURL.appendingPathComponent(cleanedPath)
         var request = URLRequest(url: url)
         request.cachePolicy = .reloadIgnoringLocalCacheData
         Self.session.dataTask(with: request) { data, _, _ in
@@ -209,6 +228,11 @@ final class StatusModel {
             correctionSampleCount: eye["correction_sample_count"] as? Int,
             correctionReliabilityScore: eye["correction_reliability_score"] as? Double,
             correctionUpdatedAt: eye["correction_updated_at"] as? String,
+            headYawDeg: eye["head_yaw_deg"] as? Double,
+            headPitchDeg: eye["head_pitch_deg"] as? Double,
+            headRollDeg: eye["head_roll_deg"] as? Double,
+            framingQuality: eye["framing_quality"] as? Double,
+            framingState: eye["framing_state"] as? String ?? "unknown",
             projectionHoldActive: eye["projection_hold_active"] as? Bool ?? false,
             projectionHoldReason: eye["projection_hold_reason"] as? String ?? "unknown",
             projectionHoldHint: eye["projection_hold_hint"] as? String,
@@ -332,7 +356,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupPanel() {
         let screen = NSScreen.main?.visibleFrame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
-        let frame = CGRect(x: screen.maxX - 430, y: screen.maxY - 428, width: 410, height: 408)
+        let frame = CGRect(x: screen.maxX - 430, y: screen.maxY - 540, width: 410, height: 520)
         panelWindow = NSPanel(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panelWindow.backgroundColor = .clear
         panelWindow.isOpaque = false
@@ -342,6 +366,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panelWindow.level = .statusBar
         panelWindow.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         panelView = PanelView(model: model)
+        panelView.onCalibrationAction = { [weak self] in
+            self?.performCalibrationPanelAction()
+        }
         panelWindow.contentView = panelView
         if popupVisible {
             panelWindow.orderFrontRegardless()
@@ -413,6 +440,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setPopupVisible(!popupVisible, shouldRefresh: true)
     }
 
+    @objc private func performCalibrationPanelAction() {
+        if model.eye.calibrationPrimaryActionTitle == "Recalibrate" {
+            recalibrateEyeTracker()
+        } else {
+            evaluateCalibration()
+        }
+    }
+
     @objc private func openWebMonitor() {
         NSWorkspace.shared.open(baseURL.appendingPathComponent("monitor"))
     }
@@ -452,15 +487,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func updatePopupMenuState() {
         popupMenuItem.title = popupVisible ? "Hide Popup View" : "Show Popup View"
         popupMenuItem.state = popupVisible ? .on : .off
-    }
-}
-
-@main
-struct AgentUserStatusApp {
-    static func main() {
-        let app = NSApplication.shared
-        let delegate = AppDelegate()
-        app.delegate = delegate
-        app.run()
     }
 }

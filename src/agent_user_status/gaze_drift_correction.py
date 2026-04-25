@@ -11,11 +11,23 @@ from typing import Any, Protocol
 
 STATE_DIR = Path(os.environ.get("AGENT_IMESSAGE_STATE_DIR", "~/.local/share/agent-imessage/state")).expanduser()
 DRIFT_CORRECTION_PATH = STATE_DIR / "gaze_drift_correction.json"
+INTERACTION_ROLES = {
+    "terminal",
+    "coding_terminal",
+    "agent_terminal",
+    "multi_agent_terminal",
+    "editor",
+    "gui_agent",
+    "gui_chat",
+}
 
 
 class ScreenLike(Protocol):
-    width: int
-    height: int
+    @property
+    def width(self) -> int: ...
+
+    @property
+    def height(self) -> int: ...
 
 
 def now_iso() -> str:
@@ -79,12 +91,12 @@ def _stability(event: dict[str, Any]) -> float:
 def _window_role_weight(event: dict[str, Any], kind: str) -> float:
     role = str(event.get("window_role") or "").lower()
     if kind == "explicit_alignment":
-        if role in {"terminal", "coding_terminal", "agent_terminal", "multi_agent_terminal", "editor", "gui_agent", "gui_chat"}:
+        if role in INTERACTION_ROLES:
             return 1.2
         if role in {"browser", "communication", "media"}:
             return 0.95
         return 1.05
-    if role in {"terminal", "coding_terminal", "agent_terminal", "multi_agent_terminal", "editor", "gui_agent", "gui_chat"}:
+    if role in INTERACTION_ROLES:
         return 1.15
     if role in {"browser", "communication", "media"}:
         return 0.68
@@ -98,12 +110,14 @@ def learn_drift_correction(events: list[dict[str, Any]], screen: ScreenLike) -> 
     for event in reversed(events[-180:]):
         if not isinstance(event, dict):
             continue
-        if event.get("learnable") is False:
-            continue
         if not bool(event.get("harmony_hint", False)) and str(event.get("kind") or "") != "explicit_alignment":
             continue
         kind = str(event.get("kind") or "")
         if kind not in {"cursor_click", "cursor_target", "explicit_alignment"}:
+            continue
+        if kind == "explicit_alignment" and event.get("gaze_fresh") is False:
+            continue
+        if event.get("learnable") is False and kind != "explicit_alignment":
             continue
 
         gaze = _gaze_point(event)

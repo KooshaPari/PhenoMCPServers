@@ -109,3 +109,52 @@ def test_learn_drift_correction_scores_terminal_windows_higher_than_browser_wind
     assert terminal is not None
     assert browser is not None
     assert terminal["reliability_score"] > browser["reliability_score"]
+
+
+def test_explicit_alignment_can_seed_passive_correction_during_recalibration_need() -> None:
+    screen = Screen(width=1440, height=900)
+    events = [
+        {
+            "kind": "explicit_alignment",
+            "screen_x": 1020.0,
+            "screen_y": 740.0,
+            "gaze_screen_x": 100.0,
+            "gaze_screen_y": 100.0,
+            "gaze_targeting_reliable": False,
+            "gaze_fresh": False,
+            "learnable": False,
+            "score": 1.0,
+            "confidence": 1.0,
+        },
+        {
+            "kind": "explicit_alignment",
+            "screen_x": 420.0,
+            "screen_y": 240.0,
+            "gaze_screen_x": 360.0,
+            "gaze_screen_y": 300.0,
+            "gaze_targeting_reliable": False,
+            "gaze_fresh": True,
+            "learnable": False,
+            "score": 0.92,
+            "confidence": 0.88,
+        },
+        {
+            "kind": "explicit_alignment",
+            "screen_x": 820.0,
+            "screen_y": 640.0,
+            "gaze_screen_x": 760.0,
+            "gaze_screen_y": 700.0,
+            "gaze_targeting_reliable": False,
+            "gaze_fresh": True,
+            "learnable": False,
+            "score": 0.95,
+            "confidence": 0.9,
+        },
+    ]
+
+    correction = learn_drift_correction(events, screen)
+
+    assert correction is not None
+    assert correction["source_kinds"] == ["explicit_alignment"]
+    assert correction["screen_x_offset_px"] == 60.0
+    assert correction["screen_y_offset_px"] == -60.0

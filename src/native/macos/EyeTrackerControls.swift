@@ -5,9 +5,7 @@ private let statusdLabel = "com.phenotype.agent-user-statusd"
 private let trayLabel = "com.phenotype.agent-user-status-tray"
 private let cursorLabel = "com.phenotype.agent-user-status-cursor-tracker"
 private let eyeTrackerLabel = "com.phenotype.agent-user-status-webcam-eye-tracker"
-private let eyePython = "\(NSHomeDirectory())/.local/share/agent-imessage/eye-tracker-venv/bin/python"
-private let eyeTracker = "\(NSHomeDirectory())/.local/bin/agent-user-status-webcam-eye-tracker"
-private let userLaunchAgentsDir = "\(NSHomeDirectory())/Library/LaunchAgents"
+private let runtimePaths = NativeRuntimePaths.load()
 
 private enum ServiceAction: String {
     case start
@@ -22,7 +20,7 @@ private struct ManagedService {
 
     init(_ label: String) {
         self.label = label
-        self.plistPath = "\(userLaunchAgentsDir)/\(label).plist"
+        self.plistPath = "\(runtimePaths.launchAgentsDir)/\(label).plist"
     }
 
     func arguments(for action: ServiceAction) -> [String] {
@@ -63,7 +61,7 @@ final class CalibrationEvalController: NSObject {
     private var points: [CGPoint] = []
     private var index = 0
     private var started = Date()
-    private var discardedSamples = 0
+    private var evalStats = CalibrationEvalStats(targetCount: 0)
     private var isRefreshing = false
     private let settleSeconds: TimeInterval = 0.7
     private let secondsPerPoint: TimeInterval = 2.0
@@ -76,7 +74,7 @@ final class CalibrationEvalController: NSObject {
         samples = []
         index = 0
         started = Date()
-        discardedSamples = 0
+        evalStats = CalibrationEvalStats(targetCount: points.count)
         isRefreshing = false
         let panel = NSPanel(contentRect: screen, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.backgroundColor = .black
@@ -108,9 +106,15 @@ final class CalibrationEvalController: NSObject {
             guard self.index < self.points.count else { return }
             let eye = model.eye
             if eye.fresh, eye.targetingReliable, eye.confidence >= 0.35 {
-                self.samples.append((self.points[self.index], model.rawEyePoint()))
+                let point = model.rawEyePoint()
+                if let reason = self.evalStats.inspectSample(index: self.index, point: point, observedAt: eye.observedAt) {
+                    self.evalStats.reject(index: self.index, reason: reason)
+                } else {
+                    self.samples.append((self.points[self.index], point))
+                    self.evalStats.accept(index: self.index)
+                }
             } else {
-                self.discardedSamples += 1
+                self.evalStats.reject(index: self.index, reason: self.rejectReason(for: eye))
             }
 
             if Date().timeIntervalSince(self.started) >= self.secondsPerPoint {
@@ -139,7 +143,7 @@ final class CalibrationEvalController: NSObject {
         guard !samples.isEmpty else {
             showAlert(
                 title: "Calibration Evaluation",
-                detail: "No fresh reliable gaze samples were available.\nDiscarded samples: \(discardedSamples)\nStart or recalibrate the eye tracker, then retry."
+                detail: "No fresh reliable gaze samples were available.\nRejected samples: \(evalStats.rejected)\n\(evalStats.summary())\nStart or recalibrate the eye tracker, then retry."
             )
             return
         }
@@ -150,8 +154,21 @@ final class CalibrationEvalController: NSObject {
         let quality = errors.count >= expectedSamples ? "usable sample volume" : "low sample volume"
         showAlert(
             title: "Calibration Evaluation",
-            detail: "Mean error: \(Int(mean)) px\nP95 error: \(Int(p95)) px\nSamples: \(errors.count) (\(quality))\nDiscarded stale/unreliable samples: \(discardedSamples)"
+            detail: "Mean error: \(Int(mean)) px\nP95 error: \(Int(p95)) px\nSamples: \(errors.count) (\(quality))\nRejected samples: \(evalStats.rejected)\n\(evalStats.summary())"
         )
+    }
+
+    private func rejectReason(for eye: EyeState) -> String {
+        if !eye.fresh {
+            return "stale"
+        }
+        if !eye.targetingReliable {
+            return "unreliable"
+        }
+        if eye.confidence < 0.35 {
+            return "low_confidence"
+        }
+        return "unknown"
     }
 
     private func showAlert(title: String, detail: String) {
@@ -214,16 +231,15 @@ extension AppDelegate {
     }
 
     @objc func recalibrateEyeTracker() {
-        setCommandStatus("Calibration running in background")
+        setCommandStatus("Calibration starting")
         guard let eyeTrackerService = managedServices[eyeTrackerLabel] else {
             setCommandStatus("Unknown service: \(eyeTrackerLabel)")
             return
         }
         _ = runLaunchctl(eyeTrackerService.arguments(for: .kill))
-        _ = runShell("sleep 1")
         let calibration = [
-            shellQuote(eyePython),
-            shellQuote(eyeTracker),
+            shellQuote(runtimePaths.eyePython),
+            shellQuote(runtimePaths.eyeTracker),
             "calibrate",
             "--camera",
             shellQuote(eyeCameraIndex()),
@@ -236,13 +252,19 @@ extension AppDelegate {
             "--settle-seconds",
             "0.7",
         ].joined(separator: " ")
-        if runShell(calibration) {
-            setCommandStatus("Calibration complete; restarting eye tracker")
-        } else {
-            setCommandStatus("Calibration failed; restarting eye tracker")
+        DispatchQueue.global(qos: .userInitiated).async {
+            Thread.sleep(forTimeInterval: 1)
+            let ok = self.runShell(calibration)
+            self.setCommandStatus(ok ? "Calibration complete; restarting eye tracker" : "Calibration failed; restarting eye tracker")
+            _ = self.runLaunchctl(eyeTrackerService.arguments(for: .start))
+            _ = self.runLaunchctl(eyeTrackerService.restartArguments())
+            DispatchQueue.main.async {
+                self.model.refresh {
+                    self.panelView.needsDisplay = true
+                    self.overlayView.needsDisplay = true
+                }
+            }
         }
-        _ = runLaunchctl(eyeTrackerService.arguments(for: .start))
-        _ = runLaunchctl(eyeTrackerService.restartArguments())
     }
 
     @objc func evaluateCalibration() {

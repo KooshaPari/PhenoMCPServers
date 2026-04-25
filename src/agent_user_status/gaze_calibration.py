@@ -8,8 +8,11 @@ from typing import Any, Protocol
 
 
 class ScreenLike(Protocol):
-    width: int
-    height: int
+    @property
+    def width(self) -> int: ...
+
+    @property
+    def height(self) -> int: ...
 
 
 def expanded_features(features: list[float]) -> list[float]:
@@ -83,7 +86,8 @@ def projection_thresholds(calibration: dict[str, Any], screen: ScreenLike) -> tu
     p95_error = float(calibration.get("p95_error_px", 0.0) or 0.0)
     quality_score = float(calibration.get("calibration_quality_score", 0.0) or 0.0)
     if quality_score <= 0.0:
-        quality_score = max(0.0, min(1.0, 1.0 - min(1.0, p95_error / max(1.0, math.hypot(float(screen.width), float(screen.height)) * 0.22))))
+        diagonal = math.hypot(float(screen.width), float(screen.height))
+        quality_score = max(0.0, min(1.0, 1.0 - min(1.0, p95_error / max(1.0, diagonal * 0.22))))
     shortest = float(min(screen.width, screen.height))
     diagonal = math.hypot(float(screen.width), float(screen.height))
     hold_threshold = max(90.0, shortest * 0.09, p95_error * 1.25, mean_error * 2.4)

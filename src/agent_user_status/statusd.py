@@ -15,28 +15,31 @@ import re
 import subprocess
 import threading
 import time
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from datetime import UTC, datetime
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
+from agent_user_status.bootstrap_support import agent_imessage_bin
 from agent_user_status.correction import recent_correction_events, store_correction_event
+from agent_user_status.eye_state_payload import bounded_float, bounded_int, build_eye_record, now_iso
 from agent_user_status.gaze_context import as_bool
 from agent_user_status.gaze_drift_correction import load_drift_correction
-from agent_user_status.eye_state_payload import bounded_float, bounded_int, build_eye_record, now_iso
 from agent_user_status.monitor_html import MONITOR_HTML
+from agent_user_status.state_retention import delete_state, export_state, retain_recent_state
+from agent_user_status.statusd_sessions import parsed_query, session_get_payload, session_post_payload
 
 HOST = os.environ.get("AGENT_USER_STATUSD_HOST", "127.0.0.1")
 PORT = int(os.environ.get("AGENT_USER_STATUSD_PORT", "8765"))
-AGENT_IMESSAGE = str(Path("~/.local/bin/agent-imessage").expanduser())
+AGENT_IMESSAGE = str(agent_imessage_bin())
 STATE_DIR = Path(os.environ.get("AGENT_IMESSAGE_STATE_DIR", "~/.local/share/agent-imessage/state")).expanduser()
 DEV_STATE_PATH = STATE_DIR / "dev_monitor_state.json"
 MAX_BODY_BYTES = 16_384
 EYE_SIGNAL_INTERVAL_SECONDS = float(os.environ.get("AGENT_USER_STATUSD_EYE_SIGNAL_INTERVAL_SECONDS", "1.0"))
 RAW_SENSOR_PATTERNS = re.compile(
     r"(^|[^a-z0-9])(raw|frame|image|photo|screenshot|face|facial|biometric|"
-    r"pupil|retina|iris|embedding|landmark|camera|webcam|transcript|waveform|"
+    r"pupil|retina|iris|embedding|landmarks?|camera|webcam|audio|transcript|waveform|"
     r"typed_text|key_name|keystroke|keycode)($|[^a-z0-9])",
     re.IGNORECASE,
 )
@@ -231,7 +234,11 @@ def store_eye_payload(payload: dict[str, Any]) -> dict[str, Any]:
     state_payload["updated_at"] = now_iso()
     write_json_file(DEV_STATE_PATH, state_payload)
     signal_state = eye.get("state") or "looking_at_screen"
-    signal = queue_eye_signal(str(signal_state), float(eye.get("score", 0.5) or 0.5), int(eye.get("max_age_seconds", 5) or 5))
+    signal = queue_eye_signal(
+        str(signal_state),
+        float(eye.get("score", 0.5) or 0.5),
+        int(eye.get("max_age_seconds", 5) or 5),
+    )
     return {"eye": eye, "signal": signal}
 
 
@@ -263,6 +270,20 @@ class Handler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             pass
 
+    def send_sse(self, payloads: list[dict[str, Any]]) -> None:
+        try:
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Connection", "keep-alive")
+            self.end_headers()
+            for payload in payloads:
+                body = json.dumps(payload, sort_keys=True)
+                self.wfile.write(f"event: session\ndata: {body}\n\n".encode())
+                self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+
     def read_json(self) -> dict[str, Any]:
         length = int(self.headers.get("Content-Length", "0"))
         if length > MAX_BODY_BYTES:
@@ -283,6 +304,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_html(200, MONITOR_HTML)
             elif path == "/privacy":
                 self.send_json(200, {"ok": True, "policy": PRIVACY_POLICY})
+            elif path == "/state/export":
+                self.send_json(200, {"ok": True, "export": export_state(STATE_DIR)})
             elif path == "/dev/state":
                 self.send_json(200, {"ok": True, **dev_state()})
             elif path == "/dev/eye":
@@ -299,6 +322,16 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/actions":
                 result = run_agent(["actions"], timeout=4)
                 self.send_json(200 if result.get("ok") else 502, result)
+            elif path == "/events/stream":
+                query = parse_qs(parsed.query)
+                limit = bounded_int(query.get("limit", [80])[0], 80, 1, 500, "limit")
+                session_payload = session_get_payload(
+                    "/session/snapshot",
+                    {"event_limit": [str(limit)], "session_limit": [str(limit)]},
+                )
+                self.send_sse([session_payload or {"ok": True, "snapshot": {}}])
+            elif session_payload := session_get_payload(path, parsed_query(parsed.query)):
+                self.send_json(200, session_payload)
             elif path == "/correction/events":
                 query = parse_qs(parsed.query)
                 limit = bounded_int(query.get("limit", [80])[0], 80, 1, 500, "limit")
@@ -348,6 +381,15 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(200, {"ok": True, **store_eye_payload(payload)})
             elif path == "/correction/event":
                 self.send_json(200, {"ok": True, "event": store_correction_event(payload)})
+            elif session_payload := session_post_payload(path, payload):
+                self.send_json(200, session_payload)
+            elif path == "/state/delete":
+                names = payload.get("names")
+                selected = [str(name) for name in names] if isinstance(names, list) else None
+                self.send_json(200, {"ok": True, **delete_state(STATE_DIR, names=selected)})
+            elif path == "/state/retention":
+                max_age = bounded_int(payload.get("max_age_seconds"), 86400, 1, 31_536_000, "max_age_seconds")
+                self.send_json(200, {"ok": True, **retain_recent_state(STATE_DIR, max_age_seconds=max_age)})
             elif path == "/action":
                 max_age = bounded_int(payload.get("max_age_seconds"), 120, 1, 3600, "max_age_seconds")
                 command = [

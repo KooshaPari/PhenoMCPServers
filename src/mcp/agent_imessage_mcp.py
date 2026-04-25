@@ -5,13 +5,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
+from agent_user_status.agent_imessage_core import RECIPIENT_ROLES, require_recipient_role
+from agent_user_status.agent_imessage_mcp_sessions import SESSION_TOOL_NAMES, SESSION_TOOLS, session_tool_call
+from agent_user_status.bootstrap_support import agent_imessage_bin
 
-AGENT_IMESSAGE = str(Path("~/.local/bin/agent-imessage").expanduser())
+AGENT_IMESSAGE = str(agent_imessage_bin())
 SERVER_NAME = "agent-imessage"
 MESSAGES_SERVER_ARGS = [
     "uvx",
@@ -21,14 +25,25 @@ MESSAGES_SERVER_ARGS = [
     "git+https://github.com/carterlasalle/mac_messages_mcp.git",
     "mac-messages-mcp",
 ]
+UNREDACTED_STATUS_KEYS = {"latest_inbound_preview", "chat"}
+
+
+def redact_agent_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    redacted = dict(payload)
+    data = redacted.get("data")
+    if isinstance(data, dict):
+        data = dict(data)
+        for key in UNREDACTED_STATUS_KEYS:
+            data.pop(key, None)
+        redacted["data"] = data
+    return redacted
 
 
 def run(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         args,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         timeout=timeout,
         check=False,
     )
@@ -68,11 +83,12 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "notify_user",
-        "description": "Send an iMessage/SMS notification to Koosha.",
+        "description": "Send an iMessage/SMS notification to a scoped recipient role. Defaults to Koosha.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "message": {"type": "string"},
+                "recipient": {"type": "string", "enum": list(RECIPIENT_ROLES), "default": "koosha"},
                 "dry_run": {"type": "boolean", "default": False},
             },
             "required": ["message"],
@@ -152,10 +168,11 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "wait_for_user_reply",
-        "description": "Wait for the next inbound configured-user message.",
+        "description": "Wait for the next inbound message from a scoped recipient role. Defaults to Koosha.",
         "inputSchema": {
             "type": "object",
             "properties": {
+                "recipient": {"type": "string", "enum": list(RECIPIENT_ROLES), "default": "koosha"},
                 "timeout": {"type": "integer", "default": 900},
                 "poll": {"type": "number", "default": 3.0},
                 "include_existing": {"type": "boolean", "default": False},
@@ -163,16 +180,20 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    *SESSION_TOOLS,
 ]
 
 
 def tool_call(name: str, args: dict[str, Any]) -> dict[str, Any]:
+    if name in SESSION_TOOL_NAMES:
+        return session_tool_call(name, args, call_agent_imessage)
     if name == "user_status":
-        return call_agent_imessage(["status", "--json"])
+        return redact_agent_payload(call_agent_imessage(["status", "--json"]))
     if name == "hook_decision":
         return call_agent_imessage(["hook-decision", "--text", str(args["text"])])
     if name == "notify_user":
-        command = ["notify", str(args["message"])]
+        recipient = require_recipient_role(args.get("recipient"))
+        command = ["notify", "--recipient", recipient, str(args["message"])]
         if args.get("dry_run"):
             command.append("--dry-run")
         return call_agent_imessage(command)
@@ -222,8 +243,11 @@ def tool_call(name: str, args: dict[str, Any]) -> dict[str, Any]:
     if name == "inspect_user_actions":
         return call_agent_imessage(["actions"])
     if name == "wait_for_user_reply":
+        recipient = require_recipient_role(args.get("recipient"))
         command = [
             "wait",
+            "--recipient",
+            recipient,
             "--timeout",
             str(args.get("timeout", 900)),
             "--poll",
@@ -310,15 +334,25 @@ def install_messages_mcp(client: str) -> dict[str, Any]:
     if client in {"codex", "both"}:
         run(["codex", "mcp", "remove", "messages"], timeout=30)
         result = run(["codex", "mcp", "add", "messages", "--", *MESSAGES_SERVER_ARGS], timeout=30)
-        results.append({"client": "codex", "ok": result.returncode == 0, "stdout": result.stdout, "stderr": result.stderr})
+        results.append(
+            {"client": "codex", "ok": result.returncode == 0, "stdout": result.stdout, "stderr": result.stderr}
+        )
     if client in {"claude", "both"}:
         run(["claude", "mcp", "remove", "messages", "-s", "user"], timeout=30)
         result = run(["claude", "mcp", "add", "-s", "user", "messages", "--", *MESSAGES_SERVER_ARGS], timeout=30)
-        results.append({"client": "claude", "ok": result.returncode == 0, "stdout": result.stdout, "stderr": result.stderr})
+        results.append(
+            {"client": "claude", "ok": result.returncode == 0, "stdout": result.stdout, "stderr": result.stderr}
+        )
     return {"messages_mcp": results}
 
 
 def command_install(args: argparse.Namespace) -> int:
+    if args.with_messages and os.environ.get("AGENT_IMESSAGE_ALLOW_GENERIC_MESSAGES_MCP") != "1":
+        raise SystemExit(
+            "--with-messages registers a generic Messages MCP and is disabled by default. "
+            "Set AGENT_IMESSAGE_ALLOW_GENERIC_MESSAGES_MCP=1 only for explicit local admin repair."
+        )
+
     results: list[dict[str, Any]] = []
     if args.client in {"codex", "both"}:
         results.append(install_codex())
@@ -350,8 +384,22 @@ def command_doctor(args: argparse.Namespace) -> int:
     checks.append({"check": "agent-status", **call_agent_imessage(["status", "--json"])})
     codex = run(["codex", "mcp", "get", SERVER_NAME], timeout=30)
     claude = run(["claude", "mcp", "get", SERVER_NAME], timeout=30)
-    checks.append({"check": "codex-agent-imessage-mcp", "ok": codex.returncode == 0, "stdout": codex.stdout, "stderr": codex.stderr})
-    checks.append({"check": "claude-agent-imessage-mcp", "ok": claude.returncode == 0, "stdout": claude.stdout, "stderr": claude.stderr})
+    checks.append(
+        {
+            "check": "codex-agent-imessage-mcp",
+            "ok": codex.returncode == 0,
+            "stdout": codex.stdout,
+            "stderr": codex.stderr,
+        }
+    )
+    checks.append(
+        {
+            "check": "claude-agent-imessage-mcp",
+            "ok": claude.returncode == 0,
+            "stdout": claude.stdout,
+            "stderr": claude.stderr,
+        }
+    )
     print(json.dumps({"ok": all(item.get("ok", False) for item in checks), "checks": checks}, indent=2))
     return 0
 
@@ -365,7 +413,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     install = sub.add_parser("install", help="Register the CLI-backed MCP server")
     install.add_argument("--client", choices=["codex", "claude", "both"], default="both")
-    install.add_argument("--with-messages", action="store_true", help="Also repair the direct mac_messages_mcp registration")
+    install.add_argument(
+        "--with-messages",
+        action="store_true",
+        help="Also repair the direct mac_messages_mcp registration",
+    )
     install.set_defaults(func=command_install)
 
     status = sub.add_parser("status", help="Show MCP and user-status state")

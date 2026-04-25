@@ -9,14 +9,15 @@ import os
 import re
 import subprocess
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from agent_user_status.bootstrap_support import imsg_bin
 
 CONFIG_PATH = Path(os.environ.get("AGENT_IMESSAGE_ENV", "~/.config/phenotype/agent-imessage.env")).expanduser()
 STATE_DIR = Path(os.environ.get("AGENT_IMESSAGE_STATE_DIR", "~/.local/share/agent-imessage/state")).expanduser()
-IMSG = Path(os.environ.get("IMSG_BIN", "~/.local/bin/imsg")).expanduser()
+IMSG = imsg_bin()
 OVERRIDE_PATH = STATE_DIR / "presence_override.json"
 SIGNALS_PATH = STATE_DIR / "signals.json"
 ACTION_LOG_PATH = STATE_DIR / "action_events.jsonl"
@@ -39,13 +40,36 @@ RAW_SENSOR_PATTERNS = re.compile(
 
 @dataclass(frozen=True)
 class Config:
+    role: str
     phone_e164: str
     phone_digits: str
     email: str
     name: str
 
 
-def load_config() -> Config:
+RECIPIENT_ROLES = ("koosha", "sponsor")
+RECIPIENT_ENV_PREFIXES = {
+    "koosha": "AGENT_IMESSAGE",
+    "sponsor": "AGENT_IMESSAGE_SPONSOR",
+}
+
+
+def require_recipient_role(role: str | None) -> str:
+    normalized = (role or "koosha").strip().lower()
+    if normalized not in RECIPIENT_ROLES:
+        raise ValueError(f"Unsupported recipient role: {role}. Use one of: {', '.join(RECIPIENT_ROLES)}")
+    return normalized
+
+
+def _recipient_value(values: dict[str, str], role: str, key: str, default: str = "") -> str:
+    prefix = RECIPIENT_ENV_PREFIXES[role]
+    if role == "koosha":
+        return values.get(f"{prefix}_{key}", default)
+    return values.get(f"{prefix}_{key}", default)
+
+
+def load_recipient_config(role: str | None = "koosha") -> Config:
+    recipient = require_recipient_role(role)
     values: dict[str, str] = {}
     if CONFIG_PATH.exists():
         for line in CONFIG_PATH.read_text(encoding="utf-8").splitlines():
@@ -55,14 +79,31 @@ def load_config() -> Config:
             key, value = line.split("=", 1)
             values[key.strip().removeprefix("export ")] = value.strip().strip("\"'")
 
-    phone_e164 = values.get("AGENT_IMESSAGE_PHONE_E164", "+14243305106")
+    phone_default = "+14243305106" if recipient == "koosha" else ""
+    phone_e164 = _recipient_value(values, recipient, "PHONE_E164", phone_default)
     digits = re.sub(r"\D", "", phone_e164)
     return Config(
+        role=recipient,
         phone_e164=phone_e164,
-        phone_digits=values.get("AGENT_IMESSAGE_PHONE_DIGITS", digits[-10:]),
-        email=values.get("AGENT_IMESSAGE_EMAIL", "kooshapari@gmail.com"),
-        name=values.get("AGENT_IMESSAGE_NAME", "Koosha"),
+        phone_digits=_recipient_value(values, recipient, "PHONE_DIGITS", digits[-10:]),
+        email=_recipient_value(values, recipient, "EMAIL", "kooshapari@gmail.com" if recipient == "koosha" else ""),
+        name=_recipient_value(values, recipient, "NAME", "Koosha" if recipient == "koosha" else "Sponsor"),
     )
+
+
+def load_config() -> Config:
+    return load_recipient_config("koosha")
+
+
+def recipient_send_address(config: Config) -> str:
+    address = config.phone_e164.strip() or config.email.strip()
+    if not address:
+        raise ValueError(
+            f"No contact configured for recipient role '{config.role}'. "
+            f"Set {RECIPIENT_ENV_PREFIXES[config.role]}_PHONE_E164 or "
+            f"{RECIPIENT_ENV_PREFIXES[config.role]}_EMAIL."
+        )
+    return address
 
 
 def run_imsg(args: list[str], timeout: int | None = 30) -> subprocess.CompletedProcess[str]:
@@ -71,8 +112,7 @@ def run_imsg(args: list[str], timeout: int | None = 30) -> subprocess.CompletedP
     return subprocess.run(
         [str(IMSG), *args],
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         timeout=timeout,
         check=False,
     )
@@ -83,8 +123,7 @@ def run_cmd(args: list[str], timeout: int = 5) -> subprocess.CompletedProcess[st
         return subprocess.run(
             args,
             text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             timeout=timeout,
             check=False,
         )
@@ -114,13 +153,13 @@ def parse_dt(value: str | None) -> datetime | None:
         return None
     text = value.replace("Z", "+00:00")
     try:
-        return datetime.fromisoformat(text).astimezone(timezone.utc)
+        return datetime.fromisoformat(text).astimezone(UTC)
     except ValueError:
         return None
 
 
 def iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def stable_hash(value: str) -> str:
@@ -171,7 +210,7 @@ def message_time(message: dict[str, Any]) -> datetime | None:
 
 
 def sort_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return sorted(messages, key=lambda item: message_time(item) or datetime.min.replace(tzinfo=timezone.utc))
+    return sorted(messages, key=lambda item: message_time(item) or datetime.min.replace(tzinfo=UTC))
 
 
 def inbound_messages(config: Config, messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -223,7 +262,7 @@ def read_presence_override() -> dict[str, Any] | None:
     except json.JSONDecodeError:
         return None
     until = parse_dt(override.get("until"))
-    if until and until < datetime.now(timezone.utc):
+    if until and until < datetime.now(UTC):
         return None
     return override
 
@@ -377,7 +416,7 @@ def external_signal_records() -> list[dict[str, Any]]:
     if not data:
         return []
     records = data.get("signals", data if isinstance(data, list) else [])
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     fresh: list[dict[str, Any]] = []
     for record in records if isinstance(records, list) else []:
         if not isinstance(record, dict):

@@ -115,9 +115,11 @@ Repair or install the CLI-backed MCP server:
 
 ```bash
 agent-imessage-mcp install --client both
-agent-imessage-mcp install --client both --with-messages
 agent-imessage-mcp status
 agent-imessage-mcp doctor
 ```
 
-`agent-imessage` is the CLI-backed status/control MCP. `messages` is the direct macOS Messages MCP from `mac_messages_mcp`.
+`agent-imessage` is the CLI-backed status/control MCP. It is the default because
+it is scoped to the configured recipient and status surface. The direct generic
+Messages MCP is admin-only repair tooling and is disabled unless
+`AGENT_IMESSAGE_ALLOW_GENERIC_MESSAGES_MCP=1` is set intentionally.

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shlex
 import shutil
@@ -14,6 +15,7 @@ import urllib.request
 from collections.abc import Callable
 from pathlib import Path
 
+from agent_user_status.bootstrap_native import install_native_monitor
 from agent_user_status.bootstrap_support import (
     PLIST_NAMES,
     SUPPORT_MODULES,
@@ -21,8 +23,12 @@ from agent_user_status.bootstrap_support import (
     env_bool,
     installed_runtime_paths,
     installed_support_paths,
+    native_app_bundle,
+    native_app_executable,
+    native_app_paths,
     native_monitor_paths,
     resolve_paths,
+    runtime_paths_metadata,
     source_runtime_paths,
 )
 
@@ -136,8 +142,9 @@ def install_launchd_plists(paths: BootstrapPaths, python_bin: Path, eye_python_b
             "{{AGENT_USER_STATUSD_BIN}}": str(paths.bin_dir / "agent-user-statusd"),
             "{{AGENT_USER_STATUS_CURSOR_TRACKER}}": str(paths.bin_dir / "agent-user-status-cursor-tracker"),
             "{{AGENT_USER_STATUS_WEBCAM_EYE_TRACKER}}": str(paths.bin_dir / "agent-user-status-webcam-eye-tracker"),
-            "{{AGENT_USER_STATUS_NATIVE_MONITOR}}": str(paths.bin_dir / "agent-user-status-native-monitor"),
+            "{{AGENT_USER_STATUS_NATIVE_MONITOR}}": str(native_app_executable(paths)),
             "{{STATE_DIR}}": str(paths.state_dir),
+            "{{RUNTIME_PATHS_JSON}}": str(paths.state_dir / "runtime_paths.json"),
             "{{LAUNCHD_PATH}}": launchd_path(paths, python_bin),
         }
         replace_template(template, generated, replacements)
@@ -176,34 +183,12 @@ def install_launchd_plists(paths: BootstrapPaths, python_bin: Path, eye_python_b
         log("warn", f"no LaunchAgent templates found in {paths.launchd_src}.")
 
 
-def install_native_monitor(paths: BootstrapPaths) -> None:
-    native_bin = paths.bin_dir / "agent-user-status-native-monitor"
-    native_source_dir = paths.share_dir / "native-monitor"
-    native_source_dir.mkdir(parents=True, exist_ok=True)
-    native_sources = sorted((paths.src / "native" / "macos").glob("*.swift"))
-    for src in native_sources:
-        shutil.copy2(src, native_source_dir / src.name)
-
-    if sys.platform != "darwin":
-        log("info", "non-macOS platform detected; skipping swift compile.")
-        return
-    if not shutil.which("swiftc"):
-        log("warn", "swiftc missing. Install Xcode Command Line Tools to build tray monitor.")
-        return
-
-    command = [
-        "swiftc",
-        *[str(path) for path in native_sources],
-        "-o",
-        str(native_bin),
-        "-framework",
-        "AppKit",
-        "-framework",
-        "CoreGraphics",
-    ]
-    subprocess.run(command, check=True)
-    native_bin.chmod(0o700)
-    log("info", f"compiled tray monitor to {native_bin}")
+def write_runtime_paths_metadata(paths: BootstrapPaths, python_bin: Path, eye_python_bin: Path) -> Path:
+    metadata_path = paths.state_dir / "runtime_paths.json"
+    payload = runtime_paths_metadata(paths, python_bin, eye_python_bin)
+    metadata_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    metadata_path.chmod(0o600)
+    return metadata_path
 
 
 def remove_path(path: Path, dry_run: bool) -> None:
@@ -245,7 +230,8 @@ def install_command(args: argparse.Namespace) -> int:
     install_executable(paths.src / "mcp" / "agent_imessage_mcp.py", paths.bin_dir / "agent-imessage-mcp")
     install_bootstrap_wrapper(paths, python_bin)
     install_python_support_modules(paths)
-    install_native_monitor(paths)
+    install_native_monitor(paths, log)
+    runtime_metadata = write_runtime_paths_metadata(paths, python_bin, eye_python_bin)
     install_launchd_plists(paths, python_bin, eye_python_bin, start_services=start_services)
     if not start_services:
         log("info", "installed launch agents; set AGENT_USER_STATUS_START_SERVICES=1 to auto-start.")
@@ -254,6 +240,7 @@ def install_command(args: argparse.Namespace) -> int:
     else:
         log("info", "installed launch agents and attempted service startup.")
     log("info", f"native monitor sources: {paths.share_dir / 'native-monitor'}")
+    log("info", f"runtime path metadata: {runtime_metadata}")
     if strict:
         return doctor_command(argparse.Namespace())
     return 0
@@ -282,11 +269,13 @@ def uninstall_command(args: argparse.Namespace) -> int:
             remove_path(path, args.dry_run)
         for path in [
             *native_monitor_paths(paths),
+            *native_app_paths(paths),
             *installed_support_paths(paths),
         ]:
             remove_path(path, args.dry_run)
         remove_dir(paths.bin_dir / "agent_user_status", args.dry_run)
         remove_dir(paths.share_dir / "native-monitor", args.dry_run)
+        remove_dir(native_app_bundle(paths), args.dry_run)
     else:
         print("Skipping file removal because --no-remove was set.")
 
@@ -339,7 +328,12 @@ def doctor_command(_: argparse.Namespace) -> int:
             raise RuntimeError("swift compile")
 
     def check_layout() -> None:
-        required = [*installed_runtime_paths(paths), *installed_support_paths(paths), *native_monitor_paths(paths)]
+        required = [
+            *installed_runtime_paths(paths),
+            *installed_support_paths(paths),
+            *native_monitor_paths(paths),
+            *native_app_paths(paths),
+        ]
         missing = [str(path) for path in required if not path.exists()]
         if missing:
             raise RuntimeError("installed runtime layout\n" + "\n".join(missing[:12]))
@@ -348,6 +342,21 @@ def doctor_command(_: argparse.Namespace) -> int:
         for plist in paths.launchd_src.glob("*.plist"):
             if subprocess.run(["plutil", "-lint", str(plist)], check=False).returncode != 0:
                 raise RuntimeError(f"plist {plist.name}")
+        missing = []
+        unresolved = []
+        for name in PLIST_NAMES:
+            installed = paths.launchd_dir / name
+            if not installed.exists():
+                missing.append(str(installed))
+                continue
+            if subprocess.run(["plutil", "-lint", str(installed)], check=False).returncode != 0:
+                raise RuntimeError(f"installed plist {name}")
+            if "{{" in installed.read_text(encoding="utf-8"):
+                unresolved.append(str(installed))
+        if missing:
+            raise RuntimeError("installed plists missing\n" + "\n".join(missing))
+        if unresolved:
+            raise RuntimeError("installed plists contain unresolved tokens\n" + "\n".join(unresolved))
 
     def check_backend() -> None:
         with urllib.request.urlopen("http://127.0.0.1:8765/health", timeout=5) as response:
@@ -378,7 +387,9 @@ def setup_eye_tracker_command(_: argparse.Namespace) -> int:
 
     paths = resolve_paths()
     default_bootstrap = shutil.which("python3.11") or str(detect_python())
-    eye_bootstrap_python = Path(os.environ.get("AGENT_USER_STATUS_EYE_BOOTSTRAP_PYTHON", default_bootstrap)).expanduser()
+    eye_bootstrap_python = Path(
+        os.environ.get("AGENT_USER_STATUS_EYE_BOOTSTRAP_PYTHON", default_bootstrap)
+    ).expanduser()
     if not eye_bootstrap_python.exists():
         raise SystemExit(
             f"missing Python 3.11 at {eye_bootstrap_python}\n"

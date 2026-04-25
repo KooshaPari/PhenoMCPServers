@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Agent User Status ReadMe</title>
+</head>
+<body>
+  <h1>Before You Install</h1>
+  <p>
+    Build packages only from a disposable staging root. Do not package the live
+    <code>~/.local</code> install directly. Signing and notarization are optional
+    build-time hooks controlled by environment variables.
+  </p>
+  <p>
+    Camera and automation permissions remain user-controlled macOS prompts. The
+    package metadata must not include raw frames, screenshots, raw gaze streams,
+    landmarks, biometric templates, or environment-specific identifiers.
+  </p>
+</body>
+</html>

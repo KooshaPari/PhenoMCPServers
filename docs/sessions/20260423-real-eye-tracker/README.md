@@ -136,3 +136,8 @@ boundary.
 The install, uninstall, doctor, and setup-eye-tracker scripts validate the
 staged layout around those entrypoints, while `agent_imessage.py` remains the
 thin wrapper that launches the packaged CLI.
+
+Runtime binary lookup now flows through `agent_user_status.bootstrap_support`.
+`AGENT_USER_STATUS_BIN_DIR` controls the default command prefix, while
+`AGENT_IMESSAGE_BIN` and `IMSG_BIN` can override individual binaries for
+packaging tests or alternate local installs.
