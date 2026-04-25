@@ -1,38 +1,25 @@
-# AGENTS.md - agent-user-status
+# AGENTS.md — agent-user-status
 
-This repo packages local user-status and iMessage tooling for Codex/Claude
-agents.
+Phenotype repository
 
-## Scope
+## Quick Links
 
-Applies to all files in this repo.
+- **Local CLAUDE.md:** See `CLAUDE.md` in this repository for project-specific guidance
+- **Phenotype org governance:** `/Users/kooshapari/CodeProjects/Phenotype/repos/CLAUDE.md`
+- **Global agent guidance:** `~/.claude/AGENTS.md`
+- **AgilePlus work tracking:** `cd /repos/AgilePlus && agileplus <command>`
 
-## Rules
+## Key Workflows
 
-- Treat eye tracking, webcam, input, window, prompt, and process telemetry as
-  highly confidential local data.
-- Do not store raw camera frames, screenshots, facial landmarks, biometric
-  embeddings, or raw gaze streams.
-- Prefer derived state: coordinates, confidence, screen zone, scores, and short
-  status labels.
-- Keep the backend bound to `127.0.0.1` unless a threat model and auth layer are
-  added first.
-- Preserve the current live install under `~/.local` unless the user explicitly
-  asks to overwrite it through install scripts.
-- Native UI direction:
-  - macOS: Swift/AppKit or SwiftUI shell.
-  - Windows: WinUI 3 / Windows App SDK, Rust integration through `windows-rs`
-    or a thin UI shell over a Rust core.
-  - Linux: GTK4/libadwaita via `gtk-rs` for desktop-native fit; Slint is the
-    Rust-first cross-platform fallback.
-- Do not treat the dev cursor tracker as real eye tracking. It is only a monitor
-  validation source.
+1. **Before implementing:** Check AgilePlus for existing specs
+2. **Quality gates:** Run linters, tests, and docs validation (see CLAUDE.md)
+3. **Worktrees:** Use `repos/agent-user-status-wtrees/<topic>/` for feature work
+4. **Integration:** Commit to canonical repo (`main`) after quality gates pass
 
-## Validation
+## Project-Specific Gotchas
 
-Run before reporting completion:
+See CLAUDE.md for language stack, build commands, and testing requirements.
 
-```bash
-./scripts/doctor.sh
-./tests/smoke/smoke.sh
-```
+---
+
+**Parent contract:** Extends Phenotype-org governance. See `CLAUDE.md` and parent `AGENTS.md` for complete operating procedures.
