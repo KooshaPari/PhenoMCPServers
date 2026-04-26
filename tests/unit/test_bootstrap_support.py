@@ -73,6 +73,11 @@ def test_support_manifest_includes_decomposed_runtime_modules() -> None:
 
 @pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
 def test_native_manifest_includes_decomposed_monitor_sources() -> None:
-    native_expected = {"AgentUserStatusMonitor.swift", "DotOverlayView.swift", "PanelView.swift"}
+    native_expected = {
+        "AgentUserStatusMonitor.swift",
+        "CalibrationEvalController.swift",
+        "DotOverlayView.swift",
+        "PanelView.swift",
+    }
 
     assert native_expected.issubset(set(NATIVE_MONITOR_FILES))

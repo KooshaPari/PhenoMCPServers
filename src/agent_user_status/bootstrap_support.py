@@ -87,6 +87,7 @@ RUNTIME_BIN_SPECS = [
 NATIVE_MONITOR_FILES = [
     "AgentUserStatusMonitor.swift",
     "AgentUserStatusApp.swift",
+    "CalibrationEvalController.swift",
     "AgentSessions.swift",
     "CalibrationEvalStats.swift",
     "DotOverlayView.swift",
