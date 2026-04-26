@@ -3,7 +3,13 @@ from pathlib import Path
 import pytest
 
 from agent_user_status.bootstrap_doctor import BOOTSTRAP_HELPER_MODULES
-from agent_user_status.bootstrap_support import SUPPORT_MODULES, agent_imessage_bin, imsg_bin, runtime_bin_dir
+from agent_user_status.bootstrap_support import (
+    NATIVE_MONITOR_FILES,
+    SUPPORT_MODULES,
+    agent_imessage_bin,
+    imsg_bin,
+    runtime_bin_dir,
+)
 
 
 @pytest.mark.requirement("FR-AGENT_USER_STATUS-001")
@@ -63,3 +69,10 @@ def test_support_manifest_includes_decomposed_runtime_modules() -> None:
 
     assert support_expected.issubset(set(SUPPORT_MODULES))
     assert helper_expected.issubset(set(BOOTSTRAP_HELPER_MODULES))
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
+def test_native_manifest_includes_decomposed_monitor_sources() -> None:
+    native_expected = {"AgentUserStatusMonitor.swift", "DotOverlayView.swift", "PanelView.swift"}
+
+    assert native_expected.issubset(set(NATIVE_MONITOR_FILES))

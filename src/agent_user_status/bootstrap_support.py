@@ -89,6 +89,7 @@ NATIVE_MONITOR_FILES = [
     "AgentUserStatusApp.swift",
     "AgentSessions.swift",
     "CalibrationEvalStats.swift",
+    "DotOverlayView.swift",
     "EyeTrackerControls.swift",
     "MonitorStatusSummary.swift",
     "MonitorUIStateStore.swift",
