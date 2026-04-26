@@ -5,10 +5,10 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODE="${1:-all}"
 
 case "${MODE}" in
-  all|links|fr)
+  all|links|fr|matrix|fr-write)
     ;;
   *)
-    echo "usage: $0 [all|links|fr]" >&2
+    echo "usage: $0 [all|links|fr|matrix|fr-write]" >&2
     exit 2
     ;;
 esac
@@ -139,11 +139,13 @@ def parse_fr_blocks() -> dict[str, str]:
 def validate_fr_markers(fr_blocks: dict[str, str]) -> None:
     canonical_ids = set(fr_blocks)
     canonical_seen: set[str] = set()
+    marker_files: dict[str, set[str]] = {}
     legacy_seen: set[str] = set()
     for path in iter_source_files():
         text = path.read_text(encoding="utf-8")
         for marker in CANONICAL_MARKER_RE.findall(text):
             canonical_seen.add(marker)
+            marker_files.setdefault(marker, set()).add(str(path))
             if marker not in canonical_ids:
                 errors.append(f"{path}: marker {marker} is not defined in {FR_DOC}")
         for marker in LEGACY_MARKER_RE.findall(text):
@@ -155,6 +157,15 @@ def validate_fr_markers(fr_blocks: dict[str, str]) -> None:
         status = status_match.group(1) if status_match else ""
         if status == "IMPLEMENTED" and fr_id not in canonical_seen:
             errors.append(f"{FR_DOC}: {fr_id} is IMPLEMENTED but no test marker references it")
+        if status in {"IMPLEMENTED", "PARTIAL"}:
+            trace_match = TRACE_RE.search(block)
+            declared_files = set(re.findall(r"`([^`]+)`", trace_match.group(1))) if trace_match else set()
+            marked_files = marker_files.get(fr_id, set())
+            if declared_files != marked_files:
+                errors.append(
+                    f"{FR_DOC}: {fr_id} trace files do not match pytest markers "
+                    f"(declared={sorted(declared_files)}, marked={sorted(marked_files)})"
+                )
 
     if legacy_seen:
         warnings.append(
@@ -197,3 +208,9 @@ if errors:
 
 print(f"docs validation passed ({MODE})")
 PY
+
+if [[ "${MODE}" == "fr-write" ]]; then
+  python3 scripts/update-fr-matrix.py --write
+elif [[ "${MODE}" == "all" || "${MODE}" == "fr" || "${MODE}" == "matrix" ]]; then
+  python3 scripts/update-fr-matrix.py --check
+fi

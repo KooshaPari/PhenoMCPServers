@@ -96,7 +96,7 @@ in tests, PRs, and architectural documentation.
 
 **Status:** PARTIAL
 
-**Test Traces:** `tests/unit/test_agent_imessage_outbox.py`, `tests/unit/test_agent_imessage_recipients.py`
+**Test Traces:** `tests/unit/test_agent_imessage_outbox.py`
 
 ---
 
@@ -106,7 +106,7 @@ in tests, PRs, and architectural documentation.
 
 **Status:** IMPLEMENTED
 
-**Test Traces:** `tests/unit/test_agent_imessage_elicitation.py`, `tests/unit/test_agent_imessage_recipients.py`, `tests/unit/test_agent_imessage_mcp.py`
+**Test Traces:** `tests/unit/test_agent_imessage_elicitation.py`, `tests/unit/test_agent_imessage_envelope.py`, `tests/unit/test_agent_imessage_recipients.py`, `tests/unit/test_agent_imessage_mcp.py`
 
 ---
 
@@ -116,7 +116,7 @@ in tests, PRs, and architectural documentation.
 
 **Status:** PARTIAL
 
-**Test Traces:** `tests/unit/test_agent_imessage_outbox.py`
+**Test Traces:** `tests/unit/test_agent_imessage_outbox.py`, `tests/unit/test_agent_imessage_recipients.py`
 
 ---
 
