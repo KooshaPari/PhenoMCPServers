@@ -51,6 +51,7 @@ SUPPORT_MODULES = [
     "gaze_projection_policy.py",
     "gaze_projection_types.py",
     "eye_state_payload.py",
+    "webcam_eye_config.py",
     "webcam_probe.py",
     "webcam_runtime.py",
     "webcam_support.py",

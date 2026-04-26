@@ -5,11 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 import time
-from pathlib import Path
-from typing import Any
 
 from agent_user_status.gaze_calibration import (
     calibration_points,
@@ -20,10 +17,17 @@ from agent_user_status.gaze_calibration import (
 )
 from agent_user_status.gaze_evaluation import EvaluationCounters
 from agent_user_status.gaze_projection import StableSampleGate
+from agent_user_status.webcam_eye_config import (
+    CALIBRATION_PATH,
+    STATUSD_URL,
+    default_camera,
+    load_calibration,
+    summarize_errors,
+    tracker_thresholds,
+)
 from agent_user_status.webcam_probe import probe_presence
 from agent_user_status.webcam_runtime import run_tracker
 from agent_user_status.webcam_support import (
-    FaceTrackerThresholds,
     TrackerError,
     create_face_mesh,
     frame_sample,
@@ -33,48 +37,6 @@ from agent_user_status.webcam_support import (
     open_camera,
     screen_size,
 )
-
-STATE_DIR = Path(os.environ.get("AGENT_IMESSAGE_STATE_DIR", "~/.local/share/agent-imessage/state")).expanduser()
-CALIBRATION_PATH = Path(
-    os.environ.get("AGENT_USER_STATUS_EYE_CALIBRATION", str(STATE_DIR / "eye_calibration.json"))
-).expanduser()
-STATUSD_URL = os.environ.get("AGENT_USER_STATUSD_URL", "http://127.0.0.1:8765")
-
-
-def default_camera() -> int:
-    try:
-        return int(os.environ.get("AGENT_USER_STATUS_EYE_CAMERA", "0"))
-    except ValueError:
-        return 0
-
-
-def load_calibration(path: Path = CALIBRATION_PATH) -> dict[str, Any]:
-    if not path.exists():
-        raise TrackerError(f"calibration missing: run `agent-user-status-webcam-eye-tracker calibrate` first ({path})")
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    if payload.get("kind") != "mediapipe_iris_regression":
-        raise TrackerError(f"unsupported calibration kind in {path}")
-    return payload
-
-
-def summarize_errors(errors: list[float]) -> dict[str, float]:
-    if not errors:
-        return {"mean_error_px": 0.0, "p95_error_px": 0.0, "max_error_px": 0.0}
-    np = import_numpy()
-    ordered = np.asarray(errors, dtype=float)
-    return {
-        "mean_error_px": float(ordered.mean()),
-        "p95_error_px": float(np.percentile(ordered, 95)),
-        "max_error_px": float(ordered.max()),
-    }
-
-
-def tracker_thresholds(args: argparse.Namespace) -> FaceTrackerThresholds:
-    return FaceTrackerThresholds(
-        detection=float(args.min_face_detection_confidence),
-        presence=float(args.min_face_presence_confidence),
-        tracking=float(args.min_tracking_confidence),
-    )
 
 
 def command_calibrate(args: argparse.Namespace) -> int:
