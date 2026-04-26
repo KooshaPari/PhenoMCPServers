@@ -79,6 +79,55 @@ def test_notify_user_accepts_only_scoped_recipient_roles(monkeypatch) -> None:
         mcp.tool_call("notify_user", {"recipient": "random-contact", "message": "hello"})
 
 
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-011")
+def test_notify_user_structured_forwards_metadata(monkeypatch) -> None:
+    calls = []
+    monkeypatch.setattr(mcp, "call_agent_imessage", lambda args: calls.append(args) or {"ok": True})
+
+    result = mcp.tool_call(
+        "notify_user_structured",
+        {
+            "recipient": "koosha",
+            "message": "Need input",
+            "project": "agent-user-status",
+            "task_id": "FR-011",
+            "session_id": "sess-1",
+            "correlation_id": "corr-1",
+            "dry_run": True,
+        },
+    )
+
+    assert result == {"ok": True}
+    assert calls == [
+        [
+            "notify-structured",
+            "--recipient",
+            "koosha",
+            "Need input",
+            "--session-id",
+            "sess-1",
+            "--task-id",
+            "FR-011",
+            "--project",
+            "agent-user-status",
+            "--correlation-id",
+            "corr-1",
+            "--dry-run",
+        ]
+    ]
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-013")
+def test_parse_user_reply_forwards_schema(monkeypatch) -> None:
+    calls = []
+    monkeypatch.setattr(mcp, "call_agent_imessage", lambda args: calls.append(args) or {"ok": True})
+    schema = '{"questions":[{"prompt":"Pick","options":[{"label":"One"}]}]}'
+
+    assert mcp.tool_call("parse_user_reply", {"reply": "A1", "answer_schema_json": schema}) == {"ok": True}
+
+    assert calls == [["parse-reply", "A1", "--answer-schema-json", schema]]
+
+
 @pytest.mark.requirement("FR-age-001")
 def test_wait_for_user_reply_forwards_scoped_recipient(monkeypatch) -> None:
     calls = []

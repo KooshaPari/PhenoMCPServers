@@ -23,20 +23,11 @@ from agent_user_status.agent_imessage_core import (
     write_json_file,
 )
 from agent_user_status.gaze_context import annotate_event_with_gaze, is_gaze_reliable_event
+from agent_user_status.jsonl_tail import tail_jsonl
 
 
 def read_action_events(limit: int = 200) -> list[dict[str, Any]]:
-    if not ACTION_LOG_PATH.exists():
-        return []
-    events: list[dict[str, Any]] = []
-    for line in ACTION_LOG_PATH.read_text(encoding="utf-8").splitlines()[-limit:]:
-        try:
-            event = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(event, dict):
-            events.append(event)
-    return events
+    return tail_jsonl(ACTION_LOG_PATH, limit=limit)
 
 
 def recent_action_records(reliable_only: bool = False) -> list[dict[str, Any]]:

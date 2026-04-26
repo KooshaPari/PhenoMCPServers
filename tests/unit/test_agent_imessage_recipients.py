@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from agent_user_status import agent_imessage_commands as commands
 from agent_user_status import agent_imessage_core as core
 
@@ -65,6 +67,38 @@ def test_notify_dry_run_defaults_to_koosha(monkeypatch, capsys, tmp_path) -> Non
     assert payload["message"] == "hello"
 
 
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-011")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-013")
+def test_notify_structured_dry_run_renders_envelope(monkeypatch, capsys, tmp_path) -> None:
+    monkeypatch.setattr(core, "CONFIG_PATH", tmp_path / "missing.env")
+    schema = json.dumps({"questions": [{"prompt": "Proceed?", "options": [{"label": "Yes"}, {"label": "No"}]}]})
+    args = commands.build_parser().parse_args(
+        [
+            "notify-structured",
+            "Need approval.",
+            "--project",
+            "agent-user-status",
+            "--task-id",
+            "FR-011",
+            "--session-id",
+            "sess-1",
+            "--correlation-id",
+            "corr-1",
+            "--answer-schema-json",
+            schema,
+            "--dry-run",
+        ]
+    )
+
+    assert args.func(args) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["recipient"] == "koosha"
+    assert payload["envelope"]["correlation_id"] == "corr-1"
+    assert "Project: agent-user-status" in payload["rendered_message"]
+    assert "A2: No" in payload["rendered_message"]
+
+
 @pytest.mark.requirement("FR-age-003")
 def test_notify_sponsor_requires_configured_contact(monkeypatch, capsys, tmp_path) -> None:
     monkeypatch.setattr(core, "CONFIG_PATH", tmp_path / "missing.env")
@@ -83,3 +117,25 @@ def test_wait_uses_recipient_scoped_state_file(monkeypatch, tmp_path) -> None:
 
     assert commands.command_wait(args) == 124
     assert not (tmp_path / "last_seen_message_id").exists()
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-013")
+def test_parse_reply_command_outputs_structured_selection(capsys) -> None:
+    schema = json.dumps(
+        {
+            "questions": [
+                {
+                    "prompt": "Pick targets",
+                    "kind": "multi_answer",
+                    "options": [{"label": "One"}, {"label": "Two"}, {"label": "Three"}],
+                }
+            ]
+        }
+    )
+    args = commands.build_parser().parse_args(["parse-reply", "A1 A3 please", "--answer-schema-json", schema])
+
+    assert args.func(args) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["selected_answer_ids"] == ["A1", "A3"]
+    assert payload["freeform_text"] == "please"

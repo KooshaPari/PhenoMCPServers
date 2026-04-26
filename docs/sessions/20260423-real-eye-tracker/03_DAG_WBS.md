@@ -60,6 +60,36 @@
    - active session/stale hook/child-agent display in native panel. Done.
 20. Build the modularity lane for files above the 350-line target after gates
    are stable.
+21. Build the agent-imessage async comm-layer lane:
+   - define `AgentMessageEnvelope` with `message_id`, `correlation_id`,
+     `sender`, `session_id`, `task_id`, `project`, `repo_path`, `urgency`,
+     `expires_at`, `answer_schema`, and redacted preview/hash fields.
+   - add CLI/MCP send paths that accept the envelope and render human-readable
+     text with project/session/task context at the top.
+   - persist delivery receipts, response correlation, retry state, expiration,
+     and deletion/tombstone state in bounded JSONL or SQLite storage.
+   - add best-effort user-side echo deletion for sender artifacts, with an
+     explicit `unsupported` state when macOS Messages permissions or schema
+     changes make deletion unsafe.
+   - implement elicitation structs for `single_question`, `multi_question`,
+     `single_answer`, and `multi_answer`, using stable `A1`/`A2`/`A3` option IDs
+     plus optional freeform fallback.
+   - expose parsing helpers that turn user replies back into structured answer
+     selections and preserve uncertainty/confidence.
+22. Build the Codex hooks integration lane:
+   - inventory current Codex experimental hook payloads and map them to the
+     session bus schema.
+   - publish session start/stop, tool call, stop-decision, user-elicitation,
+     pause/resume, and child-agent spawn/close events.
+   - replace blocking stop-hook behavior with cached/bounded reads, degraded-mode
+     backoff, and explicit timeout telemetry.
+   - add hook contract tests and local doctor checks for installed hook scripts.
+23. Build the stop-hook performance remediation lane:
+   - replace unbounded `read_text().splitlines()[-limit:]` reads with tail-seek
+     bounded reads.
+   - cache repeated recent-action reads within one hook process.
+   - rotate or compact action/session JSONL logs by size and retention policy.
+   - add a latency regression test for `agent-imessage hook-decision`.
 
 Critical path:
 - Governance template hardening blocks consistent review of privacy-sensitive
@@ -67,5 +97,9 @@ Critical path:
 - The live `~/.local` install must be refreshed before `doctor` can pass the
   installed-layout check for newly added support/native files.
 - Subagent wrappers still need to call the new child lifecycle helpers.
+- The async comm-layer envelope should land before broad hook expansion so hook
+  events and iMessage prompts share one schema instead of diverging.
+- Stop-hook O(N) log reads must be fixed before expanding Codex hook usage,
+  otherwise more lifecycle events will amplify the current timeout mode.
 - Full release distribution still needs real signing identities, notarization
   credentials, icon assets, and final install-channel manifests.

@@ -10,6 +10,9 @@ import time
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from agent_user_status.agent_imessage_comm_commands import (
+    add_comm_parsers,
+)
 from agent_user_status.agent_imessage_core import (
     ACTION_LEARNING_PATH,
     LEARNING_PATH,
@@ -49,6 +52,7 @@ from agent_user_status.agent_imessage_status import (
     hook_decision_result,
     status_from_override,
 )
+from agent_user_status.jsonl_tail import tail_jsonl
 
 
 def command_notify(args: argparse.Namespace) -> int:
@@ -203,14 +207,9 @@ def command_log_response(args: argparse.Namespace) -> int:
         handle.write(json.dumps(event) + "\n")
 
     events: list[dict[str, Any]] = []
-    if RESPONSE_LOG_PATH.exists():
-        for line in RESPONSE_LOG_PATH.read_text(encoding="utf-8").splitlines()[-200:]:
-            try:
-                item = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if isinstance(item.get("response_minutes"), (int, float)):
-                events.append(item)
+    for item in tail_jsonl(RESPONSE_LOG_PATH, limit=200):
+        if isinstance(item.get("response_minutes"), (int, float)):
+            events.append(item)
     values = sorted(float(item["response_minutes"]) for item in events)
     if values:
         mid = len(values) // 2
@@ -324,6 +323,8 @@ def build_parser() -> argparse.ArgumentParser:
     notify.add_argument("--recipient", choices=RECIPIENT_ROLES, default="koosha")
     notify.add_argument("--dry-run", action="store_true")
     notify.set_defaults(func=command_notify)
+
+    add_comm_parsers(sub)
 
     inbox = sub.add_parser("inbox", help="Read recent scoped-recipient conversation")
     inbox.add_argument("--recipient", choices=RECIPIENT_ROLES, default="koosha")

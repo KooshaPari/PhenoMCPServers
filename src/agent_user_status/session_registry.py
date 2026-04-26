@@ -12,6 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from agent_user_status.jsonl_tail import tail_jsonl
 from agent_user_status.session_privacy import safe_metadata, safe_text
 
 DEFAULT_TTL_SECONDS = 300
@@ -175,13 +176,7 @@ def recent_session_records(
         return []
     bounded_limit = max(1, min(int(limit), 2000))
     records: list[dict[str, Any]] = []
-    for line in path.read_text(encoding="utf-8").splitlines()[-bounded_limit:]:
-        try:
-            record = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if not isinstance(record, dict):
-            continue
+    for record in tail_jsonl(path, limit=bounded_limit):
         if session_id is not None and record.get("session_id") != session_id:
             continue
         if kind is not None and record.get("kind") != kind:

@@ -14,6 +14,7 @@ from typing import Any
 from agent_user_status.agent_imessage_learning import action_environment_context
 from agent_user_status.gaze_context import annotate_event_with_gaze, is_gaze_reliable_event
 from agent_user_status.gaze_drift_correction import persist_drift_correction
+from agent_user_status.jsonl_tail import tail_jsonl
 
 STATE_DIR = Path(os.environ.get("AGENT_IMESSAGE_STATE_DIR", "~/.local/share/agent-imessage/state")).expanduser()
 CORRECTION_EVENTS_PATH = STATE_DIR / "correction_events.jsonl"
@@ -117,17 +118,9 @@ def store_correction_event(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def recent_correction_events(limit: int = 80, reliable_only: bool = False) -> list[dict[str, Any]]:
-    if not CORRECTION_EVENTS_PATH.exists():
-        return []
-    lines = CORRECTION_EVENTS_PATH.read_text(encoding="utf-8").splitlines()[-limit:]
     events: list[dict[str, Any]] = []
-    for line in lines:
-        try:
-            event = json.loads(line)
-        except json.JSONDecodeError:
+    for event in tail_jsonl(CORRECTION_EVENTS_PATH, limit=limit):
+        if reliable_only and not is_gaze_reliable_event(event):
             continue
-        if isinstance(event, dict):
-            if reliable_only and not is_gaze_reliable_event(event):
-                continue
-            events.append(event)
+        events.append(event)
     return events

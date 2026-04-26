@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from agent_user_status.agent_imessage_core import RECIPIENT_ROLES, require_recipient_role
+from agent_user_status.agent_imessage_mcp_comm import COMM_TOOL_NAMES, COMM_TOOLS, comm_tool_call
 from agent_user_status.agent_imessage_mcp_sessions import SESSION_TOOL_NAMES, SESSION_TOOLS, session_tool_call
 from agent_user_status.bootstrap_support import agent_imessage_bin
 
@@ -95,6 +96,7 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    *COMM_TOOLS,
     {
         "name": "set_user_status",
         "description": "Set a manual response-likelihood override.",
@@ -187,6 +189,8 @@ TOOLS: list[dict[str, Any]] = [
 def tool_call(name: str, args: dict[str, Any]) -> dict[str, Any]:
     if name in SESSION_TOOL_NAMES:
         return session_tool_call(name, args, call_agent_imessage)
+    if name in COMM_TOOL_NAMES:
+        return comm_tool_call(name, args, call_agent_imessage)
     if name == "user_status":
         return redact_agent_payload(call_agent_imessage(["status", "--json"]))
     if name == "hook_decision":

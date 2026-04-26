@@ -80,6 +80,66 @@ in tests, PRs, and architectural documentation.
 
 ---
 
+### FR-AGENT_USER_STATUS-011
+
+**Description:** Structured agent-to-user message envelopes with sender/session/task/project metadata
+
+**Status:** IMPLEMENTED
+
+**Test Traces:** `tests/unit/test_agent_imessage_envelope.py`, `tests/unit/test_agent_imessage_recipients.py`, `tests/unit/test_agent_imessage_mcp.py`
+
+---
+
+### FR-AGENT_USER_STATUS-012
+
+**Description:** User-side echo cleanup and deletion lifecycle for agent-sent Messages/iMessage artifacts
+
+**Status:** PARTIAL
+
+**Test Traces:** `tests/unit/test_agent_imessage_outbox.py`, `tests/unit/test_agent_imessage_recipients.py`
+
+---
+
+### FR-AGENT_USER_STATUS-013
+
+**Description:** Elicitation schemas for multi-question and multi-answer prompts using stable A1/A2/A3 option IDs
+
+**Status:** IMPLEMENTED
+
+**Test Traces:** `tests/unit/test_agent_imessage_elicitation.py`, `tests/unit/test_agent_imessage_recipients.py`, `tests/unit/test_agent_imessage_mcp.py`
+
+---
+
+### FR-AGENT_USER_STATUS-014
+
+**Description:** Async communication queue with delivery receipts, response correlation, retries, and expiration
+
+**Status:** PARTIAL
+
+**Test Traces:** `tests/unit/test_agent_imessage_outbox.py`
+
+---
+
+### FR-AGENT_USER_STATUS-015
+
+**Description:** Codex experimental hook integration for lifecycle events, stop decisions, user elicitation, and pause/resume control
+
+**Status:** IMPLEMENTED
+
+**Test Traces:** `tests/unit/test_codex_hooks.py`
+
+---
+
+### FR-AGENT_USER_STATUS-016
+
+**Description:** Stop-hook performance hardening with bounded state reads, rotation, caching, and degradation backoff
+
+**Status:** PARTIAL
+
+**Test Traces:** `tests/unit/test_jsonl_tail.py`
+
+---
+
 ### FR-AGENT_USER_STATUS-007
 
 **Description:** User interface components
