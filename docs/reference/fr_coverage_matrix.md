@@ -3,8 +3,8 @@
 ## Summary
 
 - **Total canonical FRs:** 14
-- **Covered (>=1 canonical marker):** 12
-- **Missing canonical marker coverage:** 2
+- **Covered (>=1 canonical marker):** 13
+- **Missing canonical marker coverage:** 1
 - **Noncanonical requirement markers:** 0
 - **Orphan test files:** 0
 
@@ -25,7 +25,7 @@
 | `FR-AGENT_USER_STATUS-014` | Async communication queue with delivery receipts, response correlation, retries, and expiration | PARTIAL | COVERED | 3 | `tests/unit/test_agent_imessage_outbox.py`<br>`tests/unit/test_agent_imessage_recipients.py` |  |
 | `FR-AGENT_USER_STATUS-015` | Codex experimental hook integration for lifecycle events, permission/tool telemetry, and stop decisions | IMPLEMENTED | COVERED | 5 | `tests/unit/test_codex_hooks.py` |  |
 | `FR-AGENT_USER_STATUS-016` | Stop-hook performance hardening with bounded state reads, rotation, caching, and degradation backoff | PARTIAL | COVERED | 2 | `tests/unit/test_jsonl_tail.py` |  |
-| `FR-AGENT_USER_STATUS-007` | User interface components | SCAFFOLD | MISSING | 0 | (none) | Scaffold without direct tests yet. |
+| `FR-AGENT_USER_STATUS-007` | User interface components | IMPLEMENTED | COVERED | 5 | `tests/unit/test_monitor_ui.py` | Browser monitor UI, `/monitor` route, privacy route, derived eye-state data contract, and native tray/popup source coverage. |
 
 ## Noncanonical Marker Debt
 

@@ -144,9 +144,9 @@ in tests, PRs, and architectural documentation.
 
 **Description:** User interface components
 
-**Status:** SCAFFOLD
+**Status:** IMPLEMENTED
 
-**Test Traces:** (pending implementation)
+**Test Traces:** `tests/unit/test_monitor_ui.py`
 
 ---
 
