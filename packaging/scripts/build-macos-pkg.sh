@@ -82,6 +82,10 @@ validate_payload_contents() {
   for binary in agent-user-status agent-imessage agent-user-statusd; do
     [[ -x "$root/usr/local/bin/$binary" ]] || fail "payload missing executable: /usr/local/bin/$binary"
   done
+  [[ -d "$root/usr/local/bin/agent_user_status" ]] || \
+    fail "payload missing Python support modules: /usr/local/bin/agent_user_status"
+  [[ -f "$root/usr/local/bin/agent_user_status/agent_imessage_envelope.py" ]] || \
+    fail "payload missing support module: agent_imessage_envelope.py"
 
   if command -v plutil >/dev/null 2>&1; then
     plutil -lint "$info" >/dev/null

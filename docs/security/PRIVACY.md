@@ -27,7 +27,7 @@ confidential local data.
 - Numeric scores are bounded.
 - `/status` served by `statusd` redacts message preview and chat metadata.
 - `/correction/event` accepts `cursor_click`, `cursor_target`, `keyboard_activity`,
-  `audio_activity`, and `explicit_alignment` events.
+  `media_activity`, and `explicit_alignment` events.
 - `/correction/events` exposes only derived correction events with bounded fields
   and no raw content.
 
@@ -37,7 +37,7 @@ confidential local data.
   `screen_x`, `screen_y`, `screen_width`, and `screen_height`.
 - Keyboard correction events must omit key contents (for example `key`, `typed_text`,
   `text`, `chords`, or any raw characters).
-- Audio correction events must omit waveforms and transcripts (no `audio`,
+- Media correction events must omit waveforms and transcripts (no `audio`,
   `samples`, `transcript`, or text stream fields).
 - `harmony_hint` is an advisory flag. Only when true should coordinate events be
   used as high-confidence drift-correction anchors.

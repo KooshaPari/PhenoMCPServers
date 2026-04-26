@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from agent_user_status.bootstrap_support import agent_imessage_bin, imsg_bin, runtime_bin_dir
+import pytest
+
+from agent_user_status.bootstrap_doctor import BOOTSTRAP_HELPER_MODULES
+from agent_user_status.bootstrap_support import SUPPORT_MODULES, agent_imessage_bin, imsg_bin, runtime_bin_dir
 
 
 @pytest.mark.requirement("FR-age-001")
@@ -32,3 +35,26 @@ def test_imsg_bin_explicit_override_wins(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("IMSG_BIN", str(tmp_path / "imsg-wrapper"))
 
     assert imsg_bin() == tmp_path / "imsg-wrapper"
+
+
+@pytest.mark.requirement("FR-age-002")
+def test_support_manifest_includes_decomposed_runtime_modules() -> None:
+    support_expected = {
+        "agent_imessage_action_learning.py",
+        "agent_imessage_comm_commands.py",
+        "agent_imessage_elicitation.py",
+        "agent_imessage_envelope.py",
+        "agent_imessage_mcp_comm.py",
+        "agent_imessage_mcp_presence.py",
+        "agent_imessage_outbox.py",
+        "agent_imessage_presence_commands.py",
+        "agent_imessage_signals.py",
+        "codex_hooks.py",
+        "gaze_projection_types.py",
+        "jsonl_tail.py",
+        "statusd_eye.py",
+    }
+    helper_expected = {"bootstrap_doctor.py", "bootstrap_eye_setup.py", "bootstrap_runtime.py"}
+
+    assert support_expected.issubset(set(SUPPORT_MODULES))
+    assert helper_expected.issubset(set(BOOTSTRAP_HELPER_MODULES))

@@ -2,7 +2,7 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup|resume",
+        "matcher": "startup|resume|clear",
         "hooks": [
           {
             "type": "command",
@@ -14,6 +14,18 @@
       }
     ],
     "PreToolUse": [
+      {
+        "matcher": "Bash|apply_patch|Edit|Write|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/agent_imessage_hook.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
       {
         "matcher": "Bash|apply_patch|Edit|Write|mcp__.*",
         "hooks": [
@@ -54,7 +66,7 @@
           {
             "type": "command",
             "command": "python3 \"$(git rev-parse --show-toplevel)/.codex/hooks/agent_imessage_hook.py\"",
-            "timeout": 5,
+            "timeout": 12,
             "statusMessage": "Checking user response state"
           }
         ]

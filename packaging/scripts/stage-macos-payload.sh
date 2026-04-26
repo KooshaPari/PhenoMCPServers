@@ -132,6 +132,7 @@ BINARIES=(
 for binary in "${BINARIES[@]}"; do
   [[ -x "$BIN_SOURCE/$binary" ]] || fail "missing executable: $BIN_SOURCE/$binary"
 done
+[[ -d "$BIN_SOURCE/agent_user_status" ]] || fail "missing Python support modules: $BIN_SOURCE/agent_user_status"
 
 log "mode: $MODE"
 log "payload root: $PAYLOAD_ROOT"
@@ -150,6 +151,7 @@ copy_item "$APP_SOURCE" "$PAYLOAD_ROOT/Applications/Agent User Status.app"
 for binary in "${BINARIES[@]}"; do
   copy_item "$BIN_SOURCE/$binary" "$PAYLOAD_ROOT/usr/local/bin/$binary"
 done
+copy_item "$BIN_SOURCE/agent_user_status" "$PAYLOAD_ROOT/usr/local/bin/agent_user_status"
 
 if [[ "$MODE" == "stage" ]]; then
   find "$PAYLOAD_ROOT" -type d -exec chmod 0755 {} +

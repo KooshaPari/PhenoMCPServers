@@ -77,6 +77,9 @@ def handle_codex_hook(payload: dict[str, Any]) -> dict[str, Any]:
         metadata=metadata,
     )
 
+    if event in {"PreToolUse", "PermissionRequest", "PostToolUse"}:
+        return {}
+
     if event != "Stop":
         return {"continue": True}
 

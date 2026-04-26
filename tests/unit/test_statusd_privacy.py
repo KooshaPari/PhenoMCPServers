@@ -45,7 +45,7 @@ def post_json(authority: str, path: str, payload: dict[str, object]) -> tuple[in
         ("/signal", {"name": "eye_tracking", "score": 0.7, "state": "derived", "screenshot": "png"}),
         ("/session/heartbeat", {"session_id": "codex", "status": "working", "transcript": "private"}),
         ("/session/heartbeat", {"session_id": "codex", "status": "working", "biometric": "template"}),
-        ("/correction/event", {"kind": "audio_activity", "score": 0.6, "audio": "waveform"}),
+        ("/correction/event", {"kind": "media_activity", "score": 0.6, "audio": "waveform"}),
         (
             "/correction/event",
             {
@@ -72,6 +72,28 @@ def test_privacy_sensitive_routes_reject_raw_payloads(
     assert data["ok"] is False
     assert "raw sensor/biometric payload rejected" in str(data["error"])
     assert "policy" in data
+
+
+@pytest.mark.requirement("FR-age-003")
+def test_correction_event_accepts_derived_media_activity_without_raw_audio(statusd_server: str) -> None:
+    status, data = post_json(
+        statusd_server,
+        "/correction/event",
+        {
+            "kind": "media_activity",
+            "score": 0.62,
+            "state": "smoke_media_activity",
+            "harmony_hint": False,
+            "max_age_seconds": 30,
+        },
+    )
+
+    assert status == 200
+    event = data["event"]
+    assert event["kind"] == "media_activity"
+    assert event["state"] == "smoke_media_activity"
+    assert "audio" not in json.dumps(event)
+    assert "transcript" not in json.dumps(event)
 
 
 @pytest.mark.requirement("FR-age-004")

@@ -92,16 +92,16 @@ if grep -q '"text"' /tmp/agent-user-status-smoke-keyboard.json; then
   false
 fi
 
-post_status_code /tmp/agent-user-status-smoke-audio.json "200" \
+post_status_code /tmp/agent-user-status-smoke-media.json "200" \
   -X POST http://127.0.0.1:8765/correction/event \
   -H 'content-type: application/json' \
-  -d '{"kind":"audio_activity","score":0.62,"state":"smoke_audio_activity","harmony_hint":false,"max_age_seconds":30}'
-grep -q '"kind": "audio_activity"' /tmp/agent-user-status-smoke-audio.json
-grep -q '"state": "smoke_audio_activity"' /tmp/agent-user-status-smoke-audio.json
-if grep -q '"audio"' /tmp/agent-user-status-smoke-audio.json; then
+  -d '{"kind":"media_activity","score":0.62,"state":"smoke_media_activity","harmony_hint":false,"max_age_seconds":30}'
+grep -q '"kind": "media_activity"' /tmp/agent-user-status-smoke-media.json
+grep -q '"state": "smoke_media_activity"' /tmp/agent-user-status-smoke-media.json
+if grep -q '"audio"' /tmp/agent-user-status-smoke-media.json; then
   false
 fi
-if grep -q '"transcript"' /tmp/agent-user-status-smoke-audio.json; then
+if grep -q '"transcript"' /tmp/agent-user-status-smoke-media.json; then
   false
 fi
 
@@ -110,7 +110,7 @@ test "${status_code}" = "200"
 grep -q '"smoke_cursor_click"' /tmp/agent-user-status-smoke-correction-events.json
 grep -q '"smoke_cursor_target"' /tmp/agent-user-status-smoke-correction-events.json
 grep -q '"smoke_keyboard_activity"' /tmp/agent-user-status-smoke-correction-events.json
-grep -q '"smoke_audio_activity"' /tmp/agent-user-status-smoke-correction-events.json
+grep -q '"smoke_media_activity"' /tmp/agent-user-status-smoke-correction-events.json
 
 curl -fsS -X POST http://127.0.0.1:8765/dev/eye \
   -H 'content-type: application/json' \

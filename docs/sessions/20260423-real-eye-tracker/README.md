@@ -65,8 +65,8 @@ The correction event contract is now explicit in the backend (`POST /correction/
     context (no raw keys, no text payloads).
   - Use `score`, `max_age_seconds`, `state`, `window_owner`, `window_role`,
     `input_modality`, and optional `harmony_hint`.
-- Audio correction:
-  - `kind: audio_activity` records only coarse attention-state cues.
+- Media correction:
+  - `kind: media_activity` records only coarse attention-state cues.
   - Use only envelope-style fields such as `score`, `max_age_seconds`, `state`,
     and optional `harmony_hint`; never audio content or transcripts.
 
@@ -78,8 +78,8 @@ Current minimum payloads:
   `{"kind":"cursor_target","score":0.82,"max_age_seconds":30,"harmony_hint":true,"screen_x":520,"screen_y":240,"screen_width":1440,"screen_height":900}`
 - keyboard_activity:
   `{"kind":"keyboard_activity","score":0.65,"max_age_seconds":30,"state":"keyboard_activity","window_owner":"Chrome","window_role":"browser","harmony_hint":false}`
-- audio_activity:
-  `{"kind":"audio_activity","score":0.58,"max_age_seconds":30,"state":"speech_detected","harmony_hint":false}`
+- media_activity:
+  `{"kind":"media_activity","score":0.58,"max_age_seconds":30,"state":"media_detected","harmony_hint":false}`
 
 The tracker still never persists or transmits raw camera frames, raw audio, raw text,
 or biometric streams. Correction events are short-lived context hints, stored as

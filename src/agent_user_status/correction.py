@@ -76,11 +76,11 @@ def screen_coord(payload: dict[str, Any]) -> dict[str, float]:
 def store_correction_event(payload: dict[str, Any]) -> dict[str, Any]:
     kind = str(payload.get("kind", ""))
     allowed_kinds = {
-        "audio_activity",
         "cursor_click",
         "cursor_target",
         "explicit_alignment",
         "keyboard_activity",
+        "media_activity",
     }
     if kind not in allowed_kinds:
         raise ValueError(f"kind must be one of {', '.join(sorted(allowed_kinds))}")

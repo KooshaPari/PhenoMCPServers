@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 import sys
@@ -12,6 +13,7 @@ from pathlib import Path
 
 from agent_user_status.bootstrap_support import (
     PLIST_NAMES,
+    SUPPORT_MODULES,
     BootstrapPaths,
     installed_runtime_paths,
     installed_support_paths,
@@ -37,7 +39,11 @@ def installed_bootstrap_helper_paths(paths: BootstrapPaths) -> list[Path]:
 
 
 def py_compile_command(paths: BootstrapPaths) -> int:
-    sources = [*source_runtime_paths(paths), *source_bootstrap_helper_paths(paths)]
+    sources = [
+        *source_runtime_paths(paths),
+        *source_bootstrap_helper_paths(paths),
+        *[paths.src / "agent_user_status" / filename for filename in SUPPORT_MODULES],
+    ]
     result = subprocess.run([sys.executable, "-m", "py_compile", *map(str, sources)], check=False)
     return result.returncode
 
@@ -87,6 +93,24 @@ def doctor_command(_: object) -> int:
         if missing:
             raise RuntimeError("installed runtime layout\n" + "\n".join(missing[:12]))
 
+    def check_installed_cli() -> None:
+        executable = paths.bin_dir / "agent-imessage"
+        result = subprocess.run(
+            [str(executable), "hook-decision", "--text", "agent complete"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+        if result.returncode != 0:
+            raise RuntimeError("installed agent-imessage failed\n" + (result.stderr or result.stdout)[:1000])
+        try:
+            payload = json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("installed agent-imessage returned non-JSON hook decision") from exc
+        if not payload.get("ok"):
+            raise RuntimeError("installed agent-imessage hook decision was not ok")
+
     def check_plists() -> None:
         for plist in paths.launchd_src.glob("*.plist"):
             if subprocess.run(["plutil", "-lint", str(plist)], check=False).returncode != 0:
@@ -118,6 +142,7 @@ def doctor_command(_: object) -> int:
     else:
         print("skip swift compile (macOS only)")
     check("installed runtime layout", check_layout)
+    check("installed CLI imports", check_installed_cli)
     if sys.platform == "darwin":
         check("plists", check_plists)
     else:
