@@ -12,7 +12,7 @@ mcp = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(mcp)
 
 
-@pytest.mark.requirement("FR-age-003")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_redact_agent_payload_removes_status_preview_and_chat() -> None:
     payload = {
         "ok": True,
@@ -28,7 +28,7 @@ def test_redact_agent_payload_removes_status_preview_and_chat() -> None:
     assert redacted["data"] == {"mode": "near"}
 
 
-@pytest.mark.requirement("FR-age-001")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-001")
 def test_user_status_tool_redacts_cli_status(monkeypatch) -> None:
     monkeypatch.setattr(
         mcp,
@@ -48,7 +48,7 @@ def test_user_status_tool_redacts_cli_status(monkeypatch) -> None:
     assert result["data"] == {"mode": "near"}
 
 
-@pytest.mark.requirement("FR-age-003")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_generic_messages_mcp_requires_explicit_admin_env(monkeypatch) -> None:
     monkeypatch.delenv("AGENT_IMESSAGE_ALLOW_GENERIC_MESSAGES_MCP", raising=False)
     args = type("Args", (), {"client": "both", "with_messages": True})()
@@ -57,7 +57,7 @@ def test_generic_messages_mcp_requires_explicit_admin_env(monkeypatch) -> None:
         mcp.command_install(args)
 
 
-@pytest.mark.requirement("FR-age-001")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-001")
 def test_notify_user_defaults_to_koosha_role(monkeypatch) -> None:
     calls = []
     monkeypatch.setattr(mcp, "call_agent_imessage", lambda args: calls.append(args) or {"ok": True})
@@ -67,7 +67,7 @@ def test_notify_user_defaults_to_koosha_role(monkeypatch) -> None:
     assert calls == [["notify", "--recipient", "koosha", "hello"]]
 
 
-@pytest.mark.requirement("FR-age-003")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_notify_user_accepts_only_scoped_recipient_roles(monkeypatch) -> None:
     calls = []
     monkeypatch.setattr(mcp, "call_agent_imessage", lambda args: calls.append(args) or {"ok": True})
@@ -128,7 +128,7 @@ def test_parse_user_reply_forwards_schema(monkeypatch) -> None:
     assert calls == [["parse-reply", "A1", "--answer-schema-json", schema]]
 
 
-@pytest.mark.requirement("FR-age-001")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-001")
 def test_wait_for_user_reply_forwards_scoped_recipient(monkeypatch) -> None:
     calls = []
 
@@ -148,14 +148,15 @@ def test_wait_for_user_reply_forwards_scoped_recipient(monkeypatch) -> None:
     ]
 
 
-@pytest.mark.requirement("FR-age-001")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-001")
 def test_session_tools_are_exposed() -> None:
     names = {tool["name"] for tool in mcp.TOOLS}
 
     assert {"sessions", "session_heartbeat", "session_event", "session_scan", "session_events"} <= names
 
 
-@pytest.mark.requirement("FR-age-006")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-005")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-006")
 def test_session_heartbeat_tool_forwards_structured_cli_event(monkeypatch) -> None:
     calls = []
     monkeypatch.setattr(mcp, "call_agent_imessage", lambda args: calls.append(args) or {"ok": True})
@@ -192,7 +193,8 @@ def test_session_heartbeat_tool_forwards_structured_cli_event(monkeypatch) -> No
     ]
 
 
-@pytest.mark.requirement("FR-age-006")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-005")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-006")
 def test_session_events_tool_forwards_filters(monkeypatch) -> None:
     calls = []
     monkeypatch.setattr(mcp, "call_agent_imessage", lambda args: calls.append(args) or {"ok": True})

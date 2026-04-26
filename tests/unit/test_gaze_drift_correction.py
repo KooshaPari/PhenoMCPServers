@@ -13,7 +13,7 @@ class Screen:
     height: int
 
 
-@pytest.mark.requirement("FR-age-001")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_learn_drift_correction_uses_reliable_alignment_events() -> None:
     events = [
         {
@@ -64,7 +64,7 @@ def test_learn_drift_correction_uses_reliable_alignment_events() -> None:
     assert correction["reliability_score"] > 0.5
 
 
-@pytest.mark.requirement("FR-age-001")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_apply_drift_correction_clamps_to_screen_bounds() -> None:
     screen = Screen(width=1440, height=900)
 
@@ -73,7 +73,7 @@ def test_apply_drift_correction_clamps_to_screen_bounds() -> None:
     assert corrected == (0.0, 0.0)
 
 
-@pytest.mark.requirement("FR-age-006")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_learn_drift_correction_scores_terminal_windows_higher_than_browser_windows() -> None:
     screen = Screen(width=1440, height=900)
     terminal_events = [
@@ -116,7 +116,7 @@ def test_learn_drift_correction_scores_terminal_windows_higher_than_browser_wind
     assert terminal["reliability_score"] > browser["reliability_score"]
 
 
-@pytest.mark.requirement("FR-age-001")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_explicit_alignment_can_seed_passive_correction_during_recalibration_need() -> None:
     screen = Screen(width=1440, height=900)
     events = [

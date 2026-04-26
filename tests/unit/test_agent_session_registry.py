@@ -18,7 +18,7 @@ from agent_user_status.session_registry import (
 )
 
 
-@pytest.mark.requirement("FR-age-004")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-006")
 def test_heartbeat_appends_privacy_safe_jsonl(tmp_path) -> None:
     store_path = tmp_path / "sessions.jsonl"
 
@@ -41,7 +41,7 @@ def test_heartbeat_appends_privacy_safe_jsonl(tmp_path) -> None:
     assert "screenshot" not in json.dumps(record)
 
 
-@pytest.mark.requirement("FR-age-003")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_event_rejects_raw_transcript_or_screenshot_payloads(tmp_path) -> None:
     store_path = tmp_path / "sessions.jsonl"
 
@@ -64,7 +64,7 @@ def test_event_rejects_raw_transcript_or_screenshot_payloads(tmp_path) -> None:
     assert not store_path.exists()
 
 
-@pytest.mark.requirement("FR-age-003")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_recent_records_skip_malformed_lines_and_filter(tmp_path) -> None:
     store_path = tmp_path / "sessions.jsonl"
     append_session_heartbeat("a", status="working", store_path=store_path)
@@ -79,7 +79,7 @@ def test_recent_records_skip_malformed_lines_and_filter(tmp_path) -> None:
     assert [record["kind"] for record in records] == ["heartbeat", "event"]
 
 
-@pytest.mark.requirement("FR-age-006")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-006")
 def test_session_summaries_use_latest_heartbeat_and_event(tmp_path) -> None:
     store_path = tmp_path / "sessions.jsonl"
     stale_time = (datetime.now(UTC) - timedelta(minutes=10)).isoformat()
@@ -102,7 +102,7 @@ def test_session_summaries_use_latest_heartbeat_and_event(tmp_path) -> None:
     assert summaries[1]["fresh"] is False
 
 
-@pytest.mark.requirement("FR-age-006")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-006")
 def test_session_timeline_returns_oldest_to_newest_for_one_session(tmp_path) -> None:
     store_path = tmp_path / "sessions.jsonl"
     append_session_heartbeat("codex-123", status="starting", store_path=store_path)
@@ -115,7 +115,8 @@ def test_session_timeline_returns_oldest_to_newest_for_one_session(tmp_path) -> 
     assert timeline[-1]["event_type"] == "implementation"
 
 
-@pytest.mark.requirement("FR-age-006")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-005")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-006")
 def test_session_event_ring_returns_recent_records(tmp_path) -> None:
     store_path = tmp_path / "sessions.jsonl"
     heartbeat = append_session_heartbeat("codex-ring", status="working", store_path=store_path)
@@ -127,7 +128,7 @@ def test_session_event_ring_returns_recent_records(tmp_path) -> None:
     assert event["schema_version"] == 1
 
 
-@pytest.mark.requirement("FR-age-006")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-006")
 def test_session_snapshot_includes_summaries_events_and_timeline(tmp_path) -> None:
     store_path = tmp_path / "sessions.jsonl"
     append_session_heartbeat("parent", status="working", store_path=store_path)
@@ -142,7 +143,8 @@ def test_session_snapshot_includes_summaries_events_and_timeline(tmp_path) -> No
     assert snapshot["generated_at"]
 
 
-@pytest.mark.requirement("FR-age-006")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-005")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-006")
 def test_child_session_events_are_structured_and_privacy_safe(tmp_path) -> None:
     store_path = tmp_path / "sessions.jsonl"
 

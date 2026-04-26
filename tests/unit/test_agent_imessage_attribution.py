@@ -5,7 +5,7 @@ import pytest
 from agent_user_status import agent_imessage_learning as learning
 
 
-@pytest.mark.requirement("FR-age-006")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_coarse_attribution_marks_unresolved_terminal_as_uncertain(monkeypatch) -> None:
     monkeypatch.setattr(
         learning,
@@ -32,7 +32,7 @@ def test_coarse_attribution_marks_unresolved_terminal_as_uncertain(monkeypatch) 
     assert learning.attribution_status_text(attribution).startswith("uncertain:unresolved_terminal")
 
 
-@pytest.mark.requirement("FR-age-006")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_coarse_attribution_marks_gui_chat_without_terminal_guessing(monkeypatch) -> None:
     monkeypatch.setattr(
         learning,
@@ -59,7 +59,7 @@ def test_coarse_attribution_marks_gui_chat_without_terminal_guessing(monkeypatch
     assert "frontmost_messages_chat" in attribution["reasons"]
 
 
-@pytest.mark.requirement("FR-age-006")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_classify_window_role_prefers_terminal_and_chat_contexts() -> None:
     assert (
         learning.classify_window_role("Ghostty", {"agent": ["codex"], "coding": ["python"]})

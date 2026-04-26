@@ -2,12 +2,35 @@
 
 ## Summary
 
-- **Total FRs:** 0
-- **Covered (≥1 test):** 0
-- **Missing (0 tests):** 0
-- **Orphan tests:** 0
+- **Total canonical FRs:** 14
+- **Covered (>=1 canonical marker):** 12
+- **Missing canonical marker coverage:** 2
+- **Noncanonical requirement markers:** 0
+- **Orphan test files:** 0
 
 ## Coverage Matrix
 
-| FR ID | Description | Test Files | Status |
-|-------|-------------|-----------|--------|
+| FR ID | Description | Requirement Status | Coverage Status | Canonical Test Count | Canonical Test Files | Notes |
+|-------|-------------|--------------------|-----------------|----------------------|----------------------|-------|
+| `FR-AGENT_USER_STATUS-002` | HTTP/REST API endpoints | IMPLEMENTED | COVERED | 6 | `tests/unit/test_eye_publish.py`<br>`tests/unit/test_statusd_privacy.py`<br>`tests/unit/test_statusd_sessions.py` |  |
+| `FR-AGENT_USER_STATUS-004` | Caching layer with TTL support | SCAFFOLD | MISSING | 0 | (none) | Scaffold without direct tests yet. |
+| `FR-AGENT_USER_STATUS-001` | CLI interface and command dispatch | IMPLEMENTED | COVERED | 8 | `tests/unit/test_agent_imessage_mcp.py`<br>`tests/unit/test_agent_imessage_recipients.py`<br>`tests/unit/test_agent_imessage_session_commands.py`<br>`tests/unit/test_bootstrap_support.py` |  |
+| `FR-AGENT_USER_STATUS-009` | Configuration management | IMPLEMENTED | COVERED | 6 | `tests/unit/test_agent_imessage_recipients.py`<br>`tests/unit/test_bootstrap_support.py` |  |
+| `FR-AGENT_USER_STATUS-006` | Persistent data storage | IMPLEMENTED | COVERED | 16 | `tests/unit/test_agent_imessage_mcp.py`<br>`tests/unit/test_agent_session_registry.py`<br>`tests/unit/test_state_retention.py`<br>`tests/unit/test_statusd_privacy.py`<br>`tests/unit/test_statusd_sessions.py` |  |
+| `FR-AGENT_USER_STATUS-005` | Event streaming and pub/sub | IMPLEMENTED | COVERED | 5 | `tests/unit/test_agent_imessage_mcp.py`<br>`tests/unit/test_agent_imessage_session_commands.py`<br>`tests/unit/test_agent_session_registry.py` |  |
+| `FR-AGENT_USER_STATUS-010` | Monitoring and observability | IMPLEMENTED | COVERED | 37 | `tests/unit/test_agent_imessage_attribution.py`<br>`tests/unit/test_agent_imessage_mcp.py`<br>`tests/unit/test_agent_session_registry.py`<br>`tests/unit/test_agent_session_scan.py`<br>`tests/unit/test_eye_smoothing.py`<br>`tests/unit/test_gaze_drift_correction.py`<br>`tests/unit/test_gaze_evaluation.py`<br>`tests/unit/test_gaze_projection.py`<br>`tests/unit/test_head_pose_telemetry.py`<br>`tests/unit/test_statusd_privacy.py`<br>`tests/unit/test_webcam_eye_tracker.py`<br>`tests/unit/test_webcam_probe.py` |  |
+| `FR-AGENT_USER_STATUS-011` | Structured agent-to-user message envelopes with sender/session/task/project metadata | IMPLEMENTED | COVERED | 4 | `tests/unit/test_agent_imessage_envelope.py`<br>`tests/unit/test_agent_imessage_mcp.py`<br>`tests/unit/test_agent_imessage_recipients.py` |  |
+| `FR-AGENT_USER_STATUS-012` | User-side echo cleanup and deletion lifecycle for agent-sent Messages/iMessage artifacts | PARTIAL | COVERED | 1 | `tests/unit/test_agent_imessage_outbox.py` |  |
+| `FR-AGENT_USER_STATUS-013` | Elicitation schemas for multi-question and multi-answer prompts using stable A1/A2/A3 option IDs | IMPLEMENTED | COVERED | 7 | `tests/unit/test_agent_imessage_elicitation.py`<br>`tests/unit/test_agent_imessage_envelope.py`<br>`tests/unit/test_agent_imessage_mcp.py`<br>`tests/unit/test_agent_imessage_recipients.py` |  |
+| `FR-AGENT_USER_STATUS-014` | Async communication queue with delivery receipts, response correlation, retries, and expiration | PARTIAL | COVERED | 3 | `tests/unit/test_agent_imessage_outbox.py`<br>`tests/unit/test_agent_imessage_recipients.py` |  |
+| `FR-AGENT_USER_STATUS-015` | Codex experimental hook integration for lifecycle events, permission/tool telemetry, and stop decisions | IMPLEMENTED | COVERED | 5 | `tests/unit/test_codex_hooks.py` |  |
+| `FR-AGENT_USER_STATUS-016` | Stop-hook performance hardening with bounded state reads, rotation, caching, and degradation backoff | PARTIAL | COVERED | 2 | `tests/unit/test_jsonl_tail.py` |  |
+| `FR-AGENT_USER_STATUS-007` | User interface components | SCAFFOLD | MISSING | 0 | (none) | Scaffold without direct tests yet. |
+
+## Noncanonical Marker Debt
+
+No noncanonical requirement markers remain.
+
+## Orphan Test Files
+
+No orphan test files without requirement markers remain.

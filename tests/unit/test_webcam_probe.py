@@ -5,7 +5,7 @@ import pytest
 from agent_user_status.webcam_probe import summarize_presence_probe
 
 
-@pytest.mark.requirement("FR-age-001")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_presence_probe_reports_detected_samples() -> None:
     summary = summarize_presence_probe(
         camera=0,
@@ -26,7 +26,7 @@ def test_presence_probe_reports_detected_samples() -> None:
     assert summary.max_sample_confidence == 0.44
 
 
-@pytest.mark.requirement("FR-age-003")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_presence_probe_reports_missing_presence_without_sensitive_terms() -> None:
     summary = summarize_presence_probe(
         camera=0,

@@ -26,7 +26,7 @@ from urllib.parse import unquote
 
 MODE = sys.argv[1]
 ROOT = Path.cwd()
-DOC_ROOTS = [Path("README.md"), Path("docs"), Path("packaging")]
+DOC_ROOTS = [Path("README.md"), Path("FUNCTIONAL_REQUIREMENTS.md"), Path("docs"), Path("packaging")]
 FR_DOC = Path("docs/FUNCTIONAL_REQUIREMENTS.md")
 HOOKS_JSON = Path(".codex/hooks.json")
 
@@ -146,7 +146,9 @@ def validate_fr_markers(fr_blocks: dict[str, str]) -> None:
             canonical_seen.add(marker)
             if marker not in canonical_ids:
                 errors.append(f"{path}: marker {marker} is not defined in {FR_DOC}")
-        legacy_seen.update(LEGACY_MARKER_RE.findall(text))
+        for marker in LEGACY_MARKER_RE.findall(text):
+            legacy_seen.add(marker)
+            errors.append(f"{path}: legacy marker {marker} must use canonical FR-AGENT_USER_STATUS-*")
 
     for fr_id, block in fr_blocks.items():
         status_match = STATUS_RE.search(block)
@@ -172,6 +174,8 @@ def validate_stale_phrases() -> None:
         for phrase in stale_patterns:
             if phrase in text:
                 errors.append(f"{path}: stale validation phrase remains: {phrase}")
+        for marker in LEGACY_MARKER_RE.findall(text):
+            errors.append(f"{path}: legacy marker {marker} must use canonical FR-AGENT_USER_STATUS-*")
 
 
 if MODE in {"all", "links"}:

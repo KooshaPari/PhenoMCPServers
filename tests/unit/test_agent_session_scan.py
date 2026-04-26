@@ -5,7 +5,7 @@ import pytest
 from agent_user_status.session_scan import parse_ps_output, parse_tmux_panes, path_summary
 
 
-@pytest.mark.requirement("FR-age-005")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_parse_ps_output_keeps_agent_processes_without_args() -> None:
     output = """
       10     1    10 ??       /usr/local/bin/codex
@@ -21,7 +21,7 @@ def test_parse_ps_output_keeps_agent_processes_without_args() -> None:
     assert all("args" not in record for record in records)
 
 
-@pytest.mark.requirement("FR-age-005")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_parse_tmux_panes_redacts_full_cwd_by_default(tmp_path) -> None:
     repo = tmp_path / "agent-user-status"
     repo.mkdir()
@@ -42,7 +42,7 @@ def test_parse_tmux_panes_redacts_full_cwd_by_default(tmp_path) -> None:
     ]
 
 
-@pytest.mark.requirement("FR-age-005")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_path_summary_includes_cwd_only_when_requested(tmp_path) -> None:
     summary = path_summary(str(tmp_path / "repo"), include_cwd=False)
     debug_summary = path_summary(str(tmp_path / "repo"), include_cwd=True)

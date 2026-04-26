@@ -6,14 +6,14 @@ from agent_user_status.bootstrap_doctor import BOOTSTRAP_HELPER_MODULES
 from agent_user_status.bootstrap_support import SUPPORT_MODULES, agent_imessage_bin, imsg_bin, runtime_bin_dir
 
 
-@pytest.mark.requirement("FR-age-001")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-001")
 def test_runtime_bin_dir_defaults_to_local_bin(monkeypatch) -> None:
     monkeypatch.delenv("AGENT_USER_STATUS_BIN_DIR", raising=False)
 
     assert runtime_bin_dir() == Path.home() / ".local" / "bin"
 
 
-@pytest.mark.requirement("FR-age-002")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
 def test_agent_imessage_bin_uses_runtime_bin_dir(monkeypatch, tmp_path) -> None:
     monkeypatch.delenv("AGENT_IMESSAGE_BIN", raising=False)
     monkeypatch.setenv("AGENT_USER_STATUS_BIN_DIR", str(tmp_path / "bin"))
@@ -21,7 +21,7 @@ def test_agent_imessage_bin_uses_runtime_bin_dir(monkeypatch, tmp_path) -> None:
     assert agent_imessage_bin() == tmp_path / "bin" / "agent-imessage"
 
 
-@pytest.mark.requirement("FR-age-002")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
 def test_agent_imessage_bin_explicit_override_wins(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("AGENT_USER_STATUS_BIN_DIR", str(tmp_path / "bin"))
     monkeypatch.setenv("AGENT_IMESSAGE_BIN", str(tmp_path / "custom" / "agent-imessage"))
@@ -29,7 +29,7 @@ def test_agent_imessage_bin_explicit_override_wins(monkeypatch, tmp_path) -> Non
     assert agent_imessage_bin() == tmp_path / "custom" / "agent-imessage"
 
 
-@pytest.mark.requirement("FR-age-002")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
 def test_imsg_bin_explicit_override_wins(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("AGENT_USER_STATUS_BIN_DIR", str(tmp_path / "bin"))
     monkeypatch.setenv("IMSG_BIN", str(tmp_path / "imsg-wrapper"))
@@ -37,7 +37,7 @@ def test_imsg_bin_explicit_override_wins(monkeypatch, tmp_path) -> None:
     assert imsg_bin() == tmp_path / "imsg-wrapper"
 
 
-@pytest.mark.requirement("FR-age-002")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
 def test_support_manifest_includes_decomposed_runtime_modules() -> None:
     support_expected = {
         "agent_imessage_action_learning.py",

@@ -14,9 +14,9 @@ in tests, PRs, and architectural documentation.
 
 **Description:** HTTP/REST API endpoints
 
-**Status:** SCAFFOLD
+**Status:** IMPLEMENTED
 
-**Test Traces:** (pending implementation)
+**Test Traces:** `tests/unit/test_eye_publish.py`, `tests/unit/test_statusd_privacy.py`, `tests/unit/test_statusd_sessions.py`
 
 ---
 
@@ -34,9 +34,9 @@ in tests, PRs, and architectural documentation.
 
 **Description:** CLI interface and command dispatch
 
-**Status:** SCAFFOLD
+**Status:** IMPLEMENTED
 
-**Test Traces:** (pending implementation)
+**Test Traces:** `tests/unit/test_agent_imessage_mcp.py`, `tests/unit/test_agent_imessage_recipients.py`, `tests/unit/test_agent_imessage_session_commands.py`, `tests/unit/test_bootstrap_support.py`
 
 ---
 
@@ -44,9 +44,9 @@ in tests, PRs, and architectural documentation.
 
 **Description:** Configuration management
 
-**Status:** SCAFFOLD
+**Status:** IMPLEMENTED
 
-**Test Traces:** (pending implementation)
+**Test Traces:** `tests/unit/test_agent_imessage_recipients.py`, `tests/unit/test_bootstrap_support.py`
 
 ---
 
@@ -54,9 +54,9 @@ in tests, PRs, and architectural documentation.
 
 **Description:** Persistent data storage
 
-**Status:** SCAFFOLD
+**Status:** IMPLEMENTED
 
-**Test Traces:** (pending implementation)
+**Test Traces:** `tests/unit/test_agent_imessage_mcp.py`, `tests/unit/test_agent_session_registry.py`, `tests/unit/test_state_retention.py`, `tests/unit/test_statusd_privacy.py`, `tests/unit/test_statusd_sessions.py`
 
 ---
 
@@ -64,9 +64,9 @@ in tests, PRs, and architectural documentation.
 
 **Description:** Event streaming and pub/sub
 
-**Status:** SCAFFOLD
+**Status:** IMPLEMENTED
 
-**Test Traces:** (pending implementation)
+**Test Traces:** `tests/unit/test_agent_imessage_mcp.py`, `tests/unit/test_agent_imessage_session_commands.py`, `tests/unit/test_agent_session_registry.py`
 
 ---
 
@@ -74,9 +74,9 @@ in tests, PRs, and architectural documentation.
 
 **Description:** Monitoring and observability
 
-**Status:** SCAFFOLD
+**Status:** IMPLEMENTED
 
-**Test Traces:** (pending implementation)
+**Test Traces:** `tests/unit/test_agent_imessage_attribution.py`, `tests/unit/test_agent_imessage_mcp.py`, `tests/unit/test_agent_session_registry.py`, `tests/unit/test_agent_session_scan.py`, `tests/unit/test_eye_smoothing.py`, `tests/unit/test_gaze_drift_correction.py`, `tests/unit/test_gaze_evaluation.py`, `tests/unit/test_gaze_projection.py`, `tests/unit/test_head_pose_telemetry.py`, `tests/unit/test_statusd_privacy.py`, `tests/unit/test_webcam_eye_tracker.py`, `tests/unit/test_webcam_probe.py`
 
 ---
 
@@ -154,10 +154,10 @@ in tests, PRs, and architectural documentation.
 
 All tests MUST reference at least one FR using this marker:
 
-```rust
-// Traces to: FR-<REPOID>-NNN
-#[test]
-fn test_feature_name() { }
+```python
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-NNN")
+def test_feature_name() -> None:
+    ...
 ```
 
 Every FR must have at least one corresponding test. Use the pattern above to link test to requirement.

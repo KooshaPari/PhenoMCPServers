@@ -7,7 +7,8 @@ import pytest
 from agent_user_status import agent_imessage_session_commands as commands
 
 
-@pytest.mark.requirement("FR-age-006")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-001")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-005")
 def test_session_child_spawn_command_records_structured_event(monkeypatch, capsys) -> None:
     calls = []
 

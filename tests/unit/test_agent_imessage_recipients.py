@@ -13,7 +13,7 @@ def write_env(path: Path, body: str) -> None:
     path.write_text(body, encoding="utf-8")
 
 
-@pytest.mark.requirement("FR-age-002")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
 def test_load_config_keeps_koosha_defaults(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(core, "CONFIG_PATH", tmp_path / "missing.env")
 
@@ -26,7 +26,7 @@ def test_load_config_keeps_koosha_defaults(monkeypatch, tmp_path) -> None:
     assert config.name == "Koosha"
 
 
-@pytest.mark.requirement("FR-age-002")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
 def test_load_recipient_config_reads_scoped_sponsor_values(monkeypatch, tmp_path) -> None:
     env_path = tmp_path / "agent-imessage.env"
     write_env(
@@ -53,7 +53,7 @@ def test_load_recipient_config_reads_scoped_sponsor_values(monkeypatch, tmp_path
     assert koosha.phone_e164 == "+15550000000"
 
 
-@pytest.mark.requirement("FR-age-001")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-001")
 def test_notify_dry_run_defaults_to_koosha(monkeypatch, capsys, tmp_path) -> None:
     monkeypatch.setattr(core, "CONFIG_PATH", tmp_path / "missing.env")
     monkeypatch.setattr(commands, "CONFIG_PATH", tmp_path / "missing.env", raising=False)
@@ -99,7 +99,7 @@ def test_notify_structured_dry_run_renders_envelope(monkeypatch, capsys, tmp_pat
     assert "A2: No" in payload["rendered_message"]
 
 
-@pytest.mark.requirement("FR-age-003")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-001")
 def test_notify_sponsor_requires_configured_contact(monkeypatch, capsys, tmp_path) -> None:
     monkeypatch.setattr(core, "CONFIG_PATH", tmp_path / "missing.env")
     args = commands.build_parser().parse_args(["notify", "--recipient", "sponsor", "hello", "--dry-run"])
@@ -108,7 +108,7 @@ def test_notify_sponsor_requires_configured_contact(monkeypatch, capsys, tmp_pat
     assert "No contact configured for recipient role 'sponsor'" in capsys.readouterr().err
 
 
-@pytest.mark.requirement("FR-age-006")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-014")
 def test_wait_uses_recipient_scoped_state_file(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(commands, "STATE_DIR", tmp_path)
     monkeypatch.setattr(commands, "load_recipient_config", lambda _role: core.Config("sponsor", "", "", "", "Sponsor"))

@@ -10,7 +10,7 @@ from agent_user_status.gaze_evaluation import (
 )
 
 
-@pytest.mark.requirement("FR-age-005")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_evaluation_counters_report_rejection_reasons_per_target() -> None:
     counters = EvaluationCounters()
     first = counters.begin_target(1, 100, 100)
@@ -37,7 +37,7 @@ def test_evaluation_counters_report_rejection_reasons_per_target() -> None:
     assert summary["targets"][0]["rejected"]["settling"] == 2
 
 
-@pytest.mark.requirement("FR-age-005")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_stuck_detector_reports_repeated_then_stuck_derived_coordinates() -> None:
     detector = GazeSampleStuckDetector(repeated_threshold=2, stuck_threshold=4)
 
@@ -51,7 +51,7 @@ def test_stuck_detector_reports_repeated_then_stuck_derived_coordinates() -> Non
     }
 
 
-@pytest.mark.requirement("FR-age-005")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_evaluation_counters_include_sample_health_totals() -> None:
     counters = EvaluationCounters()
     target = counters.begin_target(1, 100, 100)
@@ -70,7 +70,7 @@ def test_evaluation_counters_include_sample_health_totals() -> None:
     }
 
 
-@pytest.mark.requirement("FR-age-005")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_stuck_detector_reset_starts_new_sample_sequence() -> None:
     detector = GazeSampleStuckDetector(repeated_threshold=2, stuck_threshold=3)
 
@@ -85,7 +85,7 @@ def test_stuck_detector_reset_starts_new_sample_sequence() -> None:
     }
 
 
-@pytest.mark.requirement("FR-age-005")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_stuck_detector_precision_buckets_nearby_derived_coordinates() -> None:
     detector = GazeSampleStuckDetector(
         repeated_threshold=2,

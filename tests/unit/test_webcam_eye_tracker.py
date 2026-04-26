@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 
-@pytest.mark.requirement("FR-age-001")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
 def test_tracker_uses_privacy_safe_missing_presence_state() -> None:
     source = Path("src/agent_user_status/webcam_runtime.py").read_text(encoding="utf-8")
 
