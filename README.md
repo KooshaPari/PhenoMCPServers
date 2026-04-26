@@ -233,3 +233,7 @@ larger: a typed local event bus, hot/warm encrypted state store, native collecto
 per OS, and an agent policy engine.
 
 See [docs/architecture/LONG_TERM_PLAN.md](docs/architecture/LONG_TERM_PLAN.md).
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
