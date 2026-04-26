@@ -65,6 +65,7 @@ def test_support_manifest_includes_decomposed_runtime_modules() -> None:
         "statusd_eye.py",
         "statusd_privacy.py",
         "ttl_cache.py",
+        "webcam_cli_args.py",
         "webcam_eye_config.py",
     }
     helper_expected = {"bootstrap_doctor.py", "bootstrap_eye_setup.py", "bootstrap_runtime.py"}
