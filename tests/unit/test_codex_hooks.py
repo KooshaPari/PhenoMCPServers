@@ -3,9 +3,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from agent_user_status import codex_hooks
 
 
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-015")
 def test_codex_hook_records_session_start(monkeypatch) -> None:
     heartbeats = []
     monkeypatch.setattr(
@@ -30,6 +33,7 @@ def test_codex_hook_records_session_start(monkeypatch) -> None:
     assert heartbeats[0][1]["metadata"]["session_log_available"] is False
 
 
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-015")
 def test_codex_stop_hook_continues_when_hook_decision_prompts(monkeypatch) -> None:
     events = []
     monkeypatch.setattr(codex_hooks, "append_session_event", lambda *args, **kwargs: events.append((args, kwargs)))
@@ -54,6 +58,7 @@ def test_codex_stop_hook_continues_when_hook_decision_prompts(monkeypatch) -> No
     assert events
 
 
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-015")
 def test_codex_stop_hook_allows_when_already_active(monkeypatch) -> None:
     monkeypatch.setattr(codex_hooks, "append_session_event", lambda *args, **kwargs: None)
     monkeypatch.setattr(codex_hooks, "hook_decision_result", lambda _text: {"decision": "reprompt_wait", "prompt": "x"})
@@ -71,6 +76,7 @@ def test_codex_stop_hook_allows_when_already_active(monkeypatch) -> None:
     assert "decision" not in result
 
 
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-015")
 def test_codex_hooks_json_includes_current_events() -> None:
     hooks_path = Path(__file__).resolve().parents[2] / ".codex" / "hooks.json"
     config_path = Path(__file__).resolve().parents[2] / ".codex" / "config.toml"
@@ -86,6 +92,7 @@ def test_codex_hooks_json_includes_current_events() -> None:
     assert payload["hooks"]["Stop"][0]["hooks"][0]["timeout"] >= 10
 
 
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-015")
 def test_codex_permission_request_records_without_unsupported_continue(monkeypatch) -> None:
     events = []
     monkeypatch.setattr(codex_hooks, "append_session_event", lambda *args, **kwargs: events.append((args, kwargs)))
