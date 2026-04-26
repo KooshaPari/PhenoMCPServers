@@ -10,12 +10,21 @@ import shlex
 import shutil
 import subprocess
 import sys
-import tempfile
-import urllib.request
-from collections.abc import Callable
 from pathlib import Path
 
+from agent_user_status.bootstrap_doctor import BOOTSTRAP_HELPER_MODULES, doctor_command
+from agent_user_status.bootstrap_eye_setup import setup_eye_tracker_command
 from agent_user_status.bootstrap_native import install_native_monitor
+from agent_user_status.bootstrap_runtime import (
+    default_eye_python,
+    detect_python,
+    ensure_directories,
+    install_executable,
+    log,
+    remove_dir,
+    remove_path,
+    write_text_file,
+)
 from agent_user_status.bootstrap_support import (
     PLIST_NAMES,
     SUPPORT_MODULES,
@@ -29,69 +38,7 @@ from agent_user_status.bootstrap_support import (
     native_monitor_paths,
     resolve_paths,
     runtime_paths_metadata,
-    source_runtime_paths,
 )
-
-
-def log(level: str, message: str) -> None:
-    print(f"[{level}] {message}")
-
-
-def detect_python() -> Path:
-    override = os.environ.get("AGENT_USER_STATUS_PYTHON_BIN")
-    if override:
-        return Path(override).expanduser()
-
-    candidates = [
-        Path(sys.executable),
-        Path.home() / ".local" / "bin" / "python3",
-        Path("/opt/homebrew/bin/python3"),
-        Path("/usr/bin/python3"),
-        Path("/usr/local/bin/python3"),
-    ]
-    for candidate in candidates:
-        resolved = shutil.which(str(candidate))
-        if resolved and subprocess.run(
-            [resolved, "--version"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        ).returncode == 0:
-            return Path(resolved)
-
-    resolved = shutil.which("python3")
-    if resolved and subprocess.run(
-        [resolved, "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False
-    ).returncode == 0:
-        return Path(resolved)
-
-    raise SystemExit("Python 3 was not found. Set AGENT_USER_STATUS_PYTHON_BIN.")
-
-
-def default_eye_python(paths: BootstrapPaths, python_bin: Path) -> Path:
-    override = os.environ.get("AGENT_USER_STATUS_EYE_PYTHON_BIN")
-    if override:
-        return Path(override).expanduser()
-
-    eye_python = paths.eye_venv / "bin" / "python"
-    return eye_python if eye_python.exists() else python_bin
-
-
-def ensure_directories(paths: BootstrapPaths) -> None:
-    paths.bin_dir.mkdir(parents=True, exist_ok=True)
-    paths.share_dir.mkdir(parents=True, exist_ok=True)
-    paths.launchd_dir.mkdir(parents=True, exist_ok=True)
-    paths.state_dir.mkdir(parents=True, exist_ok=True)
-
-
-def install_executable(src: Path, dst: Path) -> None:
-    shutil.copy2(src, dst)
-    dst.chmod(0o700)
-
-
-def write_text_file(path: Path, content: str, mode: int = 0o700) -> None:
-    path.write_text(content, encoding="utf-8")
-    path.chmod(mode)
 
 
 def install_bootstrap_wrapper(paths: BootstrapPaths, python_bin: Path) -> None:
@@ -108,7 +55,7 @@ def install_python_support_modules(paths: BootstrapPaths) -> None:
     module_dir = paths.bin_dir / "agent_user_status"
     module_dir.mkdir(parents=True, exist_ok=True)
     (module_dir / "__init__.py").write_text("", encoding="utf-8")
-    for filename in SUPPORT_MODULES:
+    for filename in [*SUPPORT_MODULES, *BOOTSTRAP_HELPER_MODULES]:
         shutil.copy2(paths.src / "agent_user_status" / filename, module_dir / filename)
 
 
@@ -191,24 +138,6 @@ def write_runtime_paths_metadata(paths: BootstrapPaths, python_bin: Path, eye_py
     return metadata_path
 
 
-def remove_path(path: Path, dry_run: bool) -> None:
-    if not path.exists():
-        return
-    if dry_run:
-        print(f"[dry-run] rm -f {path}")
-        return
-    path.unlink()
-
-
-def remove_dir(path: Path, dry_run: bool) -> None:
-    if not path.exists():
-        return
-    if dry_run:
-        print(f"[dry-run] rm -rf {path}")
-        return
-    shutil.rmtree(path, ignore_errors=True)
-
-
 def install_command(args: argparse.Namespace) -> int:
     paths = resolve_paths()
     ensure_directories(paths)
@@ -286,160 +215,6 @@ def uninstall_command(args: argparse.Namespace) -> int:
         print("uninstall complete (services stopped, files removed, state purged).")
     else:
         print("uninstall complete (services stopped, files removed; state preserved).")
-    return 0
-
-
-def py_compile_command(paths: BootstrapPaths) -> int:
-    result = subprocess.run([sys.executable, "-m", "py_compile", *map(str, source_runtime_paths(paths))], check=False)
-    return result.returncode
-
-
-def doctor_command(_: argparse.Namespace) -> int:
-    paths = resolve_paths()
-    ok = True
-
-    def check(name: str, callback: Callable[[], None]) -> None:
-        nonlocal ok
-        try:
-            callback()
-        except Exception as exc:  # noqa: BLE001
-            print(f"fail {name}")
-            print(str(exc))
-            ok = False
-        else:
-            print(f"ok   {name}")
-
-    def check_python() -> None:
-        if py_compile_command(paths) != 0:
-            raise RuntimeError("python syntax")
-
-    def check_swift() -> None:
-        command = [
-            "swiftc",
-            *map(str, sorted((paths.src / "native" / "macos").glob("*.swift"))),
-            "-o",
-            str(Path(tempfile.gettempdir()) / "agent-user-status-native-monitor"),
-            "-framework",
-            "AppKit",
-            "-framework",
-            "CoreGraphics",
-        ]
-        if subprocess.run(command, check=False).returncode != 0:
-            raise RuntimeError("swift compile")
-
-    def check_layout() -> None:
-        required = [
-            *installed_runtime_paths(paths),
-            *installed_support_paths(paths),
-            *native_monitor_paths(paths),
-            *native_app_paths(paths),
-        ]
-        missing = [str(path) for path in required if not path.exists()]
-        if missing:
-            raise RuntimeError("installed runtime layout\n" + "\n".join(missing[:12]))
-
-    def check_plists() -> None:
-        for plist in paths.launchd_src.glob("*.plist"):
-            if subprocess.run(["plutil", "-lint", str(plist)], check=False).returncode != 0:
-                raise RuntimeError(f"plist {plist.name}")
-        missing = []
-        unresolved = []
-        for name in PLIST_NAMES:
-            installed = paths.launchd_dir / name
-            if not installed.exists():
-                missing.append(str(installed))
-                continue
-            if subprocess.run(["plutil", "-lint", str(installed)], check=False).returncode != 0:
-                raise RuntimeError(f"installed plist {name}")
-            if "{{" in installed.read_text(encoding="utf-8"):
-                unresolved.append(str(installed))
-        if missing:
-            raise RuntimeError("installed plists missing\n" + "\n".join(missing))
-        if unresolved:
-            raise RuntimeError("installed plists contain unresolved tokens\n" + "\n".join(unresolved))
-
-    def check_backend() -> None:
-        with urllib.request.urlopen("http://127.0.0.1:8765/health", timeout=5) as response:
-            if response.status != 200:
-                raise RuntimeError("backend health")
-
-    check("python syntax", check_python)
-    if sys.platform == "darwin":
-        check("swift compile", check_swift)
-    else:
-        print("skip swift compile (macOS only)")
-    check("installed runtime layout", check_layout)
-    if sys.platform == "darwin":
-        check("plists", check_plists)
-    else:
-        print("skip plists (macOS only)")
-    if shutil.which("curl"):
-        check("backend health", check_backend)
-    if ok:
-        print("doctor passed")
-        return 0
-    return 1
-
-
-def setup_eye_tracker_command(_: argparse.Namespace) -> int:
-    if sys.platform != "darwin":
-        raise SystemExit("webcam eye-tracker setup is currently supported only on macOS")
-
-    paths = resolve_paths()
-    default_bootstrap = shutil.which("python3.11") or str(detect_python())
-    eye_bootstrap_python = Path(
-        os.environ.get("AGENT_USER_STATUS_EYE_BOOTSTRAP_PYTHON", default_bootstrap)
-    ).expanduser()
-    if not eye_bootstrap_python.exists():
-        raise SystemExit(
-            f"missing Python 3.11 at {eye_bootstrap_python}\n"
-            "install python@3.11 or set AGENT_USER_STATUS_EYE_BOOTSTRAP_PYTHON"
-        )
-
-    if shutil.which("uv"):
-        subprocess.run(["uv", "venv", "--python", str(eye_bootstrap_python), str(paths.eye_venv)], check=True)
-    else:
-        subprocess.run([str(eye_bootstrap_python), "-m", "venv", str(paths.eye_venv)], check=True)
-
-    eye_python = paths.eye_venv / "bin" / "python"
-    subprocess.run([str(eye_python), "-m", "ensurepip", "--upgrade"], check=True)
-    subprocess.run([str(eye_python), "-m", "pip", "install", "--upgrade", "pip"], check=True)
-    subprocess.run(
-        [
-            str(eye_python),
-            "-m",
-            "pip",
-            "install",
-            "mediapipe>=0.10.30",
-            "opencv-python>=4.10",
-            "numpy>=1.26",
-            "pyobjc-framework-Cocoa>=10.0",
-        ],
-        check=True,
-    )
-
-    env = os.environ.copy()
-    env["AGENT_USER_STATUS_SOURCE_ROOT"] = str(paths.root)
-    env["AGENT_USER_STATUS_EYE_PYTHON_BIN"] = str(eye_python)
-    env["PYTHONPATH"] = (
-        f"{paths.root / 'src'}{os.pathsep}{env['PYTHONPATH']}" if env.get("PYTHONPATH") else str(paths.root / "src")
-    )
-    subprocess.run(
-        [str(eye_python), "-m", "agent_user_status.bootstrap", "install"],
-        env=env,
-        cwd=str(paths.root),
-        check=True,
-    )
-    subprocess.run([str(eye_python), str(paths.bin_dir / "agent-user-status-webcam-eye-tracker"), "check"], check=True)
-
-    print("Eye tracker runtime is installed.")
-    print(f"If camera access is denied, grant Camera permission to:\n  {eye_python}")
-    print("Calibrate when ready:")
-    print(f"  {eye_python} {paths.bin_dir / 'agent-user-status-webcam-eye-tracker'} calibrate")
-    print("Evaluate calibration:")
-    print(f"  {eye_python} {paths.bin_dir / 'agent-user-status-webcam-eye-tracker'} evaluate")
-    print("Start calibrated tracker:")
-    print("  launchctl kickstart -k gui/$(id -u)/com.phenotype.agent-user-status-webcam-eye-tracker")
     return 0
 
 

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import pytest
+
 from agent_user_status.gaze_calibration import projection_thresholds
 from agent_user_status.gaze_projection import ProjectionHoldGate, StableSampleGate
 

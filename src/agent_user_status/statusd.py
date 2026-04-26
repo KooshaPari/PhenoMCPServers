@@ -13,9 +13,6 @@ import json
 import os
 import re
 import subprocess
-import threading
-import time
-from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -23,11 +20,12 @@ from urllib.parse import parse_qs, urlparse
 
 from agent_user_status.bootstrap_support import agent_imessage_bin
 from agent_user_status.correction import recent_correction_events, store_correction_event
-from agent_user_status.eye_state_payload import bounded_float, bounded_int, build_eye_record, now_iso
+from agent_user_status.eye_state_payload import bounded_float, bounded_int
 from agent_user_status.gaze_context import as_bool
-from agent_user_status.gaze_drift_correction import load_drift_correction
 from agent_user_status.monitor_html import MONITOR_HTML
 from agent_user_status.state_retention import delete_state, export_state, retain_recent_state
+from agent_user_status.statusd_eye import dev_state as build_dev_state
+from agent_user_status.statusd_eye import store_eye_payload as persist_eye_payload
 from agent_user_status.statusd_sessions import parsed_query, session_get_payload, session_post_payload
 
 HOST = os.environ.get("AGENT_USER_STATUSD_HOST", "127.0.0.1")
@@ -36,7 +34,6 @@ AGENT_IMESSAGE = str(agent_imessage_bin())
 STATE_DIR = Path(os.environ.get("AGENT_IMESSAGE_STATE_DIR", "~/.local/share/agent-imessage/state")).expanduser()
 DEV_STATE_PATH = STATE_DIR / "dev_monitor_state.json"
 MAX_BODY_BYTES = 16_384
-EYE_SIGNAL_INTERVAL_SECONDS = float(os.environ.get("AGENT_USER_STATUSD_EYE_SIGNAL_INTERVAL_SECONDS", "1.0"))
 RAW_SENSOR_PATTERNS = re.compile(
     r"(^|[^a-z0-9])(raw|frame|image|photo|screenshot|face|facial|biometric|"
     r"pupil|retina|iris|embedding|landmarks?|camera|webcam|audio|transcript|waveform|"
@@ -71,11 +68,6 @@ PRIVACY_POLICY = {
     ],
 }
 
-_EYE_SIGNAL_LOCK = threading.Lock()
-_EYE_SIGNAL_WORKER_RUNNING = False
-_EYE_SIGNAL_PENDING: dict[str, Any] | None = None
-_EYE_SIGNAL_LAST_DISPATCH = 0.0
-
 
 def run_agent(args: list[str], timeout: int = 30) -> dict[str, Any]:
     try:
@@ -106,73 +98,6 @@ def redacted_agent(args: list[str], timeout: int = 30) -> dict[str, Any]:
     return result
 
 
-def queue_eye_signal(state: str, score: float, max_age_seconds: int) -> dict[str, Any]:
-    payload = {
-        "state": state,
-        "score": score,
-        "max_age_seconds": max_age_seconds,
-    }
-    global _EYE_SIGNAL_WORKER_RUNNING, _EYE_SIGNAL_PENDING
-    start_worker = False
-    with _EYE_SIGNAL_LOCK:
-        _EYE_SIGNAL_PENDING = {"state": state, "score": score, "max_age_seconds": max_age_seconds}
-        if not _EYE_SIGNAL_WORKER_RUNNING:
-            _EYE_SIGNAL_WORKER_RUNNING = True
-            start_worker = True
-    if start_worker:
-        threading.Thread(target=_drain_eye_signal_queue, daemon=True).start()
-    return payload
-
-
-def _dispatch_eye_signal(payload: dict[str, Any]) -> None:
-    state = str(payload.get("state", "looking_at_screen"))
-    score = str(payload.get("score", 0.5))
-    max_age = int(payload.get("max_age_seconds", 5))
-    run_agent(
-        [
-            "signal",
-            "eye_tracking",
-            "--score",
-            score,
-            "--state",
-            state,
-            "--max-age-seconds",
-            str(max_age),
-            "--note",
-            "derived-dev-monitor",
-        ],
-        timeout=5,
-    )
-
-
-def _drain_eye_signal_queue() -> None:
-    global _EYE_SIGNAL_WORKER_RUNNING, _EYE_SIGNAL_LAST_DISPATCH, _EYE_SIGNAL_PENDING
-
-    while True:
-        payload: dict[str, Any] | None = None
-        delay = 0.0
-        with _EYE_SIGNAL_LOCK:
-            now = time.monotonic()
-            if _EYE_SIGNAL_PENDING is None:
-                _EYE_SIGNAL_WORKER_RUNNING = False
-                return
-
-            wait = _EYE_SIGNAL_LAST_DISPATCH + EYE_SIGNAL_INTERVAL_SECONDS - now
-            if wait > 0:
-                delay = wait
-            else:
-                payload = _EYE_SIGNAL_PENDING
-                _EYE_SIGNAL_PENDING = None
-                _EYE_SIGNAL_LAST_DISPATCH = now
-
-        if delay > 0:
-            time.sleep(delay)
-            continue
-
-        if payload is not None:
-            _dispatch_eye_signal(payload)
-
-
 def reject_raw_payload(payload: dict[str, Any]) -> str | None:
     text = json.dumps(payload, sort_keys=True)
     if len(text.encode("utf-8")) > MAX_BODY_BYTES:
@@ -182,64 +107,12 @@ def reject_raw_payload(payload: dict[str, Any]) -> str | None:
     return None
 
 
-def read_json_file(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {}
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
-        return {}
-    return data if isinstance(data, dict) else {}
-
-
-def write_json_file(path: Path, payload: dict[str, Any]) -> None:
-    STATE_DIR.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-
-
-def _update_eye_freshness(eye: dict[str, Any]) -> None:
-    observed = eye.get("observed_at")
-    try:
-        max_age = int(eye.get("max_age_seconds", 5))
-    except (TypeError, ValueError):
-        max_age = 5
-
-    fresh = False
-    if observed:
-        try:
-            dt = datetime.fromisoformat(str(observed).replace("Z", "+00:00")).astimezone(UTC)
-        except ValueError:
-            dt = None
-        if dt is not None:
-            fresh = (datetime.now(UTC) - dt).total_seconds() <= max_age
-
-    eye["fresh"] = fresh
-
-
 def dev_state() -> dict[str, Any]:
-    state = read_json_file(DEV_STATE_PATH)
-    eye = state.get("eye")
-    if isinstance(eye, dict):
-        _update_eye_freshness(eye)
-    correction = load_drift_correction()
-    if correction is not None:
-        state["drift_correction"] = correction
-    return state
+    return build_dev_state(DEV_STATE_PATH)
 
 
 def store_eye_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    eye = build_eye_record(payload)
-    state_payload = read_json_file(DEV_STATE_PATH)
-    state_payload["eye"] = eye
-    state_payload["updated_at"] = now_iso()
-    write_json_file(DEV_STATE_PATH, state_payload)
-    signal_state = eye.get("state") or "looking_at_screen"
-    signal = queue_eye_signal(
-        str(signal_state),
-        float(eye.get("score", 0.5) or 0.5),
-        int(eye.get("max_age_seconds", 5) or 5),
-    )
-    return {"eye": eye, "signal": signal}
+    return persist_eye_payload(payload, STATE_DIR, DEV_STATE_PATH, run_agent)
 
 
 class Handler(BaseHTTPRequestHandler):

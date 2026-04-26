@@ -13,6 +13,11 @@ from typing import Any
 
 from agent_user_status.agent_imessage_core import RECIPIENT_ROLES, require_recipient_role
 from agent_user_status.agent_imessage_mcp_comm import COMM_TOOL_NAMES, COMM_TOOLS, comm_tool_call
+from agent_user_status.agent_imessage_mcp_presence import (
+    PRESENCE_TOOL_NAMES,
+    PRESENCE_TOOLS,
+    presence_tool_call,
+)
 from agent_user_status.agent_imessage_mcp_sessions import SESSION_TOOL_NAMES, SESSION_TOOLS, session_tool_call
 from agent_user_status.bootstrap_support import agent_imessage_bin
 
@@ -97,77 +102,7 @@ TOOLS: list[dict[str, Any]] = [
         },
     },
     *COMM_TOOLS,
-    {
-        "name": "set_user_status",
-        "description": "Set a manual response-likelihood override.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "mode": {
-                    "type": "string",
-                    "enum": ["active", "near", "away", "focus", "sleep", "async", "unknown"],
-                },
-                "minutes": {"type": "integer", "default": 60},
-                "eta_minutes": {"type": "integer"},
-                "confidence": {"type": "number"},
-                "note": {"type": "string"},
-            },
-            "required": ["mode"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "clear_user_status",
-        "description": "Clear the manual response-likelihood override.",
-        "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
-    },
-    {
-        "name": "record_presence_signal",
-        "description": "Record a short-lived external signal such as eye tracking or process tracking.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string"},
-                "score": {"type": "number"},
-                "state": {"type": "string"},
-                "weight": {"type": "number", "default": 1.0},
-                "eta_minutes": {"type": "integer"},
-                "max_age_seconds": {"type": "integer", "default": 300},
-                "note": {"type": "string"},
-            },
-            "required": ["name", "score"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "inspect_presence_signals",
-        "description": "Inspect built-in, external, and learned response-likelihood signals.",
-        "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
-    },
-    {
-        "name": "record_user_action",
-        "description": "Record a local input/output action such as mouse_click, key_press, or video_playing.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "direction": {"type": "string", "enum": ["input", "output"]},
-                "kind": {"type": "string"},
-                "score": {"type": "number"},
-                "weight": {"type": "number", "default": 1.0},
-                "state": {"type": "string"},
-                "eta_minutes": {"type": "integer"},
-                "max_age_seconds": {"type": "integer", "default": 180},
-                "note": {"type": "string"},
-            },
-            "required": ["direction", "kind"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "inspect_user_actions",
-        "description": "Inspect recent input/output actions and per-action response learning.",
-        "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
-    },
+    *PRESENCE_TOOLS,
     {
         "name": "wait_for_user_reply",
         "description": "Wait for the next inbound message from a scoped recipient role. Defaults to Koosha.",
@@ -191,6 +126,8 @@ def tool_call(name: str, args: dict[str, Any]) -> dict[str, Any]:
         return session_tool_call(name, args, call_agent_imessage)
     if name in COMM_TOOL_NAMES:
         return comm_tool_call(name, args, call_agent_imessage)
+    if name in PRESENCE_TOOL_NAMES:
+        return presence_tool_call(name, args, call_agent_imessage)
     if name == "user_status":
         return redact_agent_payload(call_agent_imessage(["status", "--json"]))
     if name == "hook_decision":
@@ -201,51 +138,6 @@ def tool_call(name: str, args: dict[str, Any]) -> dict[str, Any]:
         if args.get("dry_run"):
             command.append("--dry-run")
         return call_agent_imessage(command)
-    if name == "set_user_status":
-        command = ["set-status", str(args["mode"])]
-        if args.get("minutes") is not None:
-            command.extend(["--minutes", str(args["minutes"])])
-        if args.get("eta_minutes") is not None:
-            command.extend(["--eta-minutes", str(args["eta_minutes"])])
-        if args.get("confidence") is not None:
-            command.extend(["--confidence", str(args["confidence"])])
-        if args.get("note"):
-            command.extend(["--note", str(args["note"])])
-        return call_agent_imessage(command)
-    if name == "clear_user_status":
-        return call_agent_imessage(["clear-status"])
-    if name == "record_presence_signal":
-        command = ["signal", str(args["name"]), "--score", str(args["score"])]
-        if args.get("state"):
-            command.extend(["--state", str(args["state"])])
-        if args.get("weight") is not None:
-            command.extend(["--weight", str(args["weight"])])
-        if args.get("eta_minutes") is not None:
-            command.extend(["--eta-minutes", str(args["eta_minutes"])])
-        if args.get("max_age_seconds") is not None:
-            command.extend(["--max-age-seconds", str(args["max_age_seconds"])])
-        if args.get("note"):
-            command.extend(["--note", str(args["note"])])
-        return call_agent_imessage(command)
-    if name == "inspect_presence_signals":
-        return call_agent_imessage(["signals"])
-    if name == "record_user_action":
-        command = ["action", str(args["direction"]), str(args["kind"])]
-        if args.get("score") is not None:
-            command.extend(["--score", str(args["score"])])
-        if args.get("weight") is not None:
-            command.extend(["--weight", str(args["weight"])])
-        if args.get("state"):
-            command.extend(["--state", str(args["state"])])
-        if args.get("eta_minutes") is not None:
-            command.extend(["--eta-minutes", str(args["eta_minutes"])])
-        if args.get("max_age_seconds") is not None:
-            command.extend(["--max-age-seconds", str(args["max_age_seconds"])])
-        if args.get("note"):
-            command.extend(["--note", str(args["note"])])
-        return call_agent_imessage(command)
-    if name == "inspect_user_actions":
-        return call_agent_imessage(["actions"])
     if name == "wait_for_user_reply":
         recipient = require_recipient_role(args.get("recipient"))
         command = [
