@@ -29,6 +29,7 @@ SUPPORT_MODULES = [
     "agent_imessage_envelope.py",
     "agent_imessage_learning.py",
     "agent_imessage_mcp_comm.py",
+    "agent_imessage_mcp_install.py",
     "agent_imessage_mcp_presence.py",
     "agent_imessage_mcp_sessions.py",
     "agent_imessage_outbox.py",
