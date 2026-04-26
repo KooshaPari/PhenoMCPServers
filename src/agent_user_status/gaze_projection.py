@@ -3,6 +3,19 @@
 from __future__ import annotations
 
 from agent_user_status.eye_smoothing import projection_error
+from agent_user_status.gaze_projection_policy import (
+    anchor_point,
+    degraded_hold_hint,
+    hold_hint,
+    hold_reason,
+    recovery_score,
+)
+from agent_user_status.gaze_projection_policy import (
+    effective_release_frames as policy_effective_release_frames,
+)
+from agent_user_status.gaze_projection_policy import (
+    hold_budget_frames as policy_hold_budget_frames,
+)
 from agent_user_status.gaze_projection_types import (
     ProjectionDecision,
     ScreenLike,
@@ -47,39 +60,12 @@ class ProjectionHoldGate:
         self.last_trusted_point: tuple[float, float] | None = None
         self.last_error_px = 0.0
 
-    def _quality_label(self) -> str:
-        if self.calibration_quality_score <= 0.35:
-            return "poor"
-        if self.calibration_quality_score <= 0.55:
-            return "fragile"
-        if self.calibration_quality_score <= 0.78:
-            return "usable"
-        return "excellent"
-
-    def _hold_budget_frames(self) -> int:
-        if self.calibration_quality_score <= 0.35:
-            return 2
-        if self.calibration_quality_score <= 0.55:
-            return 3
-        return 0
-
-    def _effective_release_frames(self) -> int:
-        if self.calibration_quality_score <= 0.35:
-            return max(self.release_frames, 4)
-        if self.calibration_quality_score <= 0.55:
-            return max(self.release_frames, 3)
-        return self.release_frames
-
     def _anchor_point(
         self,
         fallback_point: tuple[float, float] | None,
         screen: ScreenLike,
     ) -> tuple[float, float]:
-        if self.last_trusted_point is not None:
-            return clamp_point(self.last_trusted_point, screen)
-        if fallback_point is not None and in_bounds(fallback_point, screen):
-            return clamp_point(fallback_point, screen)
-        return screen_center(screen)
+        return anchor_point(self.last_trusted_point, fallback_point, screen)
 
     def _hold_reason(
         self,
@@ -90,38 +76,28 @@ class ProjectionHoldGate:
         stability_score: float,
         recovery_signal: bool,
     ) -> str:
-        if recovery_signal:
-            return "recovering"
-        if self.calibration_quality_score <= 0.35:
-            return "poor_calibration_fit"
-        if not in_bounds(raw_point, screen):
-            return "offscreen_jump"
-        if confidence < self.min_confidence:
-            return "low_confidence"
-        if stability_score < 0.32:
-            return "unstable_projection"
-        if error_px >= self.hold_threshold_px:
-            return "projection_outlier"
-        return "projection_pending"
+        return hold_reason(
+            raw_point,
+            screen,
+            error_px,
+            confidence,
+            stability_score,
+            recovery_signal,
+            self.calibration_quality_score,
+            self.min_confidence,
+            self.hold_threshold_px,
+        )
 
     def _recovery_score(self, error_px: float, confidence: float, stability_score: float) -> float:
-        if self.release_threshold_px >= self.hold_threshold_px:
-            proximity = 1.0 if error_px <= self.release_threshold_px else 0.0
-        else:
-            proximity = 1.0 - min(
-                1.0,
-                max(0.0, (error_px - self.release_threshold_px) / (self.hold_threshold_px - self.release_threshold_px)),
-            )
-        quality = max(
-            0.0,
-            min(
-                1.0,
-                0.45 * (confidence / max(self.min_confidence, 1e-6))
-                + 0.35 * stability_score
-                + 0.20 * self.calibration_quality_score,
-            ),
+        return recovery_score(
+            error_px,
+            confidence,
+            stability_score,
+            self.release_threshold_px,
+            self.hold_threshold_px,
+            self.min_confidence,
+            self.calibration_quality_score,
         )
-        return max(0.0, min(1.0, 0.65 * proximity + 0.35 * quality))
 
     def _hold_hint(
         self,
@@ -130,47 +106,15 @@ class ProjectionHoldGate:
         effective_release_frames: int,
         budget_frames: int,
     ) -> str:
-        if recovery_signal:
-            return (
-                f"projection is back inside screen bounds; release after one more stable frame "
-                f"({self.release_threshold_px:.0f}px release / {self.hold_threshold_px:.0f}px hold)"
-            )
-        if reason == "poor_calibration_fit":
-            return (
-                f"poor calibration fit ({self._quality_label()}); recalibrate soon; "
-                f"degraded hold stays active until recovery is sustained for {effective_release_frames} frames "
-                f"({self.release_threshold_px:.0f}px release / {self.hold_threshold_px:.0f}px hold)"
-            )
-        if reason == "offscreen_jump":
-            return (
-                f"projection is offscreen; move gaze back inside the screen and keep it steady for "
-                f"{effective_release_frames} frames "
-                f"({self.release_threshold_px:.0f}px release / {self.hold_threshold_px:.0f}px hold)"
-            )
-        if reason == "low_confidence":
-            return (
-                f"camera confidence is too low; hold keeps the last trusted point and will release after "
-                f"{effective_release_frames} stable frames "
-                f"({self.release_threshold_px:.0f}px release / {self.hold_threshold_px:.0f}px hold)"
-            )
-        if reason == "unstable_projection":
-            return (
-                "projection is unstable; slow down head motion and keep gaze steady for "
-                f"{effective_release_frames} frames "
-                f"({self.release_threshold_px:.0f}px release / {self.hold_threshold_px:.0f}px hold)"
-            )
-        if reason == "projection_outlier":
-            return (
-                f"projection jumped past the hold threshold ({self.hold_threshold_px:.0f}px); "
-                f"recalibrate if this repeats"
-            )
-        if budget_frames > 0:
-            return (
-                f"hold budget is {budget_frames} frames before degraded release; "
-                "recalibrate if the fit stays poor "
-                f"({self.release_threshold_px:.0f}px release / {self.hold_threshold_px:.0f}px hold)"
-            )
-        return "freeze at the last trusted point until the projection returns in bounds"
+        return hold_hint(
+            reason,
+            recovery_signal,
+            effective_release_frames,
+            budget_frames,
+            self.release_threshold_px,
+            self.hold_threshold_px,
+            self.calibration_quality_score,
+        )
 
     def update(
         self,
@@ -183,8 +127,8 @@ class ProjectionHoldGate:
         error_px = projection_error(raw_point, screen)
         raw_in_bounds = in_bounds(raw_point, screen)
         improving = error_px <= self.last_error_px * 0.86 if self.last_error_px > 0 else False
-        effective_release_frames = self._effective_release_frames()
-        hold_budget_frames = self._hold_budget_frames()
+        effective_release_frames = policy_effective_release_frames(self.calibration_quality_score, self.release_frames)
+        hold_budget_frames = policy_hold_budget_frames(self.calibration_quality_score)
         recovery_signal = raw_in_bounds and (
             error_px <= self.release_threshold_px
             or (improving and error_px <= self.hold_threshold_px * 1.15)
@@ -236,10 +180,10 @@ class ProjectionHoldGate:
                     mode="projection_hold_degraded",
                     hold_active=True,
                     hold_reason=hold_reason,
-                    hold_hint=(
-                        f"poor calibration fit ({self._quality_label()}); degraded hold remains active until "
-                        f"recovery is sustained for {effective_release_frames} frames; "
-                        f"{self.calibration_recommended_action.replace('_', ' ')}"
+                    hold_hint=degraded_hold_hint(
+                        self.calibration_quality_score,
+                        effective_release_frames,
+                        self.calibration_recommended_action,
                     ),
                     should_reset=False,
                     projection_error_px=round(error_px, 2),
