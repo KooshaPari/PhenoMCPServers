@@ -38,6 +38,7 @@ jobs:
       - name: Validate macOS package helper
         run: |
           bash -n packaging/scripts/build-macos-pkg.sh
+          bash -n packaging/scripts/macos-pkg-lib.sh
           bash -n packaging/scripts/stage-macos-payload.sh
           bash -n packaging/scripts/validate-packaging.sh
           bash -n packaging/scripts/validate-python-dist.sh
