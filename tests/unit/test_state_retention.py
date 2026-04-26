@@ -5,6 +5,8 @@ import os
 import time
 from argparse import Namespace
 
+import pytest
+
 from agent_user_status import agent_imessage_state_commands
 from agent_user_status.state_retention import delete_state, export_state, retain_recent_state
 

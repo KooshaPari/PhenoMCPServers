@@ -67,9 +67,11 @@ def test_outbox_reads_recent_records_and_filters_malformed_lines(tmp_path) -> No
     )
 
     records = read_outbox_records(store_path=store_path, correlation_id="corr-1")
+    latest = latest_outbox_state(store_path=store_path, correlation_id="corr-1")
 
     assert [record["delivery_state"] for record in records] == ["queued", "responded"]
-    assert latest_outbox_state(store_path=store_path, correlation_id="corr-1")["delivery_state"] == "responded"
+    assert latest is not None
+    assert latest["delivery_state"] == "responded"
 
 
 @pytest.mark.requirement("FR-AGENT_USER_STATUS-012")

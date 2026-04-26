@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from agent_user_status.session_scan import parse_ps_output, parse_tmux_panes, path_summary
 
 

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import pytest
+
 from agent_user_status.eye_state_payload import build_eye_record
 from agent_user_status.webcam_support import derived_head_telemetry
 

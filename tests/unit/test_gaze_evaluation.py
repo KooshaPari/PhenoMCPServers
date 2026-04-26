@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from agent_user_status.gaze_evaluation import (
     REPEATED_GAZE_SAMPLE,
     STUCK_GAZE_SAMPLE,

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import cast
 
+import pytest
+
 from agent_user_status.eye_smoothing import AdaptiveGazeSmoother
 
 

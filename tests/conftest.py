@@ -1,12 +1,8 @@
-"""Shared pytest setup for legacy unit tests."""
+"""Shared pytest setup."""
 
 from __future__ import annotations
 
-import builtins
-
 import pytest
-
-builtins.pytest = pytest
 
 
 def pytest_configure(config: pytest.Config) -> None:

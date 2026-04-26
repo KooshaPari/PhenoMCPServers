@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from agent_user_status.webcam_probe import summarize_presence_probe
 
 

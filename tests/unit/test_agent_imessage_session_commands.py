@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from argparse import Namespace
 
+import pytest
+
 from agent_user_status import agent_imessage_session_commands as commands
 
 

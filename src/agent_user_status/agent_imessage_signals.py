@@ -8,9 +8,13 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from subprocess import CompletedProcess
-from typing import Any
+from typing import Any, Protocol
 
-RunCommand = Callable[[list[str], int], CompletedProcess[str]]
+
+class RunCommand(Protocol):
+    def __call__(self, args: list[str], timeout: int = 60) -> CompletedProcess[str]: ...
+
+
 ParseDatetime = Callable[[str | None], datetime | None]
 ReadJsonFile = Callable[[Path], dict[str, Any] | None]
 

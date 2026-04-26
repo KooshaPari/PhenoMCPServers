@@ -5,6 +5,7 @@ import json
 import threading
 from collections.abc import Iterator
 from http.server import ThreadingHTTPServer
+from typing import Any, cast
 
 import pytest
 
@@ -89,7 +90,7 @@ def test_correction_event_accepts_derived_media_activity_without_raw_audio(statu
     )
 
     assert status == 200
-    event = data["event"]
+    event = cast(dict[str, Any], data["event"])
     assert event["kind"] == "media_activity"
     assert event["state"] == "smoke_media_activity"
     assert "audio" not in json.dumps(event)

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 
 @pytest.mark.requirement("FR-age-001")
 def test_tracker_uses_privacy_safe_missing_presence_state() -> None:

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import pytest
+
 from agent_user_status.gaze_drift_correction import apply_drift_correction, learn_drift_correction
 
 
