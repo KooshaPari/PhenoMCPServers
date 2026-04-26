@@ -68,6 +68,10 @@ final class CalibrationEvalController: NSObject {
     private let minSamplesPerPoint = 4
 
     func start(model: StatusModel) {
+        guard ProcessInfo.processInfo.environment["EYETRACKER_ENABLE_POPUP"] == "1" else {
+            NSLog("EyeTracker: popup suppressed (set EYETRACKER_ENABLE_POPUP=1 to enable)")
+            return
+        }
         self.model = model
         let screen = NSScreen.main?.frame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
         points = CalibrationEvalController.targets(in: screen)
