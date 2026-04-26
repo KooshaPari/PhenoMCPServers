@@ -3,8 +3,8 @@
 ## Summary
 
 - **Total canonical FRs:** 14
-- **Covered (>=1 canonical marker):** 13
-- **Missing canonical marker coverage:** 1
+- **Covered (>=1 canonical marker):** 14
+- **Missing canonical marker coverage:** 0
 - **Noncanonical requirement markers:** 0
 - **Orphan test files:** 0
 
@@ -13,7 +13,7 @@
 | FR ID | Description | Requirement Status | Coverage Status | Canonical Test Count | Canonical Test Files | Notes |
 |-------|-------------|--------------------|-----------------|----------------------|----------------------|-------|
 | `FR-AGENT_USER_STATUS-002` | HTTP/REST API endpoints | IMPLEMENTED | COVERED | 6 | `tests/unit/test_eye_publish.py`<br>`tests/unit/test_statusd_privacy.py`<br>`tests/unit/test_statusd_sessions.py` |  |
-| `FR-AGENT_USER_STATUS-004` | Caching layer with TTL support | SCAFFOLD | MISSING | 0 | (none) | Scaffold without direct tests yet. |
+| `FR-AGENT_USER_STATUS-004` | Caching layer with TTL support | IMPLEMENTED | COVERED | 5 | `tests/unit/test_statusd_cache.py`<br>`tests/unit/test_ttl_cache.py` | TTL cache hit, expiry, copy isolation, bounded eviction, subprocess-backed statusd caching, and invalidation covered. |
 | `FR-AGENT_USER_STATUS-001` | CLI interface and command dispatch | IMPLEMENTED | COVERED | 8 | `tests/unit/test_agent_imessage_mcp.py`<br>`tests/unit/test_agent_imessage_recipients.py`<br>`tests/unit/test_agent_imessage_session_commands.py`<br>`tests/unit/test_bootstrap_support.py` |  |
 | `FR-AGENT_USER_STATUS-009` | Configuration management | IMPLEMENTED | COVERED | 6 | `tests/unit/test_agent_imessage_recipients.py`<br>`tests/unit/test_bootstrap_support.py` |  |
 | `FR-AGENT_USER_STATUS-006` | Persistent data storage | IMPLEMENTED | COVERED | 16 | `tests/unit/test_agent_imessage_mcp.py`<br>`tests/unit/test_agent_session_registry.py`<br>`tests/unit/test_state_retention.py`<br>`tests/unit/test_statusd_privacy.py`<br>`tests/unit/test_statusd_sessions.py` |  |

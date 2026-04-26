@@ -24,6 +24,7 @@ from agent_user_status.eye_state_payload import bounded_float, bounded_int
 from agent_user_status.gaze_context import as_bool
 from agent_user_status.monitor_html import MONITOR_HTML
 from agent_user_status.state_retention import delete_state, export_state, retain_recent_state
+from agent_user_status.statusd_command_cache import cached_command_result, clear_command_cache
 from agent_user_status.statusd_eye import dev_state as build_dev_state
 from agent_user_status.statusd_eye import store_eye_payload as persist_eye_payload
 from agent_user_status.statusd_sessions import parsed_query, session_get_payload, session_post_payload
@@ -187,13 +188,13 @@ class Handler(BaseHTTPRequestHandler):
                 else:
                     self.send_json(200, {"ok": True, **dev_state()})
             elif path == "/status":
-                result = redacted_agent(["status", "--json"], timeout=4)
+                result = cached_command_result("status-json", lambda: redacted_agent(["status", "--json"], timeout=4))
                 self.send_json(200 if result.get("ok") else 502, result)
             elif path == "/signals":
-                result = run_agent(["signals"], timeout=4)
+                result = cached_command_result("signals", lambda: run_agent(["signals"], timeout=4))
                 self.send_json(200 if result.get("ok") else 502, result)
             elif path == "/actions":
-                result = run_agent(["actions"], timeout=4)
+                result = cached_command_result("actions", lambda: run_agent(["actions"], timeout=4))
                 self.send_json(200 if result.get("ok") else 502, result)
             elif path == "/events/stream":
                 query = parse_qs(parsed.query)
@@ -249,6 +250,8 @@ class Handler(BaseHTTPRequestHandler):
                 if payload.get("note"):
                     command.extend(["--note", str(payload["note"])])
                 result = run_agent(command, timeout=4)
+                if result.get("ok"):
+                    clear_command_cache()
                 self.send_json(200 if result.get("ok") else 502, result)
             elif path == "/dev/eye":
                 self.send_json(200, {"ok": True, **store_eye_payload(payload)})
@@ -286,6 +289,8 @@ class Handler(BaseHTTPRequestHandler):
                 if payload.get("note"):
                     command.extend(["--note", str(payload["note"])])
                 result = run_agent(command, timeout=4)
+                if result.get("ok"):
+                    clear_command_cache()
                 self.send_json(200 if result.get("ok") else 502, result)
             else:
                 self.send_json(404, {"ok": False, "error": "not found"})

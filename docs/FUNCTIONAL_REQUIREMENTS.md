@@ -24,9 +24,9 @@ in tests, PRs, and architectural documentation.
 
 **Description:** Caching layer with TTL support
 
-**Status:** SCAFFOLD
+**Status:** IMPLEMENTED
 
-**Test Traces:** (pending implementation)
+**Test Traces:** `tests/unit/test_ttl_cache.py`, `tests/unit/test_statusd_cache.py`
 
 ---
 

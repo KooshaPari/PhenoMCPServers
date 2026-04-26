@@ -52,7 +52,9 @@ def test_support_manifest_includes_decomposed_runtime_modules() -> None:
         "codex_hooks.py",
         "gaze_projection_types.py",
         "jsonl_tail.py",
+        "statusd_command_cache.py",
         "statusd_eye.py",
+        "ttl_cache.py",
     }
     helper_expected = {"bootstrap_doctor.py", "bootstrap_eye_setup.py", "bootstrap_runtime.py"}
 
