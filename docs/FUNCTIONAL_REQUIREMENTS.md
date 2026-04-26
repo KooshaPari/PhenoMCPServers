@@ -122,7 +122,7 @@ in tests, PRs, and architectural documentation.
 
 ### FR-AGENT_USER_STATUS-015
 
-**Description:** Codex experimental hook integration for lifecycle events, stop decisions, user elicitation, and pause/resume control
+**Description:** Codex experimental hook integration for lifecycle events, permission/tool telemetry, and stop decisions
 
 **Status:** IMPLEMENTED
 

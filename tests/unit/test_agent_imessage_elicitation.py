@@ -52,3 +52,31 @@ def test_parse_multi_answer_reply_with_freeform_text() -> None:
     assert parsed.freeform_text == "first please"
     assert parsed.confidence == 0.95
     assert not parsed.ambiguous
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-013")
+def test_schema_accepts_text_and_multi_select_aliases() -> None:
+    schema = ElicitationSchema.from_dict(
+        {
+            "questions": [
+                {
+                    "id": "q1",
+                    "text": "Pick targets",
+                    "multi_select": True,
+                    "options": [
+                        {"id": "A1", "label": "One"},
+                        {"id": "A2", "label": "Two"},
+                        {"id": "A3", "label": "Three"},
+                    ],
+                }
+            ]
+        }
+    )
+
+    parsed = parse_reply("A1,A3", schema)
+
+    assert schema.questions[0].prompt == "Pick targets"
+    assert schema.questions[0].kind == "multi_answer"
+    assert parsed.selected_answer_ids == ["A1", "A3"]
+    assert parsed.confidence == 0.95
+    assert not parsed.ambiguous

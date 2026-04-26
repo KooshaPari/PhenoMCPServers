@@ -92,10 +92,14 @@ class ElicitationQuestion:
             for option_index, option in enumerate(options_payload, start=1)
             if isinstance(option, dict)
         ]
+        kind = str(
+            payload.get("kind")
+            or ("multi_answer" if payload.get("multi_select") else "single_answer")
+        )
         return cls(
             id=str(payload.get("id") or f"Q{index}"),
-            prompt=str(payload.get("prompt") or payload.get("question") or ""),
-            kind=str(payload.get("kind") or "single_answer"),  # type: ignore[arg-type]
+            prompt=str(payload.get("prompt") or payload.get("question") or payload.get("text") or ""),
+            kind=kind,  # type: ignore[arg-type]
             options=options,
             default_answer_ids=[str(value).upper() for value in payload.get("default_answer_ids", [])],
             allow_freeform=bool(payload.get("allow_freeform", False)),

@@ -29,8 +29,7 @@
   `agent-imessage session-scan`; child-agent lifecycle can be recorded through
   `session-child-spawn` and `session-child-close`.
 - The live checkout passes unit tests, Ruff, Pyright, Swift compile, packaging
-  metadata validation, Python dist build validation, and backend smoke. The
-  local `doctor` gate fails until the live `~/.local` install is refreshed with
-  the newly added support/native files.
+  metadata validation, Python dist build validation, backend smoke, and the
+  local `doctor` gate, including installed runtime layout and CLI import checks.
 
 These do not affect the validated local runtime.

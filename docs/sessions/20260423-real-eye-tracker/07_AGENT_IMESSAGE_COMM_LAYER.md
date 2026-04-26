@@ -39,7 +39,8 @@ echo cleanup, and Codex hook integration.
 
 5. Codex hooks
    - Repo-local `.codex/hooks.json` maps `SessionStart`, `PreToolUse`,
-     `PostToolUse`, `UserPromptSubmit`, and `Stop` into the session bus.
+     `PostToolUse`, `UserPromptSubmit`, `PermissionRequest`, and `Stop`
+     into the session bus.
    - `.codex/hooks/agent_imessage_hook.py` delegates to
      `agent_user_status.codex_hooks` and fails open with JSON output.
    - `Stop` hooks call the existing hook-decision path and return Codex
@@ -49,7 +50,14 @@ echo cleanup, and Codex hook integration.
      child-agent lifecycle disambiguation once Codex exposes stable
      agent-id/type fields for all relevant hook events.
 
-6. Performance remediation
+6. Async lifecycle status
+   - Implemented: bounded outbox records, privacy-safe correlation IDs, sent
+     and failed states, and unsupported echo-cleanup records when Messages
+     deletion is unavailable or unsafe.
+   - Pending: delivery receipts sourced from Messages metadata, retry
+     scheduling, and expiration sweeping for stale outbox entries.
+
+7. Performance remediation
    - Replace unbounded JSONL hot-path reads with tail-seek reads.
    - Add log rotation/compaction for action and session logs.
    - Add latency tests for `agent-imessage hook-decision` so regressions fail
