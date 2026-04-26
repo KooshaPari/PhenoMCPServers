@@ -5,6 +5,7 @@ from argparse import Namespace
 from agent_user_status import agent_imessage_session_commands as commands
 
 
+@pytest.mark.requirement("FR-age-006")
 def test_session_child_spawn_command_records_structured_event(monkeypatch, capsys) -> None:
     calls = []
 

@@ -60,6 +60,7 @@ def post_json(authority: str, path: str, payload: dict[str, object]) -> tuple[in
         ),
     ],
 )
+@pytest.mark.requirement("FR-age-003")
 def test_privacy_sensitive_routes_reject_raw_payloads(
     statusd_server: str,
     path: str,
@@ -73,6 +74,7 @@ def test_privacy_sensitive_routes_reject_raw_payloads(
     assert "policy" in data
 
 
+@pytest.mark.requirement("FR-age-004")
 def test_state_export_route_returns_only_derived_json_files(statusd_server: str, tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(statusd, "STATE_DIR", tmp_path)
     (tmp_path / "signals.json").write_text('{"signals":[]}', encoding="utf-8")
@@ -89,6 +91,7 @@ def test_state_export_route_returns_only_derived_json_files(statusd_server: str,
     assert sorted(data["export"]["files"]) == ["events.jsonl", "signals.json"]
 
 
+@pytest.mark.requirement("FR-age-002")
 def test_state_delete_route_deletes_selected_derived_file(statusd_server: str, tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(statusd, "STATE_DIR", tmp_path)
     keep = tmp_path / "signals.json"

@@ -3,6 +3,7 @@ from __future__ import annotations
 from agent_user_status import statusd_sessions
 
 
+@pytest.mark.requirement("FR-age-006")
 def test_session_snapshot_endpoint_builds_privacy_safe_payload(monkeypatch) -> None:
     calls = []
 
@@ -36,6 +37,7 @@ def test_session_snapshot_endpoint_builds_privacy_safe_payload(monkeypatch) -> N
     ]
 
 
+@pytest.mark.requirement("FR-age-006")
 def test_session_event_endpoint_accepts_session_filter(monkeypatch) -> None:
     calls = []
 

@@ -9,6 +9,7 @@ from agent_user_status import agent_imessage_state_commands
 from agent_user_status.state_retention import delete_state, export_state, retain_recent_state
 
 
+@pytest.mark.requirement("FR-age-004")
 def test_export_state_reads_only_derived_json_and_jsonl(tmp_path) -> None:
     (tmp_path / "signals.json").write_text('{"signals":[{"name":"eye_tracking"}]}', encoding="utf-8")
     (tmp_path / "action_events.jsonl").write_text('{"kind":"mouse_click"}\nnot-json\n', encoding="utf-8")
@@ -24,6 +25,7 @@ def test_export_state_reads_only_derived_json_and_jsonl(tmp_path) -> None:
     ]
 
 
+@pytest.mark.requirement("FR-age-002")
 def test_delete_state_deletes_only_selected_derived_files(tmp_path) -> None:
     signals = tmp_path / "signals.json"
     events = tmp_path / "action_events.jsonl"
@@ -40,6 +42,7 @@ def test_delete_state_deletes_only_selected_derived_files(tmp_path) -> None:
     assert native.exists()
 
 
+@pytest.mark.requirement("FR-age-002")
 def test_retain_recent_state_removes_old_derived_files(tmp_path) -> None:
     old_file = tmp_path / "old.json"
     fresh_file = tmp_path / "fresh.jsonl"
@@ -56,6 +59,7 @@ def test_retain_recent_state_removes_old_derived_files(tmp_path) -> None:
     assert fresh_file.exists()
 
 
+@pytest.mark.requirement("FR-age-002")
 def test_state_export_cli_uses_configured_state_dir(tmp_path, monkeypatch, capsys) -> None:
     monkeypatch.setattr(agent_imessage_state_commands, "STATE_DIR", tmp_path)
     (tmp_path / "signals.json").write_text('{"signals":[]}', encoding="utf-8")

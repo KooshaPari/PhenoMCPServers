@@ -24,6 +24,7 @@ def landmarks() -> list[Landmark]:
     return points
 
 
+@pytest.mark.requirement("FR-age-004")
 def test_derived_head_telemetry_contains_only_abstract_values() -> None:
     telemetry = derived_head_telemetry(
         landmarks(),
@@ -46,6 +47,7 @@ def test_derived_head_telemetry_contains_only_abstract_values() -> None:
     assert "landmark" not in str(telemetry).lower()
 
 
+@pytest.mark.requirement("FR-age-001")
 def test_eye_record_accepts_head_pose_without_raw_sensor_payload() -> None:
     record = build_eye_record(
         {

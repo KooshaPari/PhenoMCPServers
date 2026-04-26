@@ -10,6 +10,7 @@ class Screen:
     height = 900
 
 
+@pytest.mark.requirement("FR-age-003")
 def test_post_eye_wraps_connection_reset_as_publish_error(monkeypatch) -> None:
     def raise_connection_reset(*_args, **_kwargs):
         raise ConnectionResetError("reset")

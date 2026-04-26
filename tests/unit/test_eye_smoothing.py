@@ -5,6 +5,7 @@ from typing import cast
 from agent_user_status.eye_smoothing import AdaptiveGazeSmoother
 
 
+@pytest.mark.requirement("FR-age-001")
 def test_smoother_holds_small_deadband_motion() -> None:
     smoother = AdaptiveGazeSmoother()
     assert smoother.update((100.0, 100.0), timestamp=0.0, confidence=1.0) == (100.0, 100.0)
@@ -15,6 +16,7 @@ def test_smoother_holds_small_deadband_motion() -> None:
     assert smoother.snapshot()["filter_mode"] == "deadband_hold"
 
 
+@pytest.mark.requirement("FR-age-001")
 def test_smoother_holds_low_confidence_jump() -> None:
     smoother = AdaptiveGazeSmoother()
     smoother.update((100.0, 100.0), timestamp=0.0, confidence=1.0)
@@ -26,6 +28,7 @@ def test_smoother_holds_low_confidence_jump() -> None:
     assert smoother.snapshot()["targeting_reliable"] is False
 
 
+@pytest.mark.requirement("FR-age-001")
 def test_smoother_clamps_large_reliable_jump_before_filtering() -> None:
     smoother = AdaptiveGazeSmoother(max_jump_px=100.0)
     smoother.update((0.0, 0.0), timestamp=0.0, confidence=1.0)
@@ -38,6 +41,7 @@ def test_smoother_clamps_large_reliable_jump_before_filtering() -> None:
     assert smoother.snapshot()["filter_mode"] == "jump_clamp"
 
 
+@pytest.mark.requirement("FR-age-001")
 def test_smoother_ema_tracks_jump_velocity_and_residual() -> None:
     smoother = AdaptiveGazeSmoother()
     smoother.update((100.0, 100.0), timestamp=0.0, confidence=1.0)
@@ -53,6 +57,7 @@ def test_smoother_ema_tracks_jump_velocity_and_residual() -> None:
     assert cast(float, second["jitter_px"]) >= cast(float, first["jitter_px"])
 
 
+@pytest.mark.requirement("FR-age-001")
 def test_smoother_reset_reseeds_state_and_clears_ema() -> None:
     smoother = AdaptiveGazeSmoother()
     smoother.update((100.0, 100.0), timestamp=0.0, confidence=1.0)

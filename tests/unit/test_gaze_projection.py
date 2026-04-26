@@ -12,6 +12,7 @@ class Screen:
     height: int
 
 
+@pytest.mark.requirement("FR-age-001")
 def test_projection_hold_keeps_last_trusted_point_when_raw_prediction_goes_offscreen() -> None:
     screen = Screen(width=1440, height=900)
     gate = ProjectionHoldGate(
@@ -37,6 +38,7 @@ def test_projection_hold_keeps_last_trusted_point_when_raw_prediction_goes_offsc
     assert hold.projection_offscreen_px > 0
 
 
+@pytest.mark.requirement("FR-age-001")
 def test_projection_hold_releases_only_after_projection_returns_in_bounds() -> None:
     screen = Screen(width=1440, height=900)
     gate = ProjectionHoldGate(
@@ -68,6 +70,7 @@ def test_projection_hold_releases_only_after_projection_returns_in_bounds() -> N
     assert released.targeting_reliable is True
 
 
+@pytest.mark.requirement("FR-age-001")
 def test_poor_calibration_stays_in_degraded_hold_until_recovery() -> None:
     screen = Screen(width=1440, height=900)
     gate = ProjectionHoldGate(
@@ -93,6 +96,7 @@ def test_poor_calibration_stays_in_degraded_hold_until_recovery() -> None:
     assert degraded.targeting_reliable is False
 
 
+@pytest.mark.requirement("FR-age-001")
 def test_projection_thresholds_shrink_when_calibration_quality_is_poor() -> None:
     screen = Screen(width=1440, height=900)
     poor = projection_thresholds(
@@ -116,6 +120,7 @@ def test_projection_thresholds_shrink_when_calibration_quality_is_poor() -> None
     assert poor[1] <= strong[1]
 
 
+@pytest.mark.requirement("FR-age-001")
 def test_stable_sample_gate_resets_on_confidence_jitter_before_it_is_ready() -> None:
     gate = StableSampleGate(min_confidence=0.35, min_frames=3)
 
