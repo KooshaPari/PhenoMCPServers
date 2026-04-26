@@ -35,6 +35,13 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.pyright]
 pythonVersion = "3.11"
 typeCheckingMode = "basic"
+exclude = [
+  "build",
+  "dist",
+  ".venv",
+  ".pytest_cache",
+  ".ruff_cache",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import subprocess
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -27,6 +26,7 @@ from agent_user_status.state_retention import delete_state, export_state, retain
 from agent_user_status.statusd_command_cache import cached_command_result, clear_command_cache
 from agent_user_status.statusd_eye import dev_state as build_dev_state
 from agent_user_status.statusd_eye import store_eye_payload as persist_eye_payload
+from agent_user_status.statusd_privacy import MAX_BODY_BYTES, PRIVACY_POLICY, reject_raw_payload
 from agent_user_status.statusd_sessions import parsed_query, session_get_payload, session_post_payload
 
 HOST = os.environ.get("AGENT_USER_STATUSD_HOST", "127.0.0.1")
@@ -34,40 +34,6 @@ PORT = int(os.environ.get("AGENT_USER_STATUSD_PORT", "8765"))
 AGENT_IMESSAGE = str(agent_imessage_bin())
 STATE_DIR = Path(os.environ.get("AGENT_IMESSAGE_STATE_DIR", "~/.local/share/agent-imessage/state")).expanduser()
 DEV_STATE_PATH = STATE_DIR / "dev_monitor_state.json"
-MAX_BODY_BYTES = 16_384
-RAW_SENSOR_PATTERNS = re.compile(
-    r"(^|[^a-z0-9])(raw|frame|image|photo|screenshot|face|facial|biometric|"
-    r"pupil|retina|iris|embedding|landmarks?|camera|webcam|audio|transcript|waveform|"
-    r"typed_text|key_name|keystroke|keycode)($|[^a-z0-9])",
-    re.IGNORECASE,
-)
-
-
-PRIVACY_POLICY = {
-    "classification": "highly_confidential_derived_presence",
-    "retention": "short_lived_signals_only; agent-imessage max_age_seconds gates freshness",
-    "accepted": [
-        "score",
-        "state",
-        "screen_zone",
-        "bounded screen coordinates for explicit correction events",
-        "confidence",
-        "eta_minutes",
-        "max_age_seconds",
-        "short note without raw sensor content",
-    ],
-    "rejected": [
-        "camera frames",
-        "screenshots",
-        "face or eye images",
-        "facial landmarks",
-        "biometric embeddings",
-        "raw gaze streams",
-        "medical inference labels",
-        "keystroke contents or key names",
-        "audio transcripts or waveforms",
-    ],
-}
 
 
 def run_agent(args: list[str], timeout: int = 30) -> dict[str, Any]:
@@ -97,15 +63,6 @@ def redacted_agent(args: list[str], timeout: int = 30) -> dict[str, Any]:
         data.pop("latest_inbound_preview", None)
         data.pop("chat", None)
     return result
-
-
-def reject_raw_payload(payload: dict[str, Any]) -> str | None:
-    text = json.dumps(payload, sort_keys=True)
-    if len(text.encode("utf-8")) > MAX_BODY_BYTES:
-        return "payload too large"
-    if RAW_SENSOR_PATTERNS.search(text):
-        return "raw sensor/biometric payload rejected; send derived state only"
-    return None
 
 
 def dev_state() -> dict[str, Any]:

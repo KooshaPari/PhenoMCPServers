@@ -10,6 +10,7 @@ from typing import Any, cast
 import pytest
 
 from agent_user_status import statusd
+from agent_user_status.statusd_privacy import PRIVACY_POLICY, reject_raw_payload
 
 
 @pytest.fixture
@@ -35,6 +36,30 @@ def post_json(authority: str, path: str, payload: dict[str, object]) -> tuple[in
     data = json.loads(response.read().decode("utf-8"))
     connection.close()
     return response.status, data
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
+def test_privacy_policy_declares_derived_presence_classification() -> None:
+    assert PRIVACY_POLICY["classification"] == "highly_confidential_derived_presence"
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-002")
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
+def test_raw_payload_gate_rejects_raw_sensor_keys() -> None:
+    reason = reject_raw_payload({"state": "derived", "score": 0.7, "raw_frame": "base64"})
+
+    assert reason is not None
+    assert "raw sensor/biometric payload rejected" in reason
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
+def test_raw_payload_gate_accepts_derived_signal_shape() -> None:
+    assert reject_raw_payload({"state": "derived", "score": 0.7, "max_age_seconds": 5}) is None
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-010")
+def test_raw_payload_gate_rejects_oversized_payloads() -> None:
+    assert reject_raw_payload({"state": "x" * 16_500}) == "payload too large"
 
 
 @pytest.mark.parametrize(

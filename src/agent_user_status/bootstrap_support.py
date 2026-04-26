@@ -59,6 +59,7 @@ SUPPORT_MODULES = [
     "state_retention.py",
     "statusd_eye.py",
     "statusd_sessions.py",
+    "statusd_privacy.py",
     "statusd_command_cache.py",
     "ttl_cache.py",
     "jsonl_tail.py",
