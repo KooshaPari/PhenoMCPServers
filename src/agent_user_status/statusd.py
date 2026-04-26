@@ -19,11 +19,12 @@ from urllib.parse import parse_qs, urlparse
 
 from agent_user_status.bootstrap_support import agent_imessage_bin
 from agent_user_status.correction import recent_correction_events, store_correction_event
-from agent_user_status.eye_state_payload import bounded_float, bounded_int
+from agent_user_status.eye_state_payload import bounded_int
 from agent_user_status.gaze_context import as_bool
 from agent_user_status.monitor_html import MONITOR_HTML
 from agent_user_status.state_retention import delete_state, export_state, retain_recent_state
 from agent_user_status.statusd_command_cache import cached_command_result, clear_command_cache
+from agent_user_status.statusd_commands import build_action_command, build_signal_command
 from agent_user_status.statusd_eye import dev_state as build_dev_state
 from agent_user_status.statusd_eye import store_eye_payload as persist_eye_payload
 from agent_user_status.statusd_privacy import MAX_BODY_BYTES, PRIVACY_POLICY, reject_raw_payload
@@ -186,27 +187,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
 
             if path == "/signal":
-                score = bounded_float(payload["score"], 0.5, 0.0, 1.0, "score")
-                weight = bounded_float(payload.get("weight"), 1.0, 0.0, 5.0, "weight")
-                max_age = bounded_int(payload.get("max_age_seconds"), 30, 1, 3600, "max_age_seconds")
-                command = [
-                    "signal",
-                    str(payload["name"]),
-                    "--score",
-                    str(score),
-                    "--state",
-                    str(payload.get("state", "derived")),
-                    "--weight",
-                    str(weight),
-                    "--max-age-seconds",
-                    str(max_age),
-                ]
-                if payload.get("eta_minutes") is not None:
-                    eta = bounded_int(payload.get("eta_minutes"), 0, 0, 1440, "eta_minutes")
-                    command.extend(["--eta-minutes", str(eta)])
-                if payload.get("note"):
-                    command.extend(["--note", str(payload["note"])])
-                result = run_agent(command, timeout=4)
+                result = run_agent(build_signal_command(payload), timeout=4)
                 if result.get("ok"):
                     clear_command_cache()
                 self.send_json(200 if result.get("ok") else 502, result)
@@ -224,28 +205,7 @@ class Handler(BaseHTTPRequestHandler):
                 max_age = bounded_int(payload.get("max_age_seconds"), 86400, 1, 31_536_000, "max_age_seconds")
                 self.send_json(200, {"ok": True, **retain_recent_state(STATE_DIR, max_age_seconds=max_age)})
             elif path == "/action":
-                max_age = bounded_int(payload.get("max_age_seconds"), 120, 1, 3600, "max_age_seconds")
-                command = [
-                    "action",
-                    str(payload["direction"]),
-                    str(payload["kind"]),
-                    "--max-age-seconds",
-                    str(max_age),
-                ]
-                if payload.get("score") is not None:
-                    score = bounded_float(payload.get("score"), 0.5, 0.0, 1.0, "score")
-                    command.extend(["--score", str(score)])
-                if payload.get("weight") is not None:
-                    weight = bounded_float(payload.get("weight"), 1.0, 0.0, 5.0, "weight")
-                    command.extend(["--weight", str(weight)])
-                if payload.get("state"):
-                    command.extend(["--state", str(payload["state"])])
-                if payload.get("eta_minutes") is not None:
-                    eta = bounded_int(payload.get("eta_minutes"), 0, 0, 1440, "eta_minutes")
-                    command.extend(["--eta-minutes", str(eta)])
-                if payload.get("note"):
-                    command.extend(["--note", str(payload["note"])])
-                result = run_agent(command, timeout=4)
+                result = run_agent(build_action_command(payload), timeout=4)
                 if result.get("ok"):
                     clear_command_cache()
                 self.send_json(200 if result.get("ok") else 502, result)

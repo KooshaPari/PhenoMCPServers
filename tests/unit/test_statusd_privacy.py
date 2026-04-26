@@ -69,6 +69,7 @@ def test_raw_payload_gate_rejects_oversized_payloads() -> None:
         ("/dev/eye", {"screen_zone": "center", "score": 0.7, "landmarks": [1, 2, 3]}),
         ("/signal", {"name": "eye_tracking", "score": 0.7, "state": "derived", "audio": "raw"}),
         ("/signal", {"name": "eye_tracking", "score": 0.7, "state": "derived", "screenshot": "png"}),
+        ("/action", {"direction": "input", "kind": "key_press", "state": "derived", "screenshot": "png"}),
         ("/session/heartbeat", {"session_id": "codex", "status": "working", "transcript": "private"}),
         ("/session/heartbeat", {"session_id": "codex", "status": "working", "biometric": "template"}),
         ("/correction/event", {"kind": "media_activity", "score": 0.6, "audio": "waveform"}),

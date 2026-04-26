@@ -61,6 +61,7 @@ def test_support_manifest_includes_decomposed_runtime_modules() -> None:
         "gaze_projection_types.py",
         "jsonl_tail.py",
         "statusd_command_cache.py",
+        "statusd_commands.py",
         "statusd_eye.py",
         "statusd_privacy.py",
         "ttl_cache.py",

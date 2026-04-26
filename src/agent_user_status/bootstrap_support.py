@@ -64,6 +64,7 @@ SUPPORT_MODULES = [
     "statusd_sessions.py",
     "statusd_privacy.py",
     "statusd_command_cache.py",
+    "statusd_commands.py",
     "ttl_cache.py",
     "jsonl_tail.py",
     "codex_hooks.py",

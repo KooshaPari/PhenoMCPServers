@@ -111,6 +111,22 @@ def test_signal_post_invalidates_cached_command_results(monkeypatch, statusd_ser
     assert post_status == 200
     assert post_payload["ok"] is True
     assert refreshed["data"] == {"call_count": 3}
+    assert calls == [
+        ["signals"],
+        [
+            "signal",
+            "process_tracker",
+            "--score",
+            "0.8",
+            "--state",
+            "coding",
+            "--weight",
+            "1.0",
+            "--max-age-seconds",
+            "30",
+        ],
+        ["signals"],
+    ]
 
 
 @pytest.mark.requirement("FR-AGENT_USER_STATUS-004")
