@@ -78,6 +78,7 @@ def test_native_manifest_includes_decomposed_monitor_sources() -> None:
         "CalibrationEvalController.swift",
         "DotOverlayView.swift",
         "PanelView.swift",
+        "StatusModel.swift",
     }
 
     assert native_expected.issubset(set(NATIVE_MONITOR_FILES))

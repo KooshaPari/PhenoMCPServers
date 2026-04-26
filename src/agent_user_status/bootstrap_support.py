@@ -99,6 +99,7 @@ NATIVE_MONITOR_FILES = [
     "VisualGazeFilter.swift",
     "WindowTracking.swift",
     "PanelView.swift",
+    "StatusModel.swift",
 ]
 
 NATIVE_APP_NAME = "Agent User Status.app"
