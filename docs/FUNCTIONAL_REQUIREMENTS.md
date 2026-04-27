@@ -46,7 +46,7 @@ in tests, PRs, and architectural documentation.
 
 **Status:** IMPLEMENTED
 
-**Test Traces:** `tests/unit/test_agent_imessage_recipients.py`, `tests/unit/test_bootstrap_support.py`, `tests/unit/test_packaging_macos.py`
+**Test Traces:** `tests/unit/test_agent_imessage_recipients.py`, `tests/unit/test_bootstrap_support.py`, `tests/unit/test_packaging_macos.py`, `tests/unit/test_validate_docs.py`
 
 ---
 
