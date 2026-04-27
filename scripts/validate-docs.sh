@@ -57,6 +57,7 @@ FORBIDDEN_ROOT_DOCS = {
     "WORKLOG.md",
     "worklog.md",
 }
+FORBIDDEN_ROOT_DOC_RE = re.compile(r"(SUMMARY|STATUS|FINAL|COMPLETE|REPORT|WORKLOG)", re.IGNORECASE)
 
 errors: list[str] = []
 warnings: list[str] = []
@@ -95,6 +96,11 @@ def validate_forbidden_root_docs() -> None:
     for filename in sorted(FORBIDDEN_ROOT_DOCS):
         if Path(filename).exists():
             errors.append(f"{filename}: merge durable content into docs/worklogs/ or docs/sessions/")
+    for path in ROOT.glob("*.md"):
+        if path.name in {"README.md", "CHANGELOG.md", "FUNCTIONAL_REQUIREMENTS.md"}:
+            continue
+        if FORBIDDEN_ROOT_DOC_RE.search(path.stem):
+            errors.append(f"{path.name}: merge durable content into docs/worklogs/ or docs/sessions/")
 
 
 def validate_local_links() -> None:
