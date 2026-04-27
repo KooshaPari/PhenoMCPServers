@@ -7,8 +7,7 @@ from pathlib import Path
 import pytest
 
 
-@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
-def test_validate_docs_rejects_temporal_root_reports(tmp_path) -> None:
+def write_minimal_docs_repo(tmp_path: Path, root_doc_name: str) -> Path:
     repo = tmp_path / "repo"
     scripts = repo / "scripts"
     scripts.mkdir(parents=True)
@@ -16,9 +15,12 @@ def test_validate_docs_rejects_temporal_root_reports(tmp_path) -> None:
     (repo / ".codex").mkdir()
     (repo / ".codex" / "hooks.json").write_text("{}", encoding="utf-8")
     (repo / "README.md").write_text("# Test Repo\n", encoding="utf-8")
-    (repo / "SUMMARY.md").write_text("# Temporary Summary\n", encoding="utf-8")
+    (repo / root_doc_name).write_text("# Temporary Report\n", encoding="utf-8")
+    return repo
 
-    result = subprocess.run(
+
+def run_docs_links(repo: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
         ["bash", "scripts/validate-docs.sh", "links"],
         cwd=repo,
         text=True,
@@ -26,5 +28,18 @@ def test_validate_docs_rejects_temporal_root_reports(tmp_path) -> None:
         check=False,
     )
 
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
+def test_validate_docs_rejects_temporal_root_reports(tmp_path) -> None:
+    result = run_docs_links(write_minimal_docs_repo(tmp_path, "SUMMARY.md"))
+
     assert result.returncode == 1
     assert "SUMMARY.md: merge durable content into docs/worklogs/ or docs/sessions/" in result.stderr
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
+def test_validate_docs_rejects_patterned_temporal_root_reports(tmp_path) -> None:
+    result = run_docs_links(write_minimal_docs_repo(tmp_path, "release-status-report.md"))
+
+    assert result.returncode == 1
+    assert "release-status-report.md: merge durable content into docs/worklogs/ or docs/sessions/" in result.stderr
