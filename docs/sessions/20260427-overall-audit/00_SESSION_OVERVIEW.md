@@ -45,8 +45,11 @@ Likely next seam: split recipient/config parsing, subprocess wrappers, or messag
 
 ### P3: Optional narrow hardening
 
-- Add direct unit tests for `statusd_commands.py` edge cases: `eta_minutes`, `note`, clamped score/weight/max-age, and missing required keys.
 - Review benign `pass` handlers in statusd/webcam runtime for whether comments or helper extraction would clarify intentional best-effort behavior.
+
+### Resolved: statusd command builder edge-case tests
+
+`tests/unit/test_statusd_commands.py` covers `eta_minutes`, `note`, bounded score/weight/max-age validation, and missing route keys for `/signal` and `/action` command builders.
 
 ## Not Currently Blocking
 
