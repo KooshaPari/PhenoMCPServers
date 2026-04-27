@@ -8,13 +8,32 @@ import json
 import os
 import re
 import subprocess
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from agent_user_status import agent_imessage_signals as _signals
+from agent_user_status.agent_imessage_recipients import (
+    RECIPIENT_ENV_PREFIXES,
+    RECIPIENT_ROLES,
+    Config,
+    require_recipient_role,
+)
 from agent_user_status.bootstrap_support import imsg_bin
+
+__all__ = [
+    "ACTION_LEARNING_PATH",
+    "ACTION_LOG_PATH",
+    "CONFIG_PATH",
+    "LEARNING_PATH",
+    "RECIPIENT_ENV_PREFIXES",
+    "RECIPIENT_ROLES",
+    "RESPONSE_LOG_PATH",
+    "SIGNALS_PATH",
+    "STATE_DIR",
+    "Config",
+    "require_recipient_role",
+]
 
 CONFIG_PATH = Path(os.environ.get("AGENT_IMESSAGE_ENV", "~/.config/phenotype/agent-imessage.env")).expanduser()
 STATE_DIR = Path(os.environ.get("AGENT_IMESSAGE_STATE_DIR", "~/.local/share/agent-imessage/state")).expanduser()
@@ -37,29 +56,6 @@ RAW_SENSOR_PATTERNS = re.compile(
     r"pupil|retina|iris|embedding|landmark|camera|webcam)($|[^a-z0-9])",
     re.IGNORECASE,
 )
-
-
-@dataclass(frozen=True)
-class Config:
-    role: str
-    phone_e164: str
-    phone_digits: str
-    email: str
-    name: str
-
-
-RECIPIENT_ROLES = ("koosha", "sponsor")
-RECIPIENT_ENV_PREFIXES = {
-    "koosha": "AGENT_IMESSAGE",
-    "sponsor": "AGENT_IMESSAGE_SPONSOR",
-}
-
-
-def require_recipient_role(role: str | None) -> str:
-    normalized = (role or "koosha").strip().lower()
-    if normalized not in RECIPIENT_ROLES:
-        raise ValueError(f"Unsupported recipient role: {role}. Use one of: {', '.join(RECIPIENT_ROLES)}")
-    return normalized
 
 
 def _recipient_value(values: dict[str, str], role: str, key: str, default: str = "") -> str:

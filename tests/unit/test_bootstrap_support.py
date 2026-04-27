@@ -55,6 +55,7 @@ def test_support_manifest_includes_decomposed_runtime_modules() -> None:
         "agent_imessage_mcp_presence.py",
         "agent_imessage_outbox.py",
         "agent_imessage_presence_commands.py",
+        "agent_imessage_recipients.py",
         "agent_imessage_signals.py",
         "codex_hooks.py",
         "gaze_projection_policy.py",

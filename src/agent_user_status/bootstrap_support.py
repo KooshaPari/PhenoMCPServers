@@ -34,6 +34,7 @@ SUPPORT_MODULES = [
     "agent_imessage_mcp_sessions.py",
     "agent_imessage_outbox.py",
     "agent_imessage_presence_commands.py",
+    "agent_imessage_recipients.py",
     "agent_imessage_session_commands.py",
     "agent_imessage_signals.py",
     "agent_imessage_state_commands.py",
