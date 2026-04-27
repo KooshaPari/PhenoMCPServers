@@ -190,6 +190,7 @@ def validate_stale_phrases() -> None:
         "doctor` gate fails until the live `~/.local` install is refreshed",
         "doc-link-check not available; skipping",
         "fr-coverage not available; skipping",
+        "PYTHONPATH=src python -m pytest tests/unit -q",
     ]
     for path in iter_markdown_files() + list(Path(".github/workflows").glob("*.yml")):
         text = path.read_text(encoding="utf-8")

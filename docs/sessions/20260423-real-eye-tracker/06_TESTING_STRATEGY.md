@@ -3,7 +3,7 @@
 Validation performed before the GitHub bootstrap:
 - `./scripts/doctor.sh`
 - `./tests/smoke/smoke.sh`
-- `PYTHONPATH=src python -m pytest tests/unit -q`
+- `PYTHONPATH=src python3 -m pytest tests/unit -q`
 
 For the setup pass itself, the only required checks are:
 - repo/remote wiring
