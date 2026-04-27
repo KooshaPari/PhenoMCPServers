@@ -58,3 +58,14 @@ def test_validate_docs_rejects_stale_pytest_command(tmp_path) -> None:
 
     assert result.returncode == 1
     assert "CONTRIBUTING.md: stale validation phrase remains" in result.stderr
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
+def test_validate_docs_rejects_missing_local_links(tmp_path) -> None:
+    repo = write_minimal_docs_repo(tmp_path)
+    (repo / "README.md").write_text("[missing](docs/missing.md)\n", encoding="utf-8")
+
+    result = run_docs_links(repo)
+
+    assert result.returncode == 1
+    assert "README.md: missing local link target: docs/missing.md" in result.stderr
