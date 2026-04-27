@@ -5,14 +5,14 @@ Date: 2026-04-27
 ## Current State
 
 - Branch: `user-status-next-dag-hardening`
-- Worktree: clean at audit start
-- Local delta from origin: 0 commits
+- Worktree: clean at latest audit refresh
+- Local delta from origin: see `git status --short --branch`
 - Functional requirements matrix: current
 
 ## Validation Passed
 
 - `PYTHONPATH=src python3 -m pytest tests/unit -q`
-  - 113 passed
+  - 134 passed
 - `python3 -m ruff check src tests scripts/update-fr-matrix.py`
 - `pyright`
 - `scripts/validate-docs.sh all`
