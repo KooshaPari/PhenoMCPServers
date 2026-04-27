@@ -30,7 +30,8 @@ Confirm each boundary:
 
 - [ ] `./scripts/doctor.sh`
 - [ ] `./tests/smoke/smoke.sh`
-- [ ] `PYTHONPATH=src python -m pytest tests/unit -q`
+- [ ] `PYTHONPATH=src python3 -m pytest tests/unit -q`
+- [ ] `scripts/validate-docs.sh all`
 
 # Reviewer Notes
 
