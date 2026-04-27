@@ -48,6 +48,15 @@ TRACE_RE = re.compile(r"\*\*Test Traces:\*\* (.+)")
 CANONICAL_MARKER_RE = re.compile(r"FR-AGENT_USER_STATUS-\d{3}")
 LEGACY_MARKER_RE = re.compile(r"FR-age-\d{3}")
 VALID_STATUSES = {"IMPLEMENTED", "PARTIAL", "SCAFFOLD"}
+FORBIDDEN_ROOT_DOCS = {
+    "COMPLETE.md",
+    "FINAL.md",
+    "REPORT.md",
+    "STATUS.md",
+    "SUMMARY.md",
+    "WORKLOG.md",
+    "worklog.md",
+}
 
 errors: list[str] = []
 warnings: list[str] = []
@@ -80,6 +89,12 @@ def validate_hooks_json() -> None:
         json.loads(HOOKS_JSON.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         errors.append(f"{HOOKS_JSON}:{exc.lineno}: invalid JSON: {exc.msg}")
+
+
+def validate_forbidden_root_docs() -> None:
+    for filename in sorted(FORBIDDEN_ROOT_DOCS):
+        if Path(filename).exists():
+            errors.append(f"{filename}: merge durable content into docs/worklogs/ or docs/sessions/")
 
 
 def validate_local_links() -> None:
@@ -203,6 +218,7 @@ def validate_stale_phrases() -> None:
 
 if MODE in {"all", "links"}:
     validate_hooks_json()
+    validate_forbidden_root_docs()
     validate_local_links()
     validate_stale_phrases()
 
