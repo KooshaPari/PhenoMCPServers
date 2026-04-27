@@ -37,6 +37,11 @@ All tracked source, test, packaging, script, native, and workflow files are now 
 
 `docs/worklogs/` is the canonical durable worklog surface. The duplicate root `worklogs/` tree was merged and removed.
 
+### Resolved: stale root worklog file
+
+The root `worklog.md` bootstrap entry was merged into `docs/worklogs/ARCHITECTURE.md`,
+leaving `docs/worklogs/` as the only durable worklog surface.
+
 ### Resolved: macOS packaging shell contract tests
 
 `tests/unit/test_packaging_macos.py` covers dry-run staging, unsafe payload root rejection, dry-run package command output, and malformed staged payload rejection.
