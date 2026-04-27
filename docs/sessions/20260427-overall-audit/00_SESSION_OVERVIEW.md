@@ -49,6 +49,10 @@ All tracked source, test, packaging, script, native, and workflow files are now 
 
 Benign `pass` handlers in statusd, webcam runtime, and cursor activity tracking are now documented where they intentionally absorb disconnects or transient local backend failures.
 
+### Resolved: stale Codex guidance snippet
+
+The unreferenced `codex/AGENTS.user-status-snippet.md` copy of broad agent guidance was removed. The canonical repo guidance remains `AGENTS.md` and `CLAUDE.md`.
+
 ## Not Currently Blocking
 
 - Unit, lint, type, docs, native compile, bootstrap, and packaging checks are green.
