@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 
-def write_minimal_docs_repo(tmp_path: Path, root_doc_name: str) -> Path:
+def write_minimal_docs_repo(tmp_path: Path, root_doc_name: str | None = None) -> Path:
     repo = tmp_path / "repo"
     scripts = repo / "scripts"
     scripts.mkdir(parents=True)
@@ -15,7 +15,8 @@ def write_minimal_docs_repo(tmp_path: Path, root_doc_name: str) -> Path:
     (repo / ".codex").mkdir()
     (repo / ".codex" / "hooks.json").write_text("{}", encoding="utf-8")
     (repo / "README.md").write_text("# Test Repo\n", encoding="utf-8")
-    (repo / root_doc_name).write_text("# Temporary Report\n", encoding="utf-8")
+    if root_doc_name:
+        (repo / root_doc_name).write_text("# Temporary Report\n", encoding="utf-8")
     return repo
 
 
@@ -43,3 +44,17 @@ def test_validate_docs_rejects_patterned_temporal_root_reports(tmp_path) -> None
 
     assert result.returncode == 1
     assert "release-status-report.md: merge durable content into docs/worklogs/ or docs/sessions/" in result.stderr
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
+def test_validate_docs_rejects_stale_pytest_command(tmp_path) -> None:
+    repo = write_minimal_docs_repo(tmp_path)
+    (repo / "CONTRIBUTING.md").write_text(
+        "Run `PYTHONPATH=src python -m pytest tests/unit -q` before review.\n",
+        encoding="utf-8",
+    )
+
+    result = run_docs_links(repo)
+
+    assert result.returncode == 1
+    assert "CONTRIBUTING.md: stale validation phrase remains" in result.stderr
