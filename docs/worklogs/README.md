@@ -15,6 +15,10 @@
 Add durable project-level entries here. Put task-specific execution notes in
 `docs/sessions/<session-id>/` instead.
 
+Do not create root-level `worklog.md`, `WORKLOG.md`, status, summary, or final
+report files. Merge durable information into one of the category files above;
+keep ephemeral execution evidence inside the relevant session folder.
+
 Use this template:
 
 ```markdown
