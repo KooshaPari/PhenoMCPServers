@@ -30,6 +30,16 @@ def run_docs_links(repo: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
+def run_docs_fr(repo: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["bash", "scripts/validate-docs.sh", "fr"],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
 @pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
 def test_validate_docs_rejects_temporal_root_reports(tmp_path) -> None:
     result = run_docs_links(write_minimal_docs_repo(tmp_path, "SUMMARY.md"))
@@ -69,3 +79,34 @@ def test_validate_docs_rejects_missing_local_links(tmp_path) -> None:
 
     assert result.returncode == 1
     assert "README.md: missing local link target: docs/missing.md" in result.stderr
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
+def test_validate_docs_rejects_fr_trace_marker_mismatch(tmp_path) -> None:
+    repo = write_minimal_docs_repo(tmp_path)
+    docs = repo / "docs"
+    tests = repo / "tests" / "unit"
+    fr_id = "FR-" + "AGENT_USER_STATUS-001"
+    docs.mkdir()
+    tests.mkdir(parents=True)
+    (docs / "FUNCTIONAL_REQUIREMENTS.md").write_text(
+        "\n".join(
+            [
+                "# Functional Requirements",
+                f"### {fr_id}",
+                "**Description:** CLI interface",
+                "**Status:** IMPLEMENTED",
+                "**Test Traces:** `tests/unit/test_expected.py`",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (tests / "test_actual.py").write_text(
+        f'import pytest\n\n@pytest.mark.requirement("{fr_id}")\ndef test_actual():\n    assert True\n',
+        encoding="utf-8",
+    )
+
+    result = run_docs_fr(repo)
+
+    assert result.returncode == 1
+    assert f"{fr_id} trace files do not match pytest markers" in result.stderr
