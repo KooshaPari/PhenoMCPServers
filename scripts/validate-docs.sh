@@ -26,7 +26,18 @@ from urllib.parse import unquote
 
 MODE = sys.argv[1]
 ROOT = Path.cwd()
-DOC_ROOTS = [Path("README.md"), Path("FUNCTIONAL_REQUIREMENTS.md"), Path("docs"), Path("packaging")]
+DOC_ROOTS = [
+    Path("README.md"),
+    Path("FUNCTIONAL_REQUIREMENTS.md"),
+    Path("AGENTS.md"),
+    Path("CLAUDE.md"),
+    Path("CONTRIBUTING.md"),
+    Path("SECURITY.md"),
+    Path("docs"),
+    Path("packaging"),
+    Path("skills"),
+    Path(".github"),
+]
 FR_DOC = Path("docs/FUNCTIONAL_REQUIREMENTS.md")
 HOOKS_JSON = Path(".codex/hooks.json")
 
