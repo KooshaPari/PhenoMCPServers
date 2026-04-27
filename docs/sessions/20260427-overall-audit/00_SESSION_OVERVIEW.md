@@ -35,24 +35,13 @@ Only one source file remains at or above the 300-line threshold:
 
 Likely next seam: split recipient/config parsing, subprocess wrappers, or message helpers into a focused support module while preserving import compatibility for current callers.
 
-### P2: Add pytest coverage for macOS packaging shell contracts
-
-Packaging shell validation passes, but there is no direct pytest coverage for the dry-run and safety behavior of:
-
-- `packaging/scripts/stage-macos-payload.sh`
-- `packaging/scripts/build-macos-pkg.sh`
-- `packaging/scripts/macos-pkg-lib.sh`
-
-Recommended tests:
-
-- dry-run staging accepts a fake app/bin source under repo `build/`
-- dry-run staging rejects unsafe payload roots
-- dry-run package build prints staging, `pkgbuild`, and `productbuild` commands
-- malformed staged payload fails validation
-
 ### Resolved: Duplicated worklog surfaces
 
 `docs/worklogs/` is the canonical durable worklog surface. The duplicate root `worklogs/` tree was merged and removed.
+
+### Resolved: macOS packaging shell contract tests
+
+`tests/unit/test_packaging_macos.py` covers dry-run staging, unsafe payload root rejection, dry-run package command output, and malformed staged payload rejection.
 
 ### P3: Optional narrow hardening
 
