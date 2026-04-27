@@ -79,6 +79,7 @@ def command_run(args: argparse.Namespace) -> int:
             try:
                 post_correction_click(x, y, args)
             except Exception:
+                # Correction clicks are opportunistic and should not stop activity tracking.
                 pass
         was_down = down
 

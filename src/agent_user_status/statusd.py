@@ -89,6 +89,7 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
         except (BrokenPipeError, ConnectionResetError):
+            # HTTP clients may disconnect after receiving enough local status data.
             pass
 
     def send_html(self, status: int, body_text: str) -> None:
@@ -100,6 +101,7 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
         except (BrokenPipeError, ConnectionResetError):
+            # Browser monitor refreshes can close the socket before the body flushes.
             pass
 
     def send_sse(self, payloads: list[dict[str, Any]]) -> None:
@@ -114,6 +116,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(f"event: session\ndata: {body}\n\n".encode())
                 self.wfile.flush()
         except (BrokenPipeError, ConnectionResetError):
+            # SSE listeners are optional and may disconnect between session events.
             pass
 
     def read_json(self) -> dict[str, Any]:

@@ -43,13 +43,13 @@ Likely next seam: split recipient/config parsing, subprocess wrappers, or messag
 
 `tests/unit/test_packaging_macos.py` covers dry-run staging, unsafe payload root rejection, dry-run package command output, and malformed staged payload rejection.
 
-### P3: Optional narrow hardening
-
-- Review benign `pass` handlers in statusd/webcam runtime for whether comments or helper extraction would clarify intentional best-effort behavior.
-
 ### Resolved: statusd command builder edge-case tests
 
 `tests/unit/test_statusd_commands.py` covers `eta_minutes`, `note`, bounded score/weight/max-age validation, and missing route keys for `/signal` and `/action` command builders.
+
+### Resolved: intentional best-effort handlers
+
+Benign `pass` handlers in statusd, webcam runtime, and cursor activity tracking are now documented where they intentionally absorb disconnects or transient local backend failures.
 
 ## Not Currently Blocking
 

@@ -114,6 +114,7 @@ def _publish_missing_presence(screen: Any, publisher: EyePublishConfig) -> None:
             state="presence_missing",
         )
     except PublishError:
+        # Presence publishing is best effort; camera sampling should keep running.
         pass
 
 
@@ -174,6 +175,7 @@ def _publish_sample(
             ),
         )
     except PublishError:
+        # Drop transient backend failures instead of stopping opt-in gaze collection.
         pass
 
 
