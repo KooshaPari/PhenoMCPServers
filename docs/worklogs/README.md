@@ -4,15 +4,18 @@
 
 ## Categories
 
-| Category | File | Purpose |
-|----------|------|---------|
-| **ARCHITECTURE** | `worklogs/ARCHITECTURE.md` | ADRs, design decisions, refactoring |
-| **RESEARCH** | `worklogs/RESEARCH.md` | Technology exploration, analysis |
-| **GOVERNANCE** | `worklogs/GOVERNANCE.md` | Policy, quality gates, compliance |
+| File | Purpose |
+|------|---------|
+| `ARCHITECTURE.md` | ADRs, design decisions, library extraction, and refactoring |
+| `RESEARCH.md` | Technology exploration, starred repo analysis, and comparative studies |
+| `GOVERNANCE.md` | Policy decisions, quality gate evidence, and org alignment |
 
 ## Adding Entries
 
-Use the format in `AGENT_ONBOARDING.md` or reference this template:
+Add durable project-level entries here. Put task-specific execution notes in
+`docs/sessions/<session-id>/` instead.
+
+Use this template:
 
 ```markdown
 ## YYYY-MM-DD - Entry Title
@@ -31,5 +34,3 @@ Brief description.
 ### Next Steps
 - [ ] Action item
 ```
-
-See `/repos/worklogs/AGENT_ONBOARDING.md` for complete format guidelines.

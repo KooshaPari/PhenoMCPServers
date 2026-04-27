@@ -35,15 +35,6 @@ Only one source file remains at or above the 300-line threshold:
 
 Likely next seam: split recipient/config parsing, subprocess wrappers, or message helpers into a focused support module while preserving import compatibility for current callers.
 
-### P2: Resolve duplicated worklog surfaces
-
-Two worklog trees exist and differ:
-
-- `worklogs/`
-- `docs/worklogs/`
-
-The next audit should decide which is canonical, merge unique content, and delete or redirect the duplicate surface. This is a documentation-governance cleanup, not a runtime blocker.
-
 ### P2: Add pytest coverage for macOS packaging shell contracts
 
 Packaging shell validation passes, but there is no direct pytest coverage for the dry-run and safety behavior of:
@@ -58,6 +49,10 @@ Recommended tests:
 - dry-run staging rejects unsafe payload roots
 - dry-run package build prints staging, `pkgbuild`, and `productbuild` commands
 - malformed staged payload fails validation
+
+### Resolved: Duplicated worklog surfaces
+
+`docs/worklogs/` is the canonical durable worklog surface. The duplicate root `worklogs/` tree was merged and removed.
 
 ### P3: Optional narrow hardening
 
