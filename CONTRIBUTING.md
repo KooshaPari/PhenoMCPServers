@@ -18,7 +18,8 @@ infrastructure unless proven otherwise.
 Run the relevant local checks before asking for review:
 
 ```bash
-PYTHONPATH=src python -m pytest tests/unit -q
+PYTHONPATH=src python3 -m pytest tests/unit -q
+scripts/validate-docs.sh all
 ./scripts/doctor.sh
 ./tests/smoke/smoke.sh
 ```
