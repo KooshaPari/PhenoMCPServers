@@ -110,3 +110,28 @@ def test_validate_docs_rejects_fr_trace_marker_mismatch(tmp_path) -> None:
 
     assert result.returncode == 1
     assert f"{fr_id} trace files do not match pytest markers" in result.stderr
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-009")
+def test_validate_docs_rejects_implemented_requirement_with_pending_traces(tmp_path) -> None:
+    repo = write_minimal_docs_repo(tmp_path)
+    docs = repo / "docs"
+    docs.mkdir()
+    fr_id = "FR-" + "AGENT_USER_STATUS-002"
+    (docs / "FUNCTIONAL_REQUIREMENTS.md").write_text(
+        "\n".join(
+            [
+                "# Functional Requirements",
+                f"### {fr_id}",
+                "**Description:** HTTP endpoints",
+                "**Status:** IMPLEMENTED",
+                "**Test Traces:** (pending implementation)",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_docs_fr(repo)
+
+    assert result.returncode == 1
+    assert f"{fr_id} is IMPLEMENTED but has pending traces" in result.stderr
