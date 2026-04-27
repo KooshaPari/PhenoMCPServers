@@ -27,13 +27,11 @@ Date: 2026-04-27
 
 ## Remaining Work
 
-### P1: Finish the 300-line modularity sweep
+No P1/P2 audit blockers remain from this session's original checklist.
 
-Only one source file remains at or above the 300-line threshold:
+### Resolved: 300-line modularity sweep
 
-- `src/agent_user_status/agent_imessage_core.py` - 302 lines
-
-Likely next seam: split recipient/config parsing, subprocess wrappers, or message helpers into a focused support module while preserving import compatibility for current callers.
+All tracked source, test, packaging, script, native, and workflow files are now under the 300-line threshold. The final source item was resolved by extracting recipient primitives from `agent_imessage_core.py`.
 
 ### Resolved: Duplicated worklog surfaces
 
