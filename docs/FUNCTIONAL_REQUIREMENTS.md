@@ -136,7 +136,7 @@ in tests, PRs, and architectural documentation.
 
 **Status:** IMPLEMENTED
 
-**Test Traces:** `tests/unit/test_agent_imessage_status.py`, `tests/unit/test_jsonl_tail.py`
+**Test Traces:** `tests/unit/test_agent_imessage_status.py`, `tests/unit/test_codex_hook_cache.py`, `tests/unit/test_jsonl_tail.py`
 
 ---
 

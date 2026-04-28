@@ -22,8 +22,8 @@ _FAILURE_COUNTS: dict[str, int] = {}
 _LOCK = threading.RLock()
 
 
-def _degraded_ttl(fingerprint: str) -> float:
-    attempts = _FAILURE_COUNTS.get(fingerprint, 0) + 1
+def _degraded_ttl(attempts: int) -> float:
+    attempts = max(1, attempts)
     ttl = STOP_HOOK_DEGRADED_BASE_TTL_SECONDS * (2 ** (attempts - 1))
     return min(ttl, STOP_HOOK_DEGRADED_MAX_TTL_SECONDS)
 
@@ -45,7 +45,7 @@ def store_success(fingerprint: str, result: Mapping[str, Any]) -> dict[str, Any]
 def store_degraded(fingerprint: str, result: Mapping[str, Any]) -> dict[str, Any]:
     with _LOCK:
         _FAILURE_COUNTS[fingerprint] = _FAILURE_COUNTS.get(fingerprint, 0) + 1
-        ttl = _degraded_ttl(fingerprint)
+        ttl = _degraded_ttl(_FAILURE_COUNTS[fingerprint])
     return STOP_HOOK_CACHE.set_with_ttl(cache_key(fingerprint), dict(result), ttl)
 
 

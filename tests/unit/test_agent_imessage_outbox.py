@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+import agent_user_status.agent_imessage_outbox as outbox
 from agent_user_status.agent_imessage_envelope import AgentMessageEnvelope
 from agent_user_status.agent_imessage_outbox import (
     append_outbox_record,
@@ -16,6 +17,7 @@ from agent_user_status.agent_imessage_outbox import (
     record_echo_cleanup_requested,
     record_echo_cleanup_unsupported,
     record_response_received,
+    record_retry_scheduled,
     sweep_expired_outbox_records,
 )
 
@@ -155,3 +157,32 @@ def test_outbox_records_receipts_responses_and_expiration(tmp_path) -> None:
     assert requested["echo_state"] == "delete_requested"
     assert deleted["echo_state"] == "deleted"
     assert expired[-1]["delivery_state"] == "expired"
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-014")
+def test_outbox_records_retry_schedule_with_bounded_backoff(monkeypatch, tmp_path) -> None:
+    store_path = tmp_path / "outbox.jsonl"
+    fixed_now = datetime(2026, 4, 27, 12, 0, tzinfo=UTC)
+
+    class FixedDatetime:
+        @classmethod
+        def now(cls, tz=None):  # noqa: D401 - test helper
+            return fixed_now
+
+    monkeypatch.setattr(outbox, "datetime", FixedDatetime)
+    monkeypatch.setattr(outbox, "now_iso", lambda: fixed_now.isoformat())
+
+    record = record_retry_scheduled(
+        message_id="msg-3",
+        correlation_id="corr-3",
+        recipient="koosha",
+        retry_count=2,
+        delay_seconds=30,
+        note="retry later",
+        store_path=store_path,
+    )
+
+    assert record["delivery_state"] == "queued"
+    assert record["retry_count"] == 2
+    assert record["next_retry_at"] == (fixed_now + timedelta(seconds=30)).isoformat()
+    assert record["note"] == "retry later"
