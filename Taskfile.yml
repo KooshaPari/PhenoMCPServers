@@ -51,7 +51,7 @@ tasks:
       - |
         case "{{.REPO_LANGUAGE}}" in
           python)
-            uv run --with pytest pytest
+            PYTHONPATH=src python -m pytest tests/unit -q
             ;;
           node)
             if [ -f pnpm-lock.yaml ]; then
