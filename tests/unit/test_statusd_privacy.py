@@ -73,6 +73,23 @@ def test_privacy_sensitive_routes_reject_raw_payloads(
     assert "policy" in data
 
 
+def test_correction_event_accepts_derived_audio_activity(statusd_server: str) -> None:
+    status, data = post_json(
+        statusd_server,
+        "/correction/event",
+        {
+            "kind": "audio_activity",
+            "score": 0.6,
+            "state": "smoke_media_activity",
+            "max_age_seconds": 30,
+        },
+    )
+
+    assert status == 200
+    assert data["event"]["kind"] == "audio_activity"
+    assert data["event"]["state"] == "smoke_media_activity"
+
+
 def test_state_export_route_returns_only_derived_json_files(statusd_server: str, tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(statusd, "STATE_DIR", tmp_path)
     (tmp_path / "signals.json").write_text('{"signals":[]}', encoding="utf-8")

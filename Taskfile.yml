@@ -74,6 +74,23 @@ tasks:
             ;;
         esac
 
+  doctor:
+    desc: Run repository doctor checks
+    cmds:
+      - ./scripts/doctor.sh
+
+  smoke:
+    desc: Run runtime smoke checks against local statusd
+    cmds:
+      - ./tests/smoke/smoke.sh
+
+  validate:
+    desc: Run tests plus local doctor and smoke validation
+    cmds:
+      - task: test
+      - task: doctor
+      - task: smoke
+
   lint:
     desc: Run the project linter
     cmds:

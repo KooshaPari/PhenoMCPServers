@@ -39,10 +39,11 @@ MAX_BODY_BYTES = 16_384
 EYE_SIGNAL_INTERVAL_SECONDS = float(os.environ.get("AGENT_USER_STATUSD_EYE_SIGNAL_INTERVAL_SECONDS", "1.0"))
 RAW_SENSOR_PATTERNS = re.compile(
     r"(^|[^a-z0-9])(raw|frame|image|photo|screenshot|face|facial|biometric|"
-    r"pupil|retina|iris|embedding|landmarks?|camera|webcam|audio|transcript|waveform|"
+    r"pupil|retina|iris|embedding|landmarks?|camera|webcam|transcript|waveform|"
     r"typed_text|key_name|keystroke|keycode)($|[^a-z0-9])",
     re.IGNORECASE,
 )
+RAW_SENSOR_KEYS = {"audio"}
 
 
 PRIVACY_POLICY = {
@@ -177,9 +178,23 @@ def reject_raw_payload(payload: dict[str, Any]) -> str | None:
     text = json.dumps(payload, sort_keys=True)
     if len(text.encode("utf-8")) > MAX_BODY_BYTES:
         return "payload too large"
+    if _contains_raw_sensor_key(payload):
+        return "raw sensor/biometric payload rejected; send derived state only"
     if RAW_SENSOR_PATTERNS.search(text):
         return "raw sensor/biometric payload rejected; send derived state only"
     return None
+
+
+def _contains_raw_sensor_key(value: Any) -> bool:
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if str(key).lower() in RAW_SENSOR_KEYS:
+                return True
+            if _contains_raw_sensor_key(item):
+                return True
+    elif isinstance(value, list):
+        return any(_contains_raw_sensor_key(item) for item in value)
+    return False
 
 
 def read_json_file(path: Path) -> dict[str, Any]:
