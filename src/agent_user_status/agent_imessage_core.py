@@ -281,14 +281,14 @@ def write_json_file(path: Path, value: dict[str, Any]) -> None:
     path.write_text(json.dumps(value, indent=2), encoding="utf-8")
 
 
-def frontmost_app_signal() -> dict[str, Any]:
+def frontmost_app_signal(timeout: int = 5) -> dict[str, Any]:
     result = run_cmd(
         [
             "osascript",
             "-e",
             'tell application "System Events" to get name of first application process whose frontmost is true',
         ],
-        timeout=5,
+        timeout=timeout,
     )
     if result.returncode != 0:
         return {"name": "frontmost_app", "ok": False, "reason": result.stderr.strip()}
@@ -314,8 +314,8 @@ def frontmost_app_signal() -> dict[str, Any]:
     return {"name": "frontmost_app", "ok": True, "app": app, "score": score, "state": state}
 
 
-def process_activity_signal() -> dict[str, Any]:
-    result = run_cmd(["ps", "-axo", "comm="], timeout=5)
+def process_activity_signal(timeout: int = 5) -> dict[str, Any]:
+    result = run_cmd(["ps", "-axo", "comm="], timeout=timeout)
     if result.returncode != 0:
         return {"name": "process_activity", "ok": False, "reason": result.stderr.strip()}
     names = [Path(line.strip()).name for line in result.stdout.splitlines() if line.strip()]

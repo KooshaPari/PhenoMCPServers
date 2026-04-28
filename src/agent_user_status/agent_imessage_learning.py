@@ -275,9 +275,9 @@ def classify_window_role(frontmost_app: str | None, process_groups: dict[str, li
     return "unknown"
 
 
-def action_environment_context() -> dict[str, Any]:
-    frontmost = frontmost_app_signal()
-    processes = process_activity_signal()
+def action_environment_context(probe_timeout: int = 1) -> dict[str, Any]:
+    frontmost = frontmost_app_signal(timeout=probe_timeout)
+    processes = process_activity_signal(timeout=probe_timeout)
     groups = processes.get("process_groups") if processes.get("ok") else {}
     groups = groups if isinstance(groups, dict) else {}
     frontmost_app = frontmost.get("app") if frontmost.get("ok") else None
