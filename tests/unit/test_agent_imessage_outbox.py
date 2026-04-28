@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -10,7 +11,12 @@ from agent_user_status.agent_imessage_outbox import (
     delivery_record_from_envelope,
     latest_outbox_state,
     read_outbox_records,
+    record_delivery_receipt,
+    record_echo_cleanup_deleted,
+    record_echo_cleanup_requested,
     record_echo_cleanup_unsupported,
+    record_response_received,
+    sweep_expired_outbox_records,
 )
 
 
@@ -89,3 +95,63 @@ def test_echo_cleanup_records_unsupported_state(tmp_path) -> None:
     assert record["delivery_state"] == "sent"
     assert record["echo_state"] == "unsupported"
     assert record["note"] == "Messages database permission unavailable"
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-014")
+def test_outbox_records_receipts_responses_and_expiration(tmp_path) -> None:
+    store_path = tmp_path / "outbox.jsonl"
+    envelope = AgentMessageEnvelope.create(
+        "Need approval",
+        project="agent-user-status",
+        task_id="FR-014",
+        session_id="sess-2",
+        expires_minutes=1,
+        correlation_id="corr-2",
+    )
+
+    append_outbox_record(
+        delivery_record_from_envelope(
+            envelope,
+            recipient="koosha",
+            rendered_message=envelope.render(),
+            delivery_state="sent",
+        ),
+        store_path=store_path,
+    )
+    receipt = record_delivery_receipt(
+        message_id=envelope.message_id,
+        correlation_id=envelope.correlation_id,
+        recipient="koosha",
+        receipt_id="receipt-1",
+        store_path=store_path,
+    )
+    response = record_response_received(
+        message_id=envelope.message_id,
+        correlation_id=envelope.correlation_id,
+        recipient="koosha",
+        response_id="reply-1",
+        response_body="A1",
+        store_path=store_path,
+    )
+    requested = record_echo_cleanup_requested(
+        message_id=envelope.message_id,
+        correlation_id=envelope.correlation_id,
+        recipient="koosha",
+        store_path=store_path,
+    )
+    deleted = record_echo_cleanup_deleted(
+        message_id=envelope.message_id,
+        correlation_id=envelope.correlation_id,
+        recipient="koosha",
+        store_path=store_path,
+    )
+    expired = sweep_expired_outbox_records(
+        store_path=store_path,
+        now=datetime.now(UTC) + timedelta(minutes=2),
+    )
+
+    assert receipt["receipt_id"] == "receipt-1"
+    assert response["response_id"] == "reply-1"
+    assert requested["echo_state"] == "delete_requested"
+    assert deleted["echo_state"] == "deleted"
+    assert expired[-1]["delivery_state"] == "expired"

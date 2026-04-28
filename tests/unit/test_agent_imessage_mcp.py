@@ -128,6 +128,19 @@ def test_parse_user_reply_forwards_schema(monkeypatch) -> None:
     assert calls == [["parse-reply", "A1", "--answer-schema-json", schema]]
 
 
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-012")
+def test_cleanup_user_echo_forwards_echo_delete(monkeypatch) -> None:
+    calls = []
+    monkeypatch.setattr(mcp, "call_agent_imessage", lambda args: calls.append(args) or {"ok": True})
+
+    assert mcp.tool_call(
+        "cleanup_user_echo",
+        {"recipient": "koosha", "message_id": "msg-1", "correlation_id": "corr-1"},
+    ) == {"ok": True}
+
+    assert calls == [["echo-delete", "--message-id", "msg-1", "--correlation-id", "corr-1", "--recipient", "koosha"]]
+
+
 @pytest.mark.requirement("FR-AGENT_USER_STATUS-001")
 def test_wait_for_user_reply_forwards_scoped_recipient(monkeypatch) -> None:
     calls = []

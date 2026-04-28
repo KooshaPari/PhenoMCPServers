@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
 
+from agent_user_status import agent_imessage_comm_commands as comm
 from agent_user_status import agent_imessage_commands as commands
 from agent_user_status import agent_imessage_core as core
+from agent_user_status import agent_imessage_outbox as outbox
 
 
 def write_env(path: Path, body: str) -> None:
@@ -139,3 +142,61 @@ def test_parse_reply_command_outputs_structured_selection(capsys) -> None:
     payload = json.loads(capsys.readouterr().out)
     assert payload["selected_answer_ids"] == ["A1", "A3"]
     assert payload["freeform_text"] == "please"
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-014")
+def test_wait_records_response_correlation(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(commands, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(commands, "load_recipient_config", lambda _role: core.Config("koosha", "", "", "", "Koosha"))
+    monkeypatch.setattr(commands, "recent_messages", lambda _config, _limit: (None, [{"id": "reply-1", "text": "A1"}]))
+    monkeypatch.setattr(commands, "inbound_messages", lambda _config, messages: messages)
+    monkeypatch.setattr(
+        commands,
+        "latest_outbox_state",
+        lambda **kwargs: {"message_id": "msg-1", "correlation_id": "corr-1", "recipient": "koosha"},
+    )
+    captured: list[dict[str, object]] = []
+    monkeypatch.setattr(commands, "record_response_received", lambda **kwargs: captured.append(kwargs) or {"ok": True})
+
+    args = commands.build_parser().parse_args(["wait", "--include-existing", "--timeout", "1"])
+
+    assert commands.command_wait(args) == 0
+    assert captured == [
+        {
+            "message_id": "msg-1",
+            "correlation_id": "corr-1",
+            "recipient": "koosha",
+            "response_id": "reply-1",
+            "response_body": "A1",
+            "note": "inbound reply observed",
+        }
+    ]
+
+
+@pytest.mark.requirement("FR-AGENT_USER_STATUS-012")
+def test_echo_delete_uses_configured_cleanup_command(monkeypatch, capsys) -> None:
+    monkeypatch.setenv(
+        "AGENT_IMESSAGE_ECHO_DELETE_CMD",
+        "echo delete {message_id} {correlation_id} {recipient}",
+    )
+    monkeypatch.setattr(
+        comm,
+        "latest_outbox_state",
+        lambda **kwargs: {
+            "message_id": "msg-1",
+            "correlation_id": "corr-1",
+            "recipient": "koosha",
+            "project": "agent-user-status",
+            "task_id": "FR-012",
+        },
+    )
+    monkeypatch.setattr(outbox, "append_outbox_record", lambda record, store_path=None: record.to_dict())
+    monkeypatch.setattr(comm, "run_cmd", lambda args, timeout=30: subprocess.CompletedProcess(args, 0))
+
+    args = commands.build_parser().parse_args(["echo-delete", "--message-id", "msg-1"])
+
+    assert args.func(args) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ok"] is True
+    assert payload["echo_cleanup"]["echo_state"] == "deleted"

@@ -7,7 +7,7 @@ from typing import Any
 
 from agent_user_status.agent_imessage_core import RECIPIENT_ROLES, require_recipient_role
 
-COMM_TOOL_NAMES = {"notify_user_structured", "parse_user_reply"}
+COMM_TOOL_NAMES = {"notify_user_structured", "parse_user_reply", "cleanup_user_echo"}
 
 COMM_TOOLS: list[dict[str, Any]] = [
     {
@@ -47,6 +47,19 @@ COMM_TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    {
+        "name": "cleanup_user_echo",
+        "description": "Attempt sender-side echo cleanup for a previously sent structured message.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "message_id": {"type": "string"},
+                "correlation_id": {"type": "string"},
+                "recipient": {"type": "string", "enum": list(RECIPIENT_ROLES), "default": "koosha"},
+            },
+            "additionalProperties": False,
+        },
+    },
 ]
 
 
@@ -80,4 +93,13 @@ def comm_tool_call(
         return call_agent_imessage(
             ["parse-reply", str(args["reply"]), "--answer-schema-json", str(args["answer_schema_json"])]
         )
+    if name == "cleanup_user_echo":
+        command = ["echo-delete"]
+        if args.get("message_id") is not None:
+            command.extend(["--message-id", str(args["message_id"])])
+        if args.get("correlation_id") is not None:
+            command.extend(["--correlation-id", str(args["correlation_id"])])
+        if args.get("recipient") is not None:
+            command.extend(["--recipient", require_recipient_role(args.get("recipient"))])
+        return call_agent_imessage(command)
     raise ValueError(f"Unknown structured communication tool: {name}")

@@ -21,6 +21,7 @@ from agent_user_status.agent_imessage_core import (
     recipient_send_address,
     run_imsg,
 )
+from agent_user_status.agent_imessage_outbox import latest_outbox_state, record_response_received
 from agent_user_status.agent_imessage_presence_commands import add_presence_parsers
 from agent_user_status.agent_imessage_session_commands import add_session_parsers
 from agent_user_status.agent_imessage_state_commands import add_state_parsers
@@ -118,6 +119,16 @@ def command_wait(args: argparse.Namespace) -> int:
             latest_id = str(latest.get("id") or latest.get("guid") or "")
             if latest_id and latest_id != last_seen:
                 state_file.write_text(latest_id, encoding="utf-8")
+                latest_outbound = latest_outbox_state(recipient=config.role)
+                if latest_outbound:
+                    record_response_received(
+                        message_id=str(latest_outbound["message_id"]),
+                        correlation_id=str(latest_outbound["correlation_id"]),
+                        recipient=config.role,
+                        response_id=latest_id,
+                        response_body=str(latest.get("text") or ""),
+                        note="inbound reply observed",
+                    )
                 print(json.dumps(latest, indent=2) if args.json else latest.get("text", ""))
                 return 0
         time.sleep(args.poll)
