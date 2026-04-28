@@ -41,7 +41,8 @@ test "${status_code}" = "422"
 curl -fsS -X POST http://127.0.0.1:8765/dev/eye \
   -H 'content-type: application/json' \
   -d '{"screen_x":720,"screen_y":450,"screen_width":1440,"screen_height":900,"score":0.9,"confidence":0.92,"stability_score":0.91,"targeting_reliable":true,"filter_mode":"tracking","state":"looking_at_screen:smoke","max_age_seconds":5}' \
-  | grep -q 'looking_at_screen:smoke'
+  -o /tmp/agent-user-status-smoke-eye.json
+grep -q 'looking_at_screen:smoke' /tmp/agent-user-status-smoke-eye.json
 
 status_code="$(curl -s -o /tmp/agent-user-status-smoke-recovering-eye.json -w '%{http_code}' \
   -X POST http://127.0.0.1:8765/dev/eye \
@@ -179,12 +180,15 @@ fi
   --state smoke_agent_complete \
   --max-age-seconds 60 \
   --note smoke \
-  | grep -q '"kind": "agent_complete"'
+  > /tmp/agent-user-status-smoke-agent-complete.json
+grep -q '"kind": "agent_complete"' /tmp/agent-user-status-smoke-agent-complete.json
 ~/.local/bin/agent-imessage action output agent-complete \
   --state smoke_agent_complete_reliable \
   --max-age-seconds 60 \
   --note smoke \
-  | grep -q '"gaze_targeting_reliable": true'
+  > /tmp/agent-user-status-smoke-agent-complete-reliable.json
+grep -q '"gaze_targeting_reliable": true' \
+  /tmp/agent-user-status-smoke-agent-complete-reliable.json
 
 curl -fsS -X POST http://127.0.0.1:8765/dev/eye \
   -H 'content-type: application/json' \
@@ -195,23 +199,26 @@ curl -fsS -X POST http://127.0.0.1:8765/dev/eye \
   --state smoke_agent_complete_unreliable \
   --max-age-seconds 60 \
   --note smoke \
-  | grep -q '"gaze_targeting_reliable": false'
+  > /tmp/agent-user-status-smoke-agent-complete-unreliable.json
+grep -q '"gaze_targeting_reliable": false' \
+  /tmp/agent-user-status-smoke-agent-complete-unreliable.json
 
 ~/.local/bin/agent-imessage hook-decision --text "waiting for your response" \
-  | tee /tmp/agent-user-status-smoke-hook-decision.json \
-  | grep -q '"kind": "agent_waiting_user"'
+  > /tmp/agent-user-status-smoke-hook-decision.json
+grep -q '"kind": "agent_waiting_user"' /tmp/agent-user-status-smoke-hook-decision.json
 grep -q '"attribution":' /tmp/agent-user-status-smoke-hook-decision.json
 grep -q '"session_event":' /tmp/agent-user-status-smoke-hook-decision.json
 
 curl -fsS 'http://127.0.0.1:8765/session/events?limit=20' \
-  | tee /tmp/agent-user-status-smoke-session-events.json \
-  | grep -q '"event_type": "agent_waiting_user"'
+  -o /tmp/agent-user-status-smoke-session-events.json
+grep -q '"event_type": "agent_waiting_user"' \
+  /tmp/agent-user-status-smoke-session-events.json
 
 ~/.local/bin/agent-imessage log-response 7 \
   --source smoke \
   --note smoke \
-  | tee /tmp/agent-user-status-smoke-log-response.json \
-  | grep -q '"learning_update":'
+  > /tmp/agent-user-status-smoke-log-response.json
+grep -q '"learning_update":' /tmp/agent-user-status-smoke-log-response.json
 grep -q '"learned_keys":' /tmp/agent-user-status-smoke-log-response.json
 
 echo "smoke passed"
