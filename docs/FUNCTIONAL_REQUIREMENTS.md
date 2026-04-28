@@ -94,9 +94,9 @@ in tests, PRs, and architectural documentation.
 
 **Description:** User-side echo cleanup and deletion lifecycle for agent-sent Messages/iMessage artifacts
 
-**Status:** PARTIAL
+**Status:** IMPLEMENTED
 
-**Test Traces:** `tests/unit/test_agent_imessage_outbox.py`
+**Test Traces:** `tests/unit/test_agent_imessage_mcp.py`, `tests/unit/test_agent_imessage_outbox.py`, `tests/unit/test_agent_imessage_recipients.py`
 
 ---
 
@@ -114,7 +114,7 @@ in tests, PRs, and architectural documentation.
 
 **Description:** Async communication queue with delivery receipts, response correlation, retries, and expiration
 
-**Status:** PARTIAL
+**Status:** IMPLEMENTED
 
 **Test Traces:** `tests/unit/test_agent_imessage_outbox.py`, `tests/unit/test_agent_imessage_recipients.py`
 
@@ -134,9 +134,9 @@ in tests, PRs, and architectural documentation.
 
 **Description:** Stop-hook performance hardening with bounded state reads, rotation, caching, and degradation backoff
 
-**Status:** PARTIAL
+**Status:** IMPLEMENTED
 
-**Test Traces:** `tests/unit/test_jsonl_tail.py`
+**Test Traces:** `tests/unit/test_agent_imessage_status.py`, `tests/unit/test_jsonl_tail.py`
 
 ---
 

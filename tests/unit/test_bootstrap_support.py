@@ -58,6 +58,7 @@ def test_support_manifest_includes_decomposed_runtime_modules() -> None:
         "agent_imessage_recipients.py",
         "agent_imessage_signals.py",
         "codex_hooks.py",
+        "codex_hook_cache.py",
         "gaze_projection_policy.py",
         "gaze_projection_types.py",
         "jsonl_tail.py",

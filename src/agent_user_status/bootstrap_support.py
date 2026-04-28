@@ -70,6 +70,7 @@ SUPPORT_MODULES = [
     "ttl_cache.py",
     "jsonl_tail.py",
     "codex_hooks.py",
+    "codex_hook_cache.py",
     "bootstrap_cli.py",
 ]
 

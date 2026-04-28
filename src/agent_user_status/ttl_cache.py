@@ -52,10 +52,15 @@ class TTLCache(Generic[T]):
             return copy.deepcopy(entry.value)
 
     def set(self, key: str, value: T) -> T:
+        return self.set_with_ttl(key, value, self.ttl_seconds)
+
+    def set_with_ttl(self, key: str, value: T, ttl_seconds: float) -> T:
+        if ttl_seconds <= 0:
+            raise ValueError("ttl_seconds must be positive")
         with self._lock:
             self._entries[key] = CacheEntry(
                 value=copy.deepcopy(value),
-                expires_at=self._clock() + self.ttl_seconds,
+                expires_at=self._clock() + float(ttl_seconds),
             )
             self._entries.move_to_end(key)
             while len(self._entries) > self.max_entries:

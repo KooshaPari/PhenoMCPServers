@@ -36,6 +36,7 @@ from agent_user_status.agent_imessage_learning import (
     learning_prior,
     weighted_average,
 )
+from agent_user_status.codex_hook_cache import cached_decision, store_degraded, store_success
 from agent_user_status.session_registry import append_session_event
 
 
@@ -152,11 +153,10 @@ def estimate_status(config: Config) -> dict[str, Any]:
     }
 
 
-def hook_decision_result(text: str) -> dict[str, Any]:
+def _build_hook_decision_result(text: str, fingerprint: str) -> dict[str, Any]:
     status = estimate_status(load_config())
     attribution = coarse_attribution_context()
     waiting = bool(WAITING_PATTERNS.search(text or ""))
-    fingerprint = stable_hash(text or "")
     hook_state = STATE_DIR / "last_stop_hook_fingerprint"
     previous = hook_state.read_text(encoding="utf-8").strip() if hook_state.exists() else ""
 
@@ -244,3 +244,34 @@ def hook_decision_result(text: str) -> dict[str, Any]:
         "session_event": session_event,
         "fingerprint": fingerprint if waiting else None,
     }
+
+
+def hook_decision_result(text: str) -> dict[str, Any]:
+    fingerprint = stable_hash(text or "")
+    cached = cached_decision(fingerprint)
+    if cached is not None:
+        return cached
+
+    try:
+        result = _build_hook_decision_result(text, fingerprint)
+    except Exception as exc:
+        result = {
+            "ok": False,
+            "waiting_detected": bool(WAITING_PATTERNS.search(text or "")),
+            "decision": "allow_stop",
+            "prompt": None,
+            "status": {"status": "unknown", "confidence": 0.0, "estimated_response": "unknown", "source": "degraded"},
+            "attribution": {
+                "surface": "unknown",
+                "hook_status": "degraded",
+                "reliable": False,
+                "reasons": ["hook_decision_error"],
+            },
+            "action_event": None,
+            "session_event": None,
+            "fingerprint": fingerprint,
+            "error": str(exc),
+        }
+        return store_degraded(fingerprint, result)
+
+    return store_success(fingerprint, result)
