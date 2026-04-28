@@ -1,0 +1,23 @@
+version: "3"
+
+tasks:
+  build:
+    desc: Build the Python package
+    cmds:
+      - uv build
+
+  test:
+    desc: Run the Python test suite
+    cmds:
+      - uv run --with pytest pytest
+
+  lint:
+    desc: Run Ruff lint checks
+    cmds:
+      - uv run --with ruff ruff check .
+
+  clean:
+    desc: Remove build outputs and local caches
+    cmds:
+      - find . -type d \( -name __pycache__ -o -name .pytest_cache -o -name .ruff_cache -o -name .mypy_cache -o -name .pyright \) -prune -exec rm -rf {} +
+      - rm -rf build dist htmlcov *.egg-info .coverage coverage.xml
