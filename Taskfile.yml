@@ -126,20 +126,58 @@ tasks:
       - |
         case "{{.REPO_LANGUAGE}}" in
           python)
-            find . -type d \( -name __pycache__ -o -name .pytest_cache -o -name .ruff_cache -o -name .mypy_cache -o -name .pyright \) -prune -exec rm -rf {} +
-            rm -rf build dist htmlcov .coverage coverage.xml
-            find . -type d -name "*.egg-info" -prune -exec rm -rf {} +
+            python -c 'import textwrap; exec(textwrap.dedent("""
+            from pathlib import Path
+            import shutil
+            root = Path(".")
+            names = {"__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache", ".pyright"}
+            paths = [root / name for name in ("build", "dist", "htmlcov", ".coverage", "coverage.xml")]
+            paths.extend(path for path in root.rglob("*") if path.name in names)
+            paths.extend(root.rglob("*.egg-info"))
+            for path in sorted(set(paths), key=lambda item: len(item.parts), reverse=True):
+                if path.is_dir():
+                    shutil.rmtree(path, ignore_errors=True)
+                elif path.exists():
+                    path.unlink()
+            """))'
             ;;
           node)
-            rm -rf node_modules dist build coverage .turbo .next .cache
+            python -c 'import textwrap; exec(textwrap.dedent("""
+            from pathlib import Path
+            import shutil
+            for name in ("node_modules", "dist", "build", "coverage", ".turbo", ".next", ".cache"):
+                path = Path(name)
+                if path.is_dir():
+                    shutil.rmtree(path, ignore_errors=True)
+                elif path.exists():
+                    path.unlink()
+            """))'
             ;;
           go)
-            rm -rf bin cover.out coverage.out
+            python -c 'import textwrap; exec(textwrap.dedent("""
+            from pathlib import Path
+            import shutil
+            for name in ("bin", "cover.out", "coverage.out"):
+                path = Path(name)
+                if path.is_dir():
+                    shutil.rmtree(path, ignore_errors=True)
+                elif path.exists():
+                    path.unlink()
+            """))'
             ;;
           rust)
             cargo clean
             ;;
           *)
-            rm -rf build dist htmlcov node_modules coverage .turbo .next .cache bin
+            python -c 'import textwrap; exec(textwrap.dedent("""
+            from pathlib import Path
+            import shutil
+            for name in ("build", "dist", "htmlcov", "node_modules", "coverage", ".turbo", ".next", ".cache", "bin"):
+                path = Path(name)
+                if path.is_dir():
+                    shutil.rmtree(path, ignore_errors=True)
+                elif path.exists():
+                    path.unlink()
+            """))'
             ;;
         esac
