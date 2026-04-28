@@ -110,7 +110,8 @@ tasks:
         case "{{.REPO_LANGUAGE}}" in
           python)
             find . -type d \( -name __pycache__ -o -name .pytest_cache -o -name .ruff_cache -o -name .mypy_cache -o -name .pyright \) -prune -exec rm -rf {} +
-            rm -rf build dist htmlcov *.egg-info .coverage coverage.xml
+            rm -rf build dist htmlcov .coverage coverage.xml
+            find . -type d -name "*.egg-info" -prune -exec rm -rf {} +
             ;;
           node)
             rm -rf node_modules dist build coverage .turbo .next .cache
