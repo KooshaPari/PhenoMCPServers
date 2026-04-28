@@ -3,7 +3,7 @@
 Repo-local findings:
 - `pyproject.toml` identifies the project as Python and uses setuptools packaging.
 - The repo already uses `ruff` configuration in `pyproject.toml`.
-- No existing `Taskfile.yml` was present in the checkout.
+- A root `Taskfile.yml` was already present in the checkout, so the work became a normalization pass rather than a fresh add.
 
 Command choices:
 - Build: `uv build`

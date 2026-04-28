@@ -1,23 +1,127 @@
 version: "3"
 
+vars:
+  REPO_LANGUAGE:
+    sh: |
+      if [ -f pyproject.toml ] || [ -f setup.py ] || [ -f requirements.txt ]; then
+        printf "python"
+      elif [ -f package.json ]; then
+        printf "node"
+      elif [ -f go.mod ]; then
+        printf "go"
+      elif [ -f Cargo.toml ]; then
+        printf "rust"
+      else
+        printf "unknown"
+      fi
+
 tasks:
   build:
-    desc: Build the Python package
+    desc: Build the project for the detected language
     cmds:
-      - uv build
+      - |
+        case "{{.REPO_LANGUAGE}}" in
+          python)
+            uv build
+            ;;
+          node)
+            if [ -f pnpm-lock.yaml ]; then
+              pnpm build
+            elif [ -f yarn.lock ]; then
+              yarn build
+            else
+              npm run build
+            fi
+            ;;
+          go)
+            go build ./...
+            ;;
+          rust)
+            cargo build
+            ;;
+          *)
+            echo "No build task configured for detected language: {{.REPO_LANGUAGE}}"
+            exit 1
+            ;;
+        esac
 
   test:
-    desc: Run the Python test suite
+    desc: Run the project test suite
     cmds:
-      - uv run --with pytest pytest
+      - |
+        case "{{.REPO_LANGUAGE}}" in
+          python)
+            uv run --with pytest pytest
+            ;;
+          node)
+            if [ -f pnpm-lock.yaml ]; then
+              pnpm test
+            elif [ -f yarn.lock ]; then
+              yarn test
+            else
+              npm test
+            fi
+            ;;
+          go)
+            go test ./...
+            ;;
+          rust)
+            cargo test
+            ;;
+          *)
+            echo "No test task configured for detected language: {{.REPO_LANGUAGE}}"
+            exit 1
+            ;;
+        esac
 
   lint:
-    desc: Run Ruff lint checks
+    desc: Run the project linter
     cmds:
-      - uv run --with ruff ruff check .
+      - |
+        case "{{.REPO_LANGUAGE}}" in
+          python)
+            uv run --with ruff ruff check .
+            ;;
+          node)
+            if [ -f pnpm-lock.yaml ]; then
+              pnpm lint
+            elif [ -f yarn.lock ]; then
+              yarn lint
+            else
+              npm run lint
+            fi
+            ;;
+          go)
+            go vet ./...
+            ;;
+          rust)
+            cargo clippy --all-targets --all-features
+            ;;
+          *)
+            echo "No lint task configured for detected language: {{.REPO_LANGUAGE}}"
+            exit 1
+            ;;
+        esac
 
   clean:
     desc: Remove build outputs and local caches
     cmds:
-      - find . -type d \( -name __pycache__ -o -name .pytest_cache -o -name .ruff_cache -o -name .mypy_cache -o -name .pyright \) -prune -exec rm -rf {} +
-      - rm -rf build dist htmlcov *.egg-info .coverage coverage.xml
+      - |
+        case "{{.REPO_LANGUAGE}}" in
+          python)
+            find . -type d \( -name __pycache__ -o -name .pytest_cache -o -name .ruff_cache -o -name .mypy_cache -o -name .pyright \) -prune -exec rm -rf {} +
+            rm -rf build dist htmlcov *.egg-info .coverage coverage.xml
+            ;;
+          node)
+            rm -rf node_modules dist build coverage .turbo .next .cache
+            ;;
+          go)
+            rm -rf bin cover.out coverage.out
+            ;;
+          rust)
+            cargo clean
+            ;;
+          *)
+            rm -rf build dist htmlcov node_modules coverage .turbo .next .cache bin
+            ;;
+        esac
