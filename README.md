@@ -3,6 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/KooshaPari/agent-user-status/actions/workflows/ci.yml/badge.svg)](https://github.com/KooshaPari/agent-user-status/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11+-3776AB.svg?logo=python&logoColor=white)](pyproject.toml)
+[![AI Slop Inside](https://sladge.net/badge.svg)](https://sladge.net)
 
 Local, privacy-first user-status runtime for Codex/Claude agents.
 
