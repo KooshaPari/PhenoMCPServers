@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
 ## 📚 Documentation
 - Docs(worklog): initialize first-entry bootstrap (`6652f57`)
 - Docs(wave-4): scaffold FUNCTIONAL_REQUIREMENTS.md with 6 stubs (`b3d0c66`)
