@@ -1,0 +1,9 @@
+{
+  "id": "agent-user-status-main",
+  "intent": "Primary usage: agent-user-status: user status tracking",
+  "recording": null,
+  "recording_gif": null,
+  "keyframe_count": 0,
+  "passed": false,
+  "steps": []
+}
