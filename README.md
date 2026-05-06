@@ -1,5 +1,7 @@
 # Agent User Status
 
+[![AI Slop Inside](https://sladge.net/badge.svg)](https://sladge.net)
+
 Local, privacy-first user-status runtime for Codex/Claude agents.
 
 This repo packages the current live prototype into a proper source tree. The
