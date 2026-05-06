@@ -25,6 +25,9 @@ agent-user-status-cursor-tracker = "agent_user_status.cursor_tracker:main"
 agent-user-status-webcam-eye-tracker = "agent_user_status.webcam_eye_tracker:main"
 agent-imessage-mcp = "mcp.agent_imessage_mcp:main"
 
+[dependency-groups]
+dev = ["mypy>=1.0"]
+
 [tool.ruff]
 line-length = 120
 target-version = "py311"
@@ -35,6 +38,15 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.pyright]
 pythonVersion = "3.11"
 typeCheckingMode = "basic"
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
 
 [tool.setuptools]
 package-dir = {"" = "src"}
