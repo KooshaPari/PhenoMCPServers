@@ -11,3 +11,13 @@ bin/
 *.log
 *.tmp
 local/
+
+# ===== Standard auto-generated hygiene ignores (do not edit manually) =====
+.env
+.env.*
+!.env.example
+node_modules/
+coverage/
+.venv/
+venv/
+# ===== End standard hygiene ignores =====
