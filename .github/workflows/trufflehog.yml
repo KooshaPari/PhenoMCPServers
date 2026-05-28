@@ -22,6 +22,6 @@ jobs:
         with:
           go-version: 'stable'
       - run: go install github.com/trufflehog/trufflehog/v3@v3.87.0
-      - run: trufflehog github --only-verified --no-update
+      - run: trufflehog github --repo https://github.com/${{ github.repository }} --only-verified --no-update
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
