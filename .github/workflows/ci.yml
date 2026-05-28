@@ -10,9 +10,12 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   quality-gates:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.1.1
@@ -34,7 +37,7 @@ jobs:
         run: pyright
 
   package-metadata:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.1.1
@@ -50,7 +53,7 @@ jobs:
           packaging/scripts/build-macos-pkg.sh --dry-run
 
   unit-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.1.1
@@ -72,7 +75,7 @@ jobs:
         run: python -m pytest tests/unit -q
 
   backend-smoke:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.1.1

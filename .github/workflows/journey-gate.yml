@@ -48,13 +48,16 @@ on:
         default: 'false'
         type: boolean
 
+permissions:
+  contents: read
+
 env:
   PHENOTYPE_JOURNEY_STRICT: ${{ inputs.strict_mode || 'true' }}
 
 jobs:
   journey-gate:
     name: Journey Verification
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
@@ -237,7 +240,7 @@ jobs:
   # --------------------------------------------------------------------------
   stub-mode:
     name: Journey Gate — No Manifests Found
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: journey-gate
     if: needs.journey-gate.result == 'failure' && needs.journey-gate.outputs.MANIFEST_COUNT == '0'
     steps:
