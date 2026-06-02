@@ -127,7 +127,8 @@ def launchd_path(paths: BootstrapPaths, python_bin: Path) -> str:
 
 
 def install_launchd_plists(paths: BootstrapPaths, python_bin: Path, eye_python_bin: Path, start_services: bool) -> None:
-    uid = str(os.getuid())
+    getuid = getattr(os, "getuid", None)
+    uid = str(getuid()) if callable(getuid) else "0"
     template_count = 0
     for name in PLIST_NAMES:
         template = paths.launchd_src / name

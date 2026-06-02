@@ -5,6 +5,7 @@ import json
 import threading
 from collections.abc import Iterator
 from http.server import ThreadingHTTPServer
+from typing import Any, cast
 
 import pytest
 
@@ -26,14 +27,14 @@ def statusd_server() -> Iterator[str]:
         thread.join(timeout=2)
 
 
-def post_json(authority: str, path: str, payload: dict[str, object]) -> tuple[int, dict[str, object]]:
+def post_json(authority: str, path: str, payload: dict[str, object]) -> tuple[int, dict[str, Any]]:
     connection = http.client.HTTPConnection(authority, timeout=5)
     body = json.dumps(payload)
     connection.request("POST", path, body=body, headers={"content-type": "application/json"})
     response = connection.getresponse()
     data = json.loads(response.read().decode("utf-8"))
     connection.close()
-    return response.status, data
+    return response.status, cast(dict[str, Any], data)
 
 
 @pytest.mark.parametrize(
