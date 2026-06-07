@@ -5,6 +5,13 @@ on:
     branches: ["**"]
   pull_request:
     branches: ["**"]
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 jobs:
   trufflehog:
@@ -15,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: TruffleHog OSS
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@75add79b929b263dae147d2e5bcf0daf292165cf # v-latest from @main
         with:
           path: ./
           base_depth: 1
