@@ -97,6 +97,77 @@ def test_session_tools_are_exposed() -> None:
     names = {tool["name"] for tool in mcp.TOOLS}
 
     assert {"sessions", "session_heartbeat", "session_event", "session_scan", "session_events"} <= names
+    # New poll-* tools are also exposed so Codex/Claude can read iMessage events
+    # directly from the MCP server.
+    assert {"poll_user_response", "poll_read_receipts"} <= names
+
+
+def test_poll_user_response_returns_empty_events_when_imessage_unavailable(monkeypatch) -> None:
+    from agent_user_status import agent_imessage_mcp_sessions as mcp_sessions
+
+    monkeypatch.setattr(mcp_sessions, "is_imessage_available", lambda: False)
+    invoked = []
+    monkeypatch.setattr(
+        mcp,
+        "call_agent_imessage",
+        lambda args: invoked.append(args) or {"ok": True},
+    )
+
+    result = mcp.tool_call("poll_user_response", {"since": "2026-06-08T00:00:00Z"})
+
+    assert result == {"ok": True, "events": []}
+    assert invoked == []  # must not spawn agent-imessage when disabled
+
+
+def test_poll_read_receipts_returns_empty_events_when_imessage_unavailable(monkeypatch) -> None:
+    from agent_user_status import agent_imessage_mcp_sessions as mcp_sessions
+
+    monkeypatch.setattr(mcp_sessions, "is_imessage_available", lambda: False)
+    invoked = []
+    monkeypatch.setattr(
+        mcp,
+        "call_agent_imessage",
+        lambda args: invoked.append(args) or {"ok": True},
+    )
+
+    result = mcp.tool_call("poll_read_receipts", {})
+
+    assert result == {"ok": True, "events": []}
+    assert invoked == []
+
+
+def test_poll_user_response_forwards_since_to_cli(monkeypatch) -> None:
+    from agent_user_status import agent_imessage_mcp_sessions as mcp_sessions
+
+    monkeypatch.setattr(mcp_sessions, "is_imessage_available", lambda: True)
+    captured = []
+    monkeypatch.setattr(
+        mcp,
+        "call_agent_imessage",
+        lambda args: captured.append(args) or {"ok": True, "events": []},
+    )
+
+    rc = mcp.tool_call("poll_user_response", {"since": "2026-06-08T00:00:00Z"})
+
+    assert rc == {"ok": True, "events": []}
+    assert captured == [["user-responses", "--since", "2026-06-08T00:00:00Z"]]
+
+
+def test_poll_read_receipts_forwards_since_to_cli(monkeypatch) -> None:
+    from agent_user_status import agent_imessage_mcp_sessions as mcp_sessions
+
+    monkeypatch.setattr(mcp_sessions, "is_imessage_available", lambda: True)
+    captured = []
+    monkeypatch.setattr(
+        mcp,
+        "call_agent_imessage",
+        lambda args: captured.append(args) or {"ok": True, "events": []},
+    )
+
+    rc = mcp.tool_call("poll_read_receipts", {"since": "2026-06-08T00:00:00Z"})
+
+    assert rc == {"ok": True, "events": []}
+    assert captured == [["read-receipts", "--since", "2026-06-08T00:00:00Z"]]
 
 
 def test_session_heartbeat_tool_forwards_structured_cli_event(monkeypatch) -> None:
