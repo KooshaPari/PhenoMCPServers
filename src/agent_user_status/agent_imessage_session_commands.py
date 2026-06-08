@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 
+from agent_user_status.agent_imessage_core import skip_if_imessage_unavailable
 from agent_user_status.session_registry import (
     append_child_session_event,
     append_session_event,
@@ -16,6 +17,12 @@ from agent_user_status.session_registry import (
     session_timeline,
 )
 from agent_user_status.session_scan import scan_agent_sessions
+
+
+def _print_session_skipped() -> int:
+    """Session reads/writes silently no-op when imessage is unavailable (exit 0)."""
+    print(json.dumps({"ok": True, "skipped": "imessage_unavailable"}, indent=2))
+    return 0
 
 
 def _session_metadata(args: argparse.Namespace) -> dict[str, str]:
@@ -32,6 +39,7 @@ def _session_metadata(args: argparse.Namespace) -> dict[str, str]:
     }
 
 
+@skip_if_imessage_unavailable(_print_session_skipped)
 def command_session_heartbeat(args: argparse.Namespace) -> int:
     record = append_session_heartbeat(
         args.session_id,
@@ -46,6 +54,7 @@ def command_session_heartbeat(args: argparse.Namespace) -> int:
     return 0
 
 
+@skip_if_imessage_unavailable(_print_session_skipped)
 def command_session_event(args: argparse.Namespace) -> int:
     record = append_session_event(
         args.session_id,
@@ -59,6 +68,7 @@ def command_session_event(args: argparse.Namespace) -> int:
     return 0
 
 
+@skip_if_imessage_unavailable(_print_session_skipped)
 def command_sessions(args: argparse.Namespace) -> int:
     if args.session_id:
         payload = {"ok": True, "records": session_timeline(args.session_id, limit=args.limit)}
@@ -68,18 +78,21 @@ def command_sessions(args: argparse.Namespace) -> int:
     return 0
 
 
+@skip_if_imessage_unavailable(_print_session_skipped)
 def command_session_scan(args: argparse.Namespace) -> int:
     payload = scan_agent_sessions(include_cwd=args.include_cwd)
     print(json.dumps({"ok": True, "scan": payload}, indent=2))
     return 0
 
 
+@skip_if_imessage_unavailable(_print_session_skipped)
 def command_session_events(args: argparse.Namespace) -> int:
     payload = recent_session_events(limit=args.limit, kind=args.kind, session_id=args.session_id)
     print(json.dumps({"ok": True, "events": payload}, indent=2))
     return 0
 
 
+@skip_if_imessage_unavailable(_print_session_skipped)
 def command_session_snapshot(args: argparse.Namespace) -> int:
     payload = session_snapshot(
         session_id=args.session_id,
@@ -91,6 +104,7 @@ def command_session_snapshot(args: argparse.Namespace) -> int:
     return 0
 
 
+@skip_if_imessage_unavailable(_print_session_skipped)
 def command_session_child(args: argparse.Namespace) -> int:
     metadata = _session_metadata(args)
     if args.result is not None:

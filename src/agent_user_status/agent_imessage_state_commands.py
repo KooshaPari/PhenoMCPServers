@@ -6,21 +6,30 @@ from __future__ import annotations
 import argparse
 import json
 
-from agent_user_status.agent_imessage_core import STATE_DIR
+from agent_user_status.agent_imessage_core import STATE_DIR, skip_if_imessage_unavailable
 from agent_user_status.state_retention import delete_state, export_state, retain_recent_state
 
 
+def _print_state_skipped() -> int:
+    """State writes silently no-op when imessage is unavailable (exit 0)."""
+    print(json.dumps({"ok": True, "skipped": "imessage_unavailable"}, indent=2))
+    return 0
+
+
+@skip_if_imessage_unavailable(_print_state_skipped)
 def command_state_export(_: argparse.Namespace) -> int:
     print(json.dumps({"ok": True, "export": export_state(STATE_DIR)}, indent=2))
     return 0
 
 
+@skip_if_imessage_unavailable(_print_state_skipped)
 def command_state_delete(args: argparse.Namespace) -> int:
     names = args.name or None
     print(json.dumps({"ok": True, **delete_state(STATE_DIR, names=names)}, indent=2))
     return 0
 
 
+@skip_if_imessage_unavailable(_print_state_skipped)
 def command_state_retain(args: argparse.Namespace) -> int:
     payload = retain_recent_state(STATE_DIR, max_age_seconds=args.max_age_seconds)
     print(json.dumps({"ok": True, **payload}, indent=2))

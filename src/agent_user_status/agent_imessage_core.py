@@ -8,12 +8,18 @@ import json
 import os
 import re
 import subprocess
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from functools import wraps
 from pathlib import Path
 from typing import Any
 
 from agent_user_status.bootstrap_support import imsg_bin
+from agent_user_status.optional_dependencies import is_imessage_available
+
+# Module-level re-export so callers can `from agent_imessage_core import is_available`.
+is_available = is_imessage_available
 
 CONFIG_PATH = Path(os.environ.get("AGENT_IMESSAGE_ENV", "~/.config/phenotype/agent-imessage.env")).expanduser()
 STATE_DIR = Path(os.environ.get("AGENT_IMESSAGE_STATE_DIR", "~/.local/share/agent-imessage/state")).expanduser()
@@ -47,6 +53,36 @@ class Config:
     name: str
 
 
+# Sentinel Config returned by load_config() / load_recipient_config() when
+# imessage is unavailable. Empty address fields make recipient_send_address
+# raise a clear "no contact configured" error only if a caller actually tries
+# to send — but the rest of the codebase short-circuits earlier.
+_EMPTY_CONFIG = Config(
+    role="none",
+    phone_e164="",
+    phone_digits="",
+    email="",
+    name="",
+)
+
+
+def skip_if_imessage_unavailable(
+    on_unavailable: Callable[[], int],
+) -> Callable[[Callable[..., int]], Callable[..., int]]:
+    """Decorator that short-circuits to ``on_unavailable`` when iMessage is unavailable."""
+
+    def decorator(func: Callable[..., int]) -> Callable[..., int]:
+        @wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> int:
+            if not is_imessage_available():
+                return on_unavailable()
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 RECIPIENT_ROLES = ("koosha", "sponsor")
 RECIPIENT_ENV_PREFIXES = {
     "koosha": "AGENT_IMESSAGE",
@@ -69,6 +105,10 @@ def _recipient_value(values: dict[str, str], role: str, key: str, default: str =
 
 
 def load_recipient_config(role: str | None = "koosha") -> Config:
+    if not is_imessage_available():
+        # Caller can still call e.g. recent_messages() which will raise a clean
+        # error — but typical entry points short-circuit before then.
+        return _EMPTY_CONFIG
     recipient = require_recipient_role(role)
     values: dict[str, str] = {}
     if CONFIG_PATH.exists():

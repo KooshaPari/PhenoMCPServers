@@ -32,6 +32,7 @@ from agent_user_status.agent_imessage_core import (
     recent_messages,
     recipient_send_address,
     run_imsg,
+    skip_if_imessage_unavailable,
     validate_abstract_payload,
     write_json_file,
 )
@@ -49,8 +50,19 @@ from agent_user_status.agent_imessage_status import (
     hook_decision_result,
     status_from_override,
 )
+from agent_user_status.optional_dependencies import drain_inbound, is_imessage_available
 
 
+def _print_imessage_unavailable() -> int:
+    print(json.dumps({"ok": False, "error": "imessage_unavailable"}, indent=2))
+    return 0
+
+
+def _imessage_unavailable() -> bool:
+    return not is_imessage_available()
+
+
+@skip_if_imessage_unavailable(_print_imessage_unavailable)
 def command_notify(args: argparse.Namespace) -> int:
     config = load_recipient_config(args.recipient)
     message = args.message or sys.stdin.read().strip()
@@ -73,6 +85,7 @@ def command_notify(args: argparse.Namespace) -> int:
     return result.returncode
 
 
+@skip_if_imessage_unavailable(_print_imessage_unavailable)
 def command_inbox(args: argparse.Namespace) -> int:
     config = load_recipient_config(args.recipient)
     try:
@@ -89,6 +102,7 @@ def command_inbox(args: argparse.Namespace) -> int:
     return 0
 
 
+@skip_if_imessage_unavailable(_print_imessage_unavailable)
 def command_status(args: argparse.Namespace) -> int:
     status = estimate_status(load_config())
     if args.json:
@@ -101,6 +115,7 @@ def command_status(args: argparse.Namespace) -> int:
     return 0 if status.get("ok") else 1
 
 
+@skip_if_imessage_unavailable(_print_imessage_unavailable)
 def command_set_status(args: argparse.Namespace) -> int:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     until: str | None = None
@@ -131,6 +146,7 @@ def command_set_status(args: argparse.Namespace) -> int:
     return 0
 
 
+@skip_if_imessage_unavailable(_print_imessage_unavailable)
 def command_clear_status(args: argparse.Namespace) -> int:
     if OVERRIDE_PATH.exists():
         OVERRIDE_PATH.unlink()
@@ -138,6 +154,7 @@ def command_clear_status(args: argparse.Namespace) -> int:
     return 0
 
 
+@skip_if_imessage_unavailable(_print_imessage_unavailable)
 def command_signal(args: argparse.Namespace) -> int:
     try:
         validate_abstract_payload(args.name, args.state, args.note)
@@ -167,6 +184,7 @@ def command_signal(args: argparse.Namespace) -> int:
     return 0
 
 
+@skip_if_imessage_unavailable(_print_imessage_unavailable)
 def command_signals(args: argparse.Namespace) -> int:
     payload = {
         "built_in": [idle_time_signal(), frontmost_app_signal(), process_activity_signal(), media_activity_signal()],
@@ -179,6 +197,7 @@ def command_signals(args: argparse.Namespace) -> int:
     return 0
 
 
+@skip_if_imessage_unavailable(_print_imessage_unavailable)
 def command_clear_signal(args: argparse.Namespace) -> int:
     data = read_json_file(SIGNALS_PATH) or {"signals": []}
     records = data.get("signals", [])
@@ -190,6 +209,7 @@ def command_clear_signal(args: argparse.Namespace) -> int:
     return 0
 
 
+@skip_if_imessage_unavailable(_print_imessage_unavailable)
 def command_log_response(args: argparse.Namespace) -> int:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     event = {
@@ -240,6 +260,7 @@ def command_log_response(args: argparse.Namespace) -> int:
     return 0
 
 
+@skip_if_imessage_unavailable(_print_imessage_unavailable)
 def command_action(args: argparse.Namespace) -> int:
     try:
         validate_abstract_payload(args.direction, args.kind, args.state, args.note)
@@ -260,6 +281,7 @@ def command_action(args: argparse.Namespace) -> int:
     return 0
 
 
+@skip_if_imessage_unavailable(_print_imessage_unavailable)
 def command_actions(args: argparse.Namespace) -> int:
     payload = {
         "attribution": coarse_attribution_context(),
@@ -272,11 +294,27 @@ def command_actions(args: argparse.Namespace) -> int:
 
 
 def command_hook_decision(args: argparse.Namespace) -> int:
+    if _imessage_unavailable():
+        # The rust stop-hook unblocks immediately when imessage is disabled —
+        # return a permissive decision so the agent can stop.
+        print(json.dumps({"ok": True, "decision": "allow", "reason": "imessage_disabled"}, indent=2))
+        return 0
     output = hook_decision_result(args.text or sys.stdin.read())
     print(json.dumps(output, indent=2))
     return 0
 
 
+def command_read_receipts(args: argparse.Namespace) -> int:
+    print(json.dumps(drain_inbound(args.since, kinds=("read_receipt",)), indent=2))
+    return 0
+
+
+def command_user_responses(args: argparse.Namespace) -> int:
+    print(json.dumps(drain_inbound(args.since, kinds=("reply", "tapback")), indent=2))
+    return 0
+
+
+@skip_if_imessage_unavailable(_print_imessage_unavailable)
 def command_wait(args: argparse.Namespace) -> int:
     config = load_recipient_config(args.recipient)
     state_file = STATE_DIR / f"last_seen_message_id_{config.role}"
@@ -396,6 +434,19 @@ def build_parser() -> argparse.ArgumentParser:
     wait.add_argument("--json", action="store_true")
     wait.add_argument("--include-existing", action="store_true")
     wait.set_defaults(func=command_wait)
+
+    read_receipts = sub.add_parser(
+        "read-receipts", help="Drain BlueBubbles read-receipt events (prints [] when imessage is unavailable)"
+    )
+    read_receipts.add_argument("--since", help="ISO 8601 timestamp; only events newer than this are returned")
+    read_receipts.set_defaults(func=command_read_receipts)
+
+    user_responses = sub.add_parser(
+        "user-responses",
+        help="Drain BlueBubbles reply/tapback events (prints [] when imessage is unavailable)",
+    )
+    user_responses.add_argument("--since", help="ISO 8601 timestamp; only events newer than this are returned")
+    user_responses.set_defaults(func=command_user_responses)
 
     add_session_parsers(sub)
     add_state_parsers(sub)
