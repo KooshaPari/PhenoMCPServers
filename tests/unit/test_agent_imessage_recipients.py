@@ -7,7 +7,6 @@ import pytest
 
 from agent_user_status import agent_imessage_commands as commands
 from agent_user_status import agent_imessage_core as core
-from agent_user_status.optional_dependencies import is_imessage_available
 
 
 def write_env(path: Path, body: str) -> None:

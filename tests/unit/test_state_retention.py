@@ -8,7 +8,6 @@ from argparse import Namespace
 
 from agent_user_status import agent_imessage_core as core
 from agent_user_status import agent_imessage_state_commands
-from agent_user_status.optional_dependencies import is_imessage_available
 from agent_user_status.state_retention import delete_state, export_state, retain_recent_state
 
 

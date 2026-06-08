@@ -11,8 +11,6 @@ from __future__ import annotations
 import json
 from argparse import Namespace
 
-import pytest
-
 from agent_user_status import agent_imessage_commands as commands
 
 
