@@ -1,5 +1,10 @@
 name: CI
 
+# DAG L2-35: read-only token default; override to `contents: write`
+# only on release/publish jobs (none in this workflow).
+permissions:
+  contents: read
+
 on:
   pull_request:
   push:
