@@ -1,3 +1,14 @@
+## Work State
+
+| Field | Value |
+|---|---|
+| Last commit | 2026-06-08 16:42:40 -0700 |
+| Open issues | 4 |
+| Open PRs | 3 |
+| Focus | status-runtime |
+
+Progress: ████████░░ 80%
+
 # Agent User Status
 
 Local, privacy-first user-status runtime for Codex/Claude agents.
