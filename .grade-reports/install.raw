@@ -1,0 +1,22 @@
+Looking in indexes: https://pypi.org/simple/, https://pypi.org/simple/
+Obtaining file:///Users/kooshapari/CodeProjects/Phenotype/repos/agent-user-status
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+[33mWARNING: agent-user-status 0.1.0 does not provide the extra 'dev'[0m[33m
+[0mBuilding wheels for collected packages: agent-user-status
+  Building editable for agent-user-status (pyproject.toml): started
+  Building editable for agent-user-status (pyproject.toml): finished with status 'done'
+  Created wheel for agent-user-status: filename=agent_user_status-0.1.0-0.editable-py3-none-any.whl size=3909 sha256=85777cf2be189b892becd1bb60212bd151dc5011bf7c28a84931cf6139725f37
+  Stored in directory: /private/var/folders/wl/z8733y815nzg28yy0_1_lh7w0000gn/T/pip-ephem-wheel-cache-4jsed38o/wheels/fa/be/e9/866223604acd2ff631ef6ef64830af1aa39db15d495a6d1937
+Successfully built agent-user-status
+Installing collected packages: agent-user-status
+Successfully installed agent-user-status-0.1.0
+
+[1m[[0m[34;49mnotice[0m[1;39;49m][0m[39;49m A new release of pip is available: [0m[31;49m26.1[0m[39;49m -> [0m[32;49m26.1.2[0m
+[1m[[0m[34;49mnotice[0m[1;39;49m][0m[39;49m To update, run: [0m[32;49mpip install --upgrade pip[0m
