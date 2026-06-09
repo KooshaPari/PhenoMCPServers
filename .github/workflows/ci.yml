@@ -1,7 +1,7 @@
 name: CI
 
-# DAG L2-35: read-only token default; override to `contents: write`
-# only on release/publish jobs (none in this workflow).
+# Default: read-only token for all jobs (DAG L2-35 hardening).
+# Override to `contents: write` per-job only for release/publish flows.
 permissions:
   contents: read
 
