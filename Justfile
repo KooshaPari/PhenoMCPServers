@@ -71,3 +71,20 @@ clean:
     #!/usr/bin/env bash
     set -euo pipefail
     rm -rf node_modules dist target build .next coverage __pycache__ 2>/dev/null || true
+# Grade targets (strictest checks — no caching)
+grade:
+    @echo "=== Running full grade ==="
+    ./grade.sh
+
+grade-fast:
+    @echo "=== Running fast grade ==="
+    ./grade.sh --fast
+
+grade-json:
+    @echo "=== Running grade (JSON) ==="
+    ./grade.sh --json
+
+grade-html:
+    @echo "=== Running grade (HTML) ==="
+    ./grade.sh --html
+
