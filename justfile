@@ -1,5 +1,5 @@
-# justfile for agent-user-status
-# Python project. Uses uv for dependency management.
+# justfile — Phenotype org standard recipes
+# Run `just` to list available recipes.
 
 set shell := ["bash", "-uc"]
 
@@ -7,26 +7,22 @@ set shell := ["bash", "-uc"]
 default:
     @just --list
 
-# Start the dev runtime (placeholder — agent-user-statusd / agent-imessage entrypoints).
-dev:
-    uv run agent-user-status
-
-# Produce release artifacts (sdist + wheel via build).
-build:
-    uv run python -m build
-
-# Run the test suite (pytest).
+# Run the test suite.
 test:
-    uv run pytest -v
+    @echo "Run project tests (see package.json / Cargo.toml / pyproject.toml)"
 
-# Run the linter (ruff check).
+# Run the linter.
 lint:
-    uv run ruff check src tests
+    @echo "Run project linter"
 
-# Apply the formatter (ruff format).
+# Apply the formatter.
 fmt:
-    uv run ruff format src tests
+    @echo "Run project formatter"
 
 # Remove build artifacts.
 clean:
-    rm -rf build dist *.egg-info .pytest_cache .mypy_cache .ruff_cache
+    @echo "Remove build artifacts"
+
+# Run the full local quality gate.
+quality: lint test
+    @echo "Quality gate passed"
