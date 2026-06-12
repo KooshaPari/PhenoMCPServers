@@ -26,8 +26,8 @@ agent-user-status-webcam-eye-tracker = "agent_user_status.webcam_eye_tracker:mai
 agent-imessage-mcp = "mcp.agent_imessage_mcp:main"
 
 [tool.ruff]
-line-length = 120
-target-version = "py311"
+line-length = 100
+target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
