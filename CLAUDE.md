@@ -9,7 +9,10 @@ Extends parent governance. See the following for canonical definitions:
 
 - **Name:** agent-user-status
 - **Location:** /Users/kooshapari/CodeProjects/Phenotype/repos/agent-user-status
-- **Language Stack:** (fill in)
+- **Language Stack:** Python 3.12+ (runtime, CLI, MCP) and Swift 6 (native macOS
+  monitor under `src/native/macos/`). macOS-only for the Swift/AppKit surface
+  and the LaunchAgent-based lifecycle; Linux CI runs the Python unit suite and
+  the loopback backend smoke path.
 - **Status:** Active
 
 ## AgilePlus Mandate

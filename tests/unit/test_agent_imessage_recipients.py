@@ -3,12 +3,25 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from agent_user_status import agent_imessage_commands as commands
 from agent_user_status import agent_imessage_core as core
 
 
 def write_env(path: Path, body: str) -> None:
     path.write_text(body, encoding="utf-8")
+
+
+# All tests in this module exercise code paths that need to *see* imessage
+# available. The optional-dependency guard short-circuits to a uniform
+# unavailable payload before any real work, so we patch the probe.
+@pytest.fixture(autouse=True)
+def _imessage_available(monkeypatch):
+    monkeypatch.setattr(core, "is_imessage_available", lambda: True)
+    monkeypatch.setattr(core, "is_available", lambda: True)
+    monkeypatch.setattr(commands, "is_imessage_available", lambda: True)
+    yield
 
 
 def test_load_config_keeps_koosha_defaults(monkeypatch, tmp_path) -> None:

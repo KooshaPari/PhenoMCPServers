@@ -36,7 +36,23 @@ from agent_user_status.agent_imessage_learning import (
     learning_prior,
     weighted_average,
 )
+from agent_user_status.optional_dependencies import is_imessage_available
 from agent_user_status.session_registry import append_session_event
+
+_UNAVAILABLE_STATUS: dict[str, Any] = {
+    "ok": True,
+    "source": "imessage_unavailable",
+    "status": "unknown",
+    "confidence": 0.0,
+    "estimated_response": "unknown",
+    "recommendation": "use_judgment",
+}
+
+
+def _ensure_imessage() -> bool:
+    """Return True when imessage is reachable. Callers use this to short-circuit
+    heavy imessage-only paths and emit safe defaults."""
+    return is_imessage_available()
 
 
 def status_from_override(override: dict[str, Any]) -> dict[str, Any]:
@@ -61,6 +77,8 @@ def status_from_override(override: dict[str, Any]) -> dict[str, Any]:
 
 
 def estimate_status(config: Config) -> dict[str, Any]:
+    if not _ensure_imessage():
+        return dict(_UNAVAILABLE_STATUS)
     override = read_presence_override()
     if override:
         return status_from_override(override)
@@ -153,6 +171,8 @@ def estimate_status(config: Config) -> dict[str, Any]:
 
 
 def hook_decision_result(text: str) -> dict[str, Any]:
+    if not _ensure_imessage():
+        return {"ok": True, "decision": "allow", "reason": "imessage_disabled", "status": dict(_UNAVAILABLE_STATUS)}
     status = estimate_status(load_config())
     attribution = coarse_attribution_context()
     waiting = bool(WAITING_PATTERNS.search(text or ""))

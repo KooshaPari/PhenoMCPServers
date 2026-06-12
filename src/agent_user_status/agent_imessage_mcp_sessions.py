@@ -6,6 +6,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+from agent_user_status.optional_dependencies import is_imessage_available
+
 SESSION_TOOLS: list[dict[str, Any]] = [
     {
         "name": "sessions",
@@ -84,6 +86,36 @@ SESSION_TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    {
+        "name": "poll_user_response",
+        "description": (
+            "Drain BlueBubbles reply/tapback events newer than ``since``"
+            " (empty list when imessage is unavailable)."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "since": {"type": "string"},
+                "timeout_seconds": {"type": "integer", "default": 5},
+            },
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "poll_read_receipts",
+        "description": (
+            "Drain BlueBubbles read-receipt events newer than ``since``"
+            " (empty list when imessage is unavailable)."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "since": {"type": "string"},
+                "timeout_seconds": {"type": "integer", "default": 5},
+            },
+            "additionalProperties": False,
+        },
+    },
 ]
 
 SESSION_TOOL_NAMES = {tool["name"] for tool in SESSION_TOOLS}
@@ -145,6 +177,20 @@ def session_tool_call(
         command = ["session-events", "--limit", str(args.get("limit", 80))]
         _add_optional(command, args, "kind")
         _add_optional(command, args, "session_id")
+        return call_agent_imessage(command)
+
+    if name == "poll_user_response":
+        if not is_imessage_available():
+            return {"ok": True, "events": []}
+        command = ["user-responses"]
+        _add_optional(command, args, "since")
+        return call_agent_imessage(command)
+
+    if name == "poll_read_receipts":
+        if not is_imessage_available():
+            return {"ok": True, "events": []}
+        command = ["read-receipts"]
+        _add_optional(command, args, "since")
         return call_agent_imessage(command)
 
     raise ValueError(f"Unknown session tool: {name}")

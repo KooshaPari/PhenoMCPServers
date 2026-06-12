@@ -23,6 +23,7 @@ from agent_user_status.agent_imessage_core import (
     write_json_file,
 )
 from agent_user_status.gaze_context import annotate_event_with_gaze, is_gaze_reliable_event
+from agent_user_status.optional_dependencies import is_imessage_available
 
 
 def read_action_events(limit: int = 200) -> list[dict[str, Any]]:
@@ -425,6 +426,20 @@ def append_action_event(
     max_age_seconds: int = 180,
     note: str | None = None,
 ) -> dict[str, Any]:
+    if not is_imessage_available():
+        # Learning is non-critical — silently no-op when imessage is off.
+        return {
+            "observed_at": iso_now(),
+            "direction": direction,
+            "kind": kind.replace("-", "_"),
+            "score": score,
+            "weight": weight,
+            "state": state,
+            "eta_minutes": eta_minutes,
+            "max_age_seconds": max_age_seconds,
+            "note": note,
+            "skipped": "imessage_unavailable",
+        }
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     normalized_kind = kind.replace("-", "_")
     event_score, default_state = score_for_action(direction, normalized_kind, score)
@@ -452,6 +467,9 @@ def update_action_learning(response_minutes: float, action_context: list[dict[st
         "skipped_unreliable": 0,
         "considered": 0,
     }
+    if not is_imessage_available():
+        summary["skipped_unreliable"] = "imessage_unavailable"
+        return summary
     if not action_context:
         return summary
 
