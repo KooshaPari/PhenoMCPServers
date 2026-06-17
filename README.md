@@ -1,8 +1,9 @@
 # PhenoMCPServers
 
 Phenotype **implementations** registry — runnable MCP servers plus **skills**,
-**plugins**, and **agent artifacts**. Framework code lives in
-[PhenoFastMCP](https://github.com/KooshaPari/PhenoFastMCP), not here.
+**plugins**, and **agent artifacts**. Framework code lives in the
+[PhenoFastMCP](https://github.com/KooshaPari/PhenoFastMCP)* tiered forks — not language
+umbrella SDKs. See [docs/LANGUAGE-TIERS-AND-ROLES.md](docs/LANGUAGE-TIERS-AND-ROLES.md).
 
 ## Layout
 
