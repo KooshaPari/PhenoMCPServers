@@ -4,6 +4,8 @@ registry_version: "1.0.0"
 framework:
   python: phenofastmcp
   repo: https://github.com/KooshaPari/PhenoFastMCP
+  upstream: https://github.com/PrefectHQ/fastmcp
+  fork_parent: PrefectHQ/fastmcp
   baseline_tag: v3.4.2
 
 servers:
