@@ -23,12 +23,19 @@ language_policy:
 framework:
   rust:
     repo: https://github.com/KooshaPari/PhenoFastMCP-rust
-    upstream: https://github.com/modelcontextprotocol/rust-sdk
-    fork_parent: modelcontextprotocol/rust-sdk
+    upstream: https://github.com/Dicklesworthstone/fastmcp_rust
+    fork_parent: Dicklesworthstone/fastmcp_rust
     tier: 0
     role: mcp-framework
     parallel_lane: phenofastmcp-rust
-    note: tier-0 rmcp; FastRMCP ergonomics via superset only
+    note: fastmcp-equivalent Rust framework; spec SDK is PhenoRMCP
+  rmcp:
+    repo: https://github.com/KooshaPari/PhenoRMCP
+    upstream: https://github.com/modelcontextprotocol/rust-sdk
+    fork_parent: modelcontextprotocol/rust-sdk
+    tier: 0
+    role: mcp-spec-sdk
+    note: official rmcp — not PhenoFastMCP branding
   go:
     repo: https://github.com/KooshaPari/PhenoFastMCP-go
     upstream: https://github.com/mark3labs/mcp-go
