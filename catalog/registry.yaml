@@ -49,7 +49,8 @@ retired_anti_patterns:
       Generic Rust catch-all — same anti-pattern as phenotype-go-sdk.
       Rust belongs to tier-0 domain forks, not a language bucket.
     replacement:
-      - KooshaPari/PhenoFastMCP-rust # tier-0 MCP framework fork (rmcp)
+      - KooshaPari/PhenoFastMCP-rust # tier-0 MCP framework fork (fastmcp_rust)
+      - KooshaPari/PhenoRMCP         # tier-0 MCP spec SDK (rmcp)
       - KooshaPari/substrate         # tier-0 fleet runtime (driver-* crates)
       - KooshaPari/phenoUtils       # tier-0 hex ports, crypto, fs
     successor_role: mcp-framework
