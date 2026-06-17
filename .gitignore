@@ -1,0 +1,9 @@
+# Git and Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+*.egg-info/
+
+# Local DB from mailbox tools
+substrate.db

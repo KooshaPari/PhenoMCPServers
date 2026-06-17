@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "substrate": {
+      "command": "python",
+      "args": ["servers/substrate/substrate_server.py"],
+      "env": {
+        "SUBSTRATE_HTTP_URL": "http://127.0.0.1:8080"
+      }
+    },
+    "substrate-dispatch": {
+      "command": "python",
+      "args": ["servers/substrate/dispatch_server.py"],
+      "env": {
+        "OMNIROUTE_URL": "http://127.0.0.1:20128"
+      }
+    }
+  }
+}

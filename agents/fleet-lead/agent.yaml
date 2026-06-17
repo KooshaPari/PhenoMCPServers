@@ -1,0 +1,10 @@
+id: fleet-lead
+title: Fleet lead agent
+persona: lead
+default_servers:
+  - substrate
+skills:
+  - substrate-dispatch-skill
+env:
+  SUBSTRATE_AGENT_NAME: lead
+  SUBSTRATE_TEAM_ID: default

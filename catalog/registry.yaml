@@ -1,0 +1,89 @@
+# PhenoMCPServers catalog — single source of truth
+# Version bumps when any entry changes shape or wiring.
+registry_version: "1.0.0"
+framework:
+  python: phenofastmcp
+  repo: https://github.com/KooshaPari/PhenoFastMCP
+  baseline_tag: v3.4.2
+
+servers:
+  - id: substrate
+    title: Substrate fleet MCP
+    description: dispatch, plan, route over HTTP plus team mailbox tools
+    package: servers/substrate
+    language: python
+    framework: fastmcp
+    transport: stdio
+    entry:
+      module: substrate_server
+      callable: mcp.run
+    env:
+      - SUBSTRATE_HTTP_URL
+      - SUBSTRATE_HTTP_AUTH_TOKEN
+      - SUBSTRATE_TEAM_ID
+      - SUBSTRATE_AGENT_NAME
+      - SUBSTRATE_DB
+    status: active
+
+  - id: substrate-dispatch
+    title: Substrate OmniRoute tier dispatch
+    description: Per-tier dispatch tools delegating to OmniRoute
+    package: servers/substrate
+    language: python
+    framework: fastmcp
+    transport: stdio
+    entry:
+      module: dispatch_server
+      callable: main
+    env:
+      - OMNIROUTE_URL
+      - LOG_LEVEL
+    status: active
+
+  - id: mcpforge
+    title: MCPForge LSP server
+    description: Semantic code tools via language servers
+    package: external
+    repo: https://github.com/KooshaPari/MCPForge
+    language: go
+    transport: stdio
+    status: pointer
+
+  - id: ops-mcp
+    title: NanoVM ops MCP
+    description: Unikernel instance and image lifecycle
+    package: external
+    repo: https://github.com/KooshaPari/phenotype-ops-mcp
+    language: go
+    transport: stdio
+    status: pointer
+
+skills:
+  - id: substrate-dispatch-skill
+    title: Substrate dispatch skill
+    description: Invoke substrate_dispatch and substrate_plan from agents
+    path: skills/substrate-dispatch
+    requires_servers:
+      - substrate
+    status: template
+
+plugins:
+  - id: phenotype-mcp-bundle
+    title: Phenotype default MCP bundle
+    description: Wires substrate + org servers for Cursor/Claude clients
+    path: plugins/phenotype-bundle
+    servers:
+      - substrate
+      - substrate-dispatch
+    status: template
+
+agents:
+  - id: fleet-lead
+    title: Fleet lead agent
+    description: Lead agent with team mailbox and dispatch tools
+    path: agents/fleet-lead
+    skills:
+      - substrate-dispatch-skill
+    servers:
+      - substrate
+    status: template

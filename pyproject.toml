@@ -1,0 +1,11 @@
+[project]
+name = "phenomcp-servers-workspace"
+version = "0.1.0"
+description = "PhenoMCPServers catalog workspace"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+dev = ["pyyaml>=6.0", "jsonschema>=4.0", "pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["servers/substrate"]

@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/KooshaPari/PhenoMCPServers/schemas/registry.schema.json",
+  "title": "PhenoMCPServers registry",
+  "type": "object",
+  "required": ["registry_version", "servers", "skills", "plugins", "agents"],
+  "properties": {
+    "registry_version": { "type": "string" },
+    "framework": { "type": "object" },
+    "servers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/server" }
+    },
+    "skills": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/skill" }
+    },
+    "plugins": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/plugin" }
+    },
+    "agents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/agent" }
+    }
+  },
+  "$defs": {
+    "server": {
+      "type": "object",
+      "required": ["id", "title", "status"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "title": { "type": "string" },
+        "status": { "enum": ["active", "pointer", "deprecated", "template"] },
+        "package": { "type": "string" },
+        "repo": { "type": "string", "format": "uri" },
+        "transport": { "enum": ["stdio", "sse", "streamable-http"] }
+      }
+    },
+    "skill": {
+      "type": "object",
+      "required": ["id", "title", "path", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "path": { "type": "string" },
+        "requires_servers": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "plugin": {
+      "type": "object",
+      "required": ["id", "title", "path", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "servers": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "required": ["id", "title", "path", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "skills": { "type": "array", "items": { "type": "string" } },
+        "servers": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}
