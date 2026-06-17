@@ -1,6 +1,6 @@
 # PhenoMCPServers catalog — single source of truth
 # Version bumps when any entry changes shape or wiring.
-registry_version: "1.0.0"
+registry_version: "1.1.0"
 
 # Language tiers & roles: docs/LANGUAGE-TIERS-AND-ROLES.md
 # Tier 0: Rust/Zig/Mojo core | Tier 1: Go edges (justified) | Tier 2: Py3.14/uv, Bun, TS7, C#, Java
@@ -138,6 +138,20 @@ skills:
       - substrate
     status: template
 
+  - id: mcp-boundary-guard
+    title: MCP boundary guard
+    description: ADR-017 pre-flight; framework vs runtime vs implementations; Rust fork selection
+    path: skills/mcp-boundary-guard
+    adr: ADR-017
+    status: active
+
+  - id: github-fork-policy
+    title: GitHub fork policy
+    description: gh repo fork only; never mirror-to-empty; verify fork parent
+    path: skills/github-fork-policy
+    adr: ADR-018
+    status: active
+
 plugins:
   - id: phenotype-mcp-bundle
     title: Phenotype default MCP bundle
@@ -155,6 +169,8 @@ agents:
     path: agents/fleet-lead
     skills:
       - substrate-dispatch-skill
+      - mcp-boundary-guard
+      - github-fork-policy
     servers:
       - substrate
     status: template
