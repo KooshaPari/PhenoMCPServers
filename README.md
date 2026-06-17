@@ -1,8 +1,9 @@
 # PhenoMCPServers
 
 Phenotype **implementations** registry — runnable MCP servers plus **skills**,
-**plugins**, and **agent artifacts**. Framework code lives in
-[PhenoFastMCP](https://github.com/KooshaPari/PhenoFastMCP), not here.
+**plugins**, and **agent artifacts**. Framework code lives in the
+[PhenoFastMCP](https://github.com/KooshaPari/PhenoFastMCP)* tiered forks — not language
+umbrella SDKs. See [docs/LANGUAGE-TIERS-AND-ROLES.md](docs/LANGUAGE-TIERS-AND-ROLES.md).
 
 ## Layout
 
@@ -43,6 +44,7 @@ During transition, `fastmcp` on PyPI is API-compatible at v3.4.2.
 |----|---------|-------|--------|
 | `substrate` | `servers/substrate` | `substrate_server.py` | in-tree |
 | `substrate-dispatch` | `servers/substrate` | `dispatch_server.py` | in-tree |
+| `pheno-org` | `servers/pheno-org` | `pheno_org_server.py` | in-tree |
 | `mcpforge` | `servers/external/mcpforge` | `main.go` | git submodule |
 | `ops-mcp` | `servers/external/ops-mcp` | `main.go` | git submodule |
 
