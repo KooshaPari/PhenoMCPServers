@@ -17,7 +17,7 @@ one language.
 ┌─────────────────────────────────────────────────────────────┐
 │ Tier 0 — CORE (max perf, protocol truth, codegen source)    │
 │   Rust · Zig · Mojo                                         │
-│   PhenoFastMCP-rust (rmcp) · substrate runtime · phenoUtils │
+│   PhenoFastMCP-rust (fastmcp_rust) · PhenoRMCP (rmcp) · substrate · phenoUtils │
 └───────────────────────────┬─────────────────────────────────┘
                             │ FFI / gRPC / schema / wasm
 ┌───────────────────────────▼─────────────────────────────────┐
@@ -98,7 +98,8 @@ These proceed **simultaneously**; sync weekly on schema/registry only:
 |--------|------|----------|
 | Py framework | PhenoFastMCP | PrefectHQ/fastmcp |
 | Go framework | PhenoFastMCP-go | mark3labs/mcp-go |
-| Rust framework | PhenoFastMCP-rust | modelcontextprotocol/rust-sdk |
+| Rust framework | PhenoFastMCP-rust | Dicklesworthstone/fastmcp_rust |
+| Rust spec SDK | PhenoRMCP | modelcontextprotocol/rust-sdk |
 | Implementations | PhenoMCPServers | catalog/registry.yaml |
 | Runtime | substrate | driver-* crates |
 
