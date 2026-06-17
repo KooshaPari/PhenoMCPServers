@@ -35,5 +35,7 @@ jobs:
         run: python scripts/validate_bundle_wiring.py
       - name: Install substrate server deps
         run: pip install -r servers/substrate/requirements.txt
-      - name: pytest bundle + hexakit + substrate
-        run: pytest tests/test_bundle_wiring.py tests/test_hexakit_template.py servers/substrate -q
+      - name: Install pheno-org server deps
+        run: pip install -e "servers/pheno-org[dev]"
+      - name: pytest bundle + hexakit + substrate + pheno-org
+        run: pytest tests/test_bundle_wiring.py tests/test_hexakit_template.py servers/substrate servers/pheno-org/tests -q

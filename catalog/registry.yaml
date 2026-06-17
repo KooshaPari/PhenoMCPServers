@@ -1,10 +1,6 @@
 # PhenoMCPServers catalog — single source of truth
 # Version bumps when any entry changes shape or wiring.
-<<<<<<< HEAD
-registry_version: "1.2.0"
-=======
-registry_version: "1.1.1"
->>>>>>> pr19-ts7
+registry_version: "1.3.0"
 
 # Language tiers & roles: docs/LANGUAGE-TIERS-AND-ROLES.md
 # Tier 0: Rust/Zig/Mojo core | Tier 1: Go edges (justified) | Tier 2: Py3.14/uv, Bun, TS7, C#, Java
@@ -291,6 +287,32 @@ skills:
     adr: ADR-018
     status: active
 
+  - id: language-tier-picker
+    title: Language tier picker
+    description: ADR-017 tier 0-3 placement for MCP code
+    path: skills/language-tier-picker
+    adr: ADR-017
+    status: active
+
+  - id: catalog-wiring
+    title: Catalog wiring
+    description: registry.yaml, plugins, and agent bundle sync
+    path: skills/catalog-wiring
+    status: active
+
+  - id: phenodag-claim
+    title: Phenodag claim discipline
+    description: pick/claim/done without duplicate parallel lanes
+    path: skills/phenodag-claim
+    status: active
+
+  - id: substrate-vs-servers
+    title: Substrate vs servers boundary
+    description: ADR-019 runtime vs PhenoMCPServers SSOT placement
+    path: skills/substrate-vs-servers
+    adr: ADR-019
+    status: active
+
 plugins:
   - id: phenotype-mcp-bundle
     title: Phenotype default MCP bundle
@@ -311,6 +333,10 @@ agents:
       - substrate-dispatch-skill
       - mcp-boundary-guard
       - github-fork-policy
+      - language-tier-picker
+      - catalog-wiring
+      - phenodag-claim
+      - substrate-vs-servers
     servers:
       - substrate
     status: template
