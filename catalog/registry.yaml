@@ -1,6 +1,6 @@
 # PhenoMCPServers catalog — single source of truth
 # Version bumps when any entry changes shape or wiring.
-registry_version: "1.1.0"
+registry_version: "1.2.0"
 
 # Language tiers & roles: docs/LANGUAGE-TIERS-AND-ROLES.md
 # Tier 0: Rust/Zig/Mojo core | Tier 1: Go edges (justified) | Tier 2: Py3.14/uv, Bun, TS7, C#, Java
@@ -208,6 +208,35 @@ servers:
     env:
       - PARPOURA_BASE_URL
     status: active
+
+  - id: agileplus-mcp-intent
+    title: AgilePlus intent graph MCP
+    description: Rule-based prompt-to-intent-graph MCP tool and HTTP API (Rust)
+    repo: https://github.com/KooshaPari/AgilePlus
+    package: crates/agileplus-mcp-intent
+    language: rust
+    framework: rmcp
+    transport: stdio
+    entry:
+      module: agileplus-mcp-intent
+      callable: mcp
+    tier: 0
+    role: mcp-implementation
+    status: pointer
+    note: Monorepo path AgilePlus/crates/agileplus-mcp-intent; audit docs/mcp/INTEGRATION.md
+
+  - id: agileplus-mcp
+    title: AgilePlus FastMCP bridge
+    description: Python FastMCP bridge from LLM tools to AgilePlus gRPC/API (planned)
+    repo: https://github.com/KooshaPari/AgilePlus
+    package: agileplus-mcp
+    language: python
+    framework: fastmcp
+    transport: stdio
+    tier: 2
+    role: mcp-implementation
+    status: pointer
+    note: Stub only — no pyproject.toml or server entry yet; see AgilePlus/docs/mcp/INTEGRATION.md
 
 skills:
   - id: substrate-dispatch-skill
