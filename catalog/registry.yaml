@@ -19,6 +19,8 @@ language_policy:
     - phenofastmcp-rust
     - phenomcp-servers
     - substrate-runtime
+    - phenofastmcp-zig     # future: start after rmcp superset stabilizes
+    - phenofastmcp-mojo    # future: start after rmcp superset stabilizes
 
 framework:
   rust:
@@ -47,6 +49,26 @@ framework:
     parallel_lane: phenofastmcp-py
     toolchain: "py3.14; uv"
     note: fastmcp binding tier — not protocol core long-term
+  zig:
+    repo: https://github.com/KooshaPari/PhenoFastMCP-zig
+    upstream: https://github.com/modelcontextprotocol/rust-sdk
+    fork_parent: modelcontextprotocol/rust-sdk
+    tier: 0
+    role: mcp-framework
+    parallel_lane: phenofastmcp-zig
+    status: future
+    start_trigger: rmcp superset stabilizes (see issue #8)
+    note: tier-0 parallel lane; same fork-parent rules as rust; NOT in phenotype-rust-sdk bucket
+  mojo:
+    repo: https://github.com/KooshaPari/PhenoFastMCP-mojo
+    upstream: https://github.com/modelcontextprotocol/rust-sdk
+    fork_parent: modelcontextprotocol/rust-sdk
+    tier: 0
+    role: mcp-framework
+    parallel_lane: phenofastmcp-mojo
+    status: future
+    start_trigger: rmcp superset stabilizes (see issue #8)
+    note: tier-0 parallel lane; same fork-parent rules as rust; NOT in phenotype-rust-sdk bucket
 
 servers:
   - id: substrate
