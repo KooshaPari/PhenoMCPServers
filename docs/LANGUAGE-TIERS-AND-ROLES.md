@@ -105,6 +105,20 @@ These proceed **simultaneously**; sync weekly on schema/registry only:
 
 Tier-0 **Zig/Mojo** MCP cores are future forks/issues — same fork-parent rules as Rust.
 
+**Trigger to start:** once the **rmcp superset** in `PhenoFastMCP-rust` stabilizes
+(API surface + ergonomics layer), evaluate Zig and Mojo in **parallel** as
+sibling forks. Each becomes its own gh repo:
+
+| Stream | Future repo | Upstream (planned) | Status |
+|--------|-------------|--------------------|--------|
+| Zig framework | `PhenoFastMCP-zig` | `modelcontextprotocol/rust-sdk` (rmcp) | future |
+| Mojo framework | `PhenoFastMCP-mojo` | `modelcontextprotocol/rust-sdk` (rmcp) | future |
+
+**Anti-pattern guard:** these lanes are **not** added to `phenotype-rust-sdk`.
+They are first-class forks with their own GH repos, mirroring the
+`PhenoFastMCP-rust` fork-parent rule. The `phenotype-rust-sdk` bucket is the
+retired language umbrella; do not reintroduce it via Zig/Mojo.
+
 ---
 
 ## Decision checklist (new code)
