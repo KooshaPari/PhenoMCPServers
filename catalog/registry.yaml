@@ -58,6 +58,20 @@ servers:
     transport: stdio
     status: pointer
 
+  - id: pheno-org
+    title: Pheno-org MCP server
+    description: Governance, agent, knowledge, policy, session, and workflow tools proxying to Parpoura (migrated from PhenoMCP)
+    package: servers/pheno-org
+    language: python
+    framework: fastmcp
+    transport: stdio
+    entry:
+      module: pheno_org_server
+      callable: mcp.run
+    env:
+      - PARPOURA_BASE_URL
+    status: active
+
 skills:
   - id: substrate-dispatch-skill
     title: Substrate dispatch skill
@@ -75,6 +89,7 @@ plugins:
     servers:
       - substrate
       - substrate-dispatch
+      - pheno-org
     status: template
 
 agents:

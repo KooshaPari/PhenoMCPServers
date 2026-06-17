@@ -43,6 +43,7 @@ During transition, `fastmcp` on PyPI is API-compatible at v3.4.2.
 |----|---------|-------|
 | `substrate` | `servers/substrate` | `substrate_server.py` |
 | `substrate-dispatch` | `servers/substrate` | `dispatch_server.py` |
+| `pheno-org` | `servers/pheno-org` | `pheno_org_server.py` |
 
 External servers (MCPForge, ops-mcp) are catalog **pointers** until migrated in-tree.
 
