@@ -1,22 +1,52 @@
 # PhenoMCPServers catalog — single source of truth
 # Version bumps when any entry changes shape or wiring.
 registry_version: "1.0.0"
+
+# Language tiers & roles: docs/LANGUAGE-TIERS-AND-ROLES.md
+# Tier 0: Rust/Zig/Mojo core | Tier 1: Go edges (justified) | Tier 2: Py3.14/uv, Bun, TS7, C#, Java
+# Anti-pattern: language umbrella SDKs (phenotype-rust-sdk) — use domain roles below.
+
+language_policy:
+  tier_0: [rust, zig, mojo]
+  tier_1: [go]
+  tier_2: [python, typescript, csharp, java]
+  tier_3: [shell, pwsh]
+  python_toolchain: "3.14+; uv"
+  typescript_toolchain: "TS 7 preview; Bun where applicable"
+  parallel_workstreams:
+    - phenofastmcp-py
+    - phenofastmcp-go
+    - phenofastmcp-rust
+    - phenomcp-servers
+    - substrate-runtime
+
 framework:
+  rust:
+    repo: https://github.com/KooshaPari/PhenoFastMCP-rust
+    upstream: https://github.com/modelcontextprotocol/rust-sdk
+    fork_parent: modelcontextprotocol/rust-sdk
+    tier: 0
+    role: mcp-framework
+    parallel_lane: phenofastmcp-rust
+    note: tier-0 rmcp; FastRMCP ergonomics via superset only
+  go:
+    repo: https://github.com/KooshaPari/PhenoFastMCP-go
+    upstream: https://github.com/mark3labs/mcp-go
+    fork_parent: mark3labs/mcp-go
+    tier: 1
+    role: mcp-framework
+    parallel_lane: phenofastmcp-go
+    justification: HTTP/SSE MCP edge servers; upstream is Go-native (MCPForge)
   python:
     repo: https://github.com/KooshaPari/PhenoFastMCP
     upstream: https://github.com/PrefectHQ/fastmcp
     fork_parent: PrefectHQ/fastmcp
     baseline_tag: v3.4.2
-  go:
-    repo: https://github.com/KooshaPari/PhenoFastMCP-go
-    upstream: https://github.com/mark3labs/mcp-go
-    fork_parent: mark3labs/mcp-go
-    note: fastmcp-like high-level Go SDK (MCPForge uses this)
-  rust:
-    repo: https://github.com/KooshaPari/PhenoFastMCP-rust
-    upstream: https://github.com/modelcontextprotocol/rust-sdk
-    fork_parent: modelcontextprotocol/rust-sdk
-    note: official rmcp; evaluate FastRMCP for fastmcp ergonomics superset
+    tier: 2
+    role: mcp-framework
+    parallel_lane: phenofastmcp-py
+    toolchain: "py3.14; uv"
+    note: fastmcp binding tier — not protocol core long-term
 
 servers:
   - id: substrate
