@@ -2,11 +2,21 @@
 # Version bumps when any entry changes shape or wiring.
 registry_version: "1.0.0"
 framework:
-  python: phenofastmcp
-  repo: https://github.com/KooshaPari/PhenoFastMCP
-  upstream: https://github.com/PrefectHQ/fastmcp
-  fork_parent: PrefectHQ/fastmcp
-  baseline_tag: v3.4.2
+  python:
+    repo: https://github.com/KooshaPari/PhenoFastMCP
+    upstream: https://github.com/PrefectHQ/fastmcp
+    fork_parent: PrefectHQ/fastmcp
+    baseline_tag: v3.4.2
+  go:
+    repo: https://github.com/KooshaPari/PhenoFastMCP-go
+    upstream: https://github.com/mark3labs/mcp-go
+    fork_parent: mark3labs/mcp-go
+    note: fastmcp-like high-level Go SDK (MCPForge uses this)
+  rust:
+    repo: https://github.com/KooshaPari/PhenoFastMCP-rust
+    upstream: https://github.com/modelcontextprotocol/rust-sdk
+    fork_parent: modelcontextprotocol/rust-sdk
+    note: official rmcp; evaluate FastRMCP for fastmcp ergonomics superset
 
 servers:
   - id: substrate
