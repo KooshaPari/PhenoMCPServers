@@ -5,3 +5,4 @@ manifest: mcp.json
 servers:
   - substrate
   - substrate-dispatch
+  - pheno-org
