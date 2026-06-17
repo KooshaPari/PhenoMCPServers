@@ -1,6 +1,6 @@
 # PhenoMCPServers catalog — single source of truth
 # Version bumps when any entry changes shape or wiring.
-registry_version: "1.1.0"
+registry_version: "1.1.1"
 
 # Language tiers & roles: docs/LANGUAGE-TIERS-AND-ROLES.md
 # Tier 0: Rust/Zig/Mojo core | Tier 1: Go edges (justified) | Tier 2: Py3.14/uv, Bun, TS7, C#, Java
@@ -22,6 +22,7 @@ language_policy:
     - substrate-runtime
     - phenofastmcp-zig     # future: start after rmcp superset stabilizes
     - phenofastmcp-mojo    # future: start after rmcp superset stabilizes
+    - phenofastmcp-ts      # planned: TS7 + Bun HexaKit binding (sd-ts7)
 
 # Retired anti-patterns — language umbrella SDKs (issue #7).
 # Do not re-introduce these. They were language buckets, not domain roles,
@@ -134,6 +135,31 @@ framework:
     status: future
     start_trigger: rmcp superset stabilizes (see issue #8)
     note: tier-0 parallel lane; same fork-parent rules as rust; NOT in phenotype-rust-sdk bucket
+  typescript:
+    repo: https://github.com/KooshaPari/PhenoFastMCP-ts
+    upstream: https://github.com/modelcontextprotocol/typescript-sdk
+    fork_parent: modelcontextprotocol/typescript-sdk
+    tier: 2
+    role: mcp-framework
+    parallel_lane: phenofastmcp-ts
+    status: planned
+    toolchain: "TS 7 preview; Bun"
+    start_trigger: MCP TS SDK v2 stable + HexaKit mcp-server-ts7 validates (sd-ts7)
+    note: tier-2 binding lane; IDE/plugin wiring; NOT protocol core
+
+templates:
+  hexakit:
+    mcp-server:
+      path: templates/mcp-server
+      runtime: python
+      framework: fastmcp
+      status: active
+    mcp-server-ts7:
+      path: templates/mcp-server-ts7
+      runtime: bun
+      framework: "@modelcontextprotocol/server"
+      status: planned
+      spike: docs/spikes/ts7-hexakit-binding.md
 
 servers:
   - id: substrate
