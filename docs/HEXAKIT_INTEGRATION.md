@@ -1,5 +1,7 @@
 # HexaKit integration
 
+## Python template (active)
+
 The `templates/mcp-server/` directory is a [HexaKit](https://github.com/KooshaPari/HexaKit)
 template targeting this catalog. HexaKit's `hexakit init` consumes it via:
 
@@ -65,3 +67,25 @@ the exact recipe).
    `template` to `active`.
 4. Re-run `python scripts/validate_catalog.py` — the path-existence check
    now applies.
+
+## TS7 / Bun template (planned — sd-ts7)
+
+| Field | Value |
+|-------|-------|
+| Template path | `templates/mcp-server-ts7/` |
+| Registry lane | `framework.typescript` (`status: planned`) |
+| Side-DAG | `sd-ts7` (phenodag `mcp-fleet-60`) |
+| Spike doc | [docs/spikes/ts7-hexakit-binding.md](spikes/ts7-hexakit-binding.md) |
+| ADR (draft) | PhenoSpecs ADR-021 — tier-2 TS7 binding + HexaKit scaffold |
+| Defer gate | MCP TS SDK v2 stable (2026-07-28 RC) + `validate_catalog` CI for TS7 template |
+
+Planned invocation (not wired in HexaKit CLI yet):
+
+```bash
+hexakit init mcp-server-ts7 --catalog phenomcp --id <my-server>
+```
+
+The stub renderer writes Bun + `@modelcontextprotocol/server` server files only.
+Skill / plugin / agent companions reuse the Python `mcp-server` template until the
+TS7 lane activates. **Do not create `PhenoFastMCP-ts` or promote the lane to
+`status: active` until the defer gate in the spike doc clears.**
