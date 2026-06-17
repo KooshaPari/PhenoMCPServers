@@ -1,0 +1,6 @@
+[submodule "mcpforge"]
+	path = servers/external/mcpforge
+	url = https://github.com/KooshaPari/MCPForge.git
+[submodule "ops-mcp"]
+	path = servers/external/ops-mcp
+	url = https://github.com/KooshaPari/phenotype-ops-mcp.git
