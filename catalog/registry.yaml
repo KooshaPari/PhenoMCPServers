@@ -171,20 +171,28 @@ servers:
   - id: mcpforge
     title: MCPForge LSP server
     description: Semantic code tools via language servers
-    package: external
+    package: servers/external/mcpforge
     repo: https://github.com/KooshaPari/MCPForge
     language: go
     transport: stdio
-    status: pointer
+    entry:
+      module: main
+      callable: main
+    build: go build -o bin/mcpforge .
+    status: active
 
   - id: ops-mcp
     title: NanoVM ops MCP
     description: Unikernel instance and image lifecycle
-    package: external
+    package: servers/external/ops-mcp
     repo: https://github.com/KooshaPari/phenotype-ops-mcp
     language: go
     transport: stdio
-    status: pointer
+    entry:
+      module: main
+      callable: main
+    build: go build -o bin/ops-mcp .
+    status: active
 
   - id: pheno-org
     title: Pheno-org MCP server

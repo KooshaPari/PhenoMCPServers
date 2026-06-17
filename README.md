@@ -40,13 +40,16 @@ During transition, `fastmcp` on PyPI is API-compatible at v3.4.2.
 
 ## Servers
 
-| ID | Package | Entry |
-|----|---------|-------|
-| `substrate` | `servers/substrate` | `substrate_server.py` |
-| `substrate-dispatch` | `servers/substrate` | `dispatch_server.py` |
-| `pheno-org` | `servers/pheno-org` | `pheno_org_server.py` |
+| ID | Package | Entry | Source |
+|----|---------|-------|--------|
+| `substrate` | `servers/substrate` | `substrate_server.py` | in-tree |
+| `substrate-dispatch` | `servers/substrate` | `dispatch_server.py` | in-tree |
+| `pheno-org` | `servers/pheno-org` | `pheno_org_server.py` | in-tree |
+| `mcpforge` | `servers/external/mcpforge` | `main.go` | git submodule |
+| `ops-mcp` | `servers/external/ops-mcp` | `main.go` | git submodule |
 
-External servers (MCPForge, ops-mcp) are catalog **pointers** until migrated in-tree.
+Go servers live under `servers/external/*` as git submodules; clone with
+`git submodule update --init --recursive`.
 
 ## Skills / plugins / agents
 
