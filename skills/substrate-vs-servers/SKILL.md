@@ -13,7 +13,7 @@ Use when placing dispatch, cheap-llm, or MCP tool logic.
 
 ## Rules
 
-- **cheap-llm** → substrate `driver-argv` only; no `cheap-llm-mcp` repo
+- **cheap-llm** → substrate `driver-argv` only; do not add a standalone cheap-llm MCP catalog server
 - **MCP tool definitions** → PhenoMCPServers `servers/` (canonical)
 - **substrate/driver-mcp/** → dev mirror; sync via `scripts/check_driver_mcp_sync.py`
 - **Dispatch HTTP** → `cargo run -p driver-http --bin substrate-http`; MCP tools call `/v1/plan` and `/v1/dispatch`
