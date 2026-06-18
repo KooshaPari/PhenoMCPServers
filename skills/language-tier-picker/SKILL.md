@@ -13,7 +13,7 @@ Use when adding MCP code and choosing a language or repo layer.
 | Tier | Languages | MCP role |
 |------|-----------|----------|
 | 0 | Rust, Zig, Mojo | Framework core, spec-adjacent runtimes |
-| 1 | Go | Edge servers (MCPForge, ops-mcp) — requires EDGE-JUSTIFICATION |
+| 1 | Go | Edge servers (MCPForge; ops-mcp currently deprecated) — requires EDGE-JUSTIFICATION |
 | 2 | Python, TypeScript, C#, Java | Framework bindings, IDE plugins |
 | 3 | Shell, pwsh | Tooling scripts only |
 

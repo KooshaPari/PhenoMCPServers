@@ -1,7 +1,9 @@
 # EDGE-JUSTIFICATION — MCPForge
 
-See [mcpforge submodule doc](../servers/external/mcpforge/docs/EDGE-JUSTIFICATION.md) when submodule is initialized.
+MCPForge is now retired from this catalog and is no longer maintained as an active edge server.
 
-**Catalog ID:** `mcpforge` | **Tier:** 1 Go | **Parent:** `isaacphi/mcp-language-server`
+**Catalog ID:** `mcpforge` (archived) | **Absorbed by:** PhenoFastMCP-go
 
-LSP-backed MCP edge server; Go justified for upstream alignment and deployable binary role (not framework core per ADR-017).
+This pointer documents historical context only; operational edge ownership moved to [PhenoFastMCP-go](https://github.com/KooshaPari/PhenoFastMCP-go).
+
+Canonical details now live in [PhenoFastMCP-go docs](https://github.com/KooshaPari/PhenoFastMCP-go/blob/main/SUPERSET.md).

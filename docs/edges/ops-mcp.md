@@ -1,7 +1,7 @@
 # EDGE-JUSTIFICATION — ops-mcp
 
-See [ops-mcp submodule doc](../servers/external/ops-mcp/docs/EDGE-JUSTIFICATION.md) when submodule is initialized.
+`ops-mcp` is now deprecated from this catalog and is no longer maintained as an
+active edge server.
 
-**Catalog ID:** `ops-mcp` | **Tier:** 1 Go | **Parent:** `nanovms/ops-mcp`
-
-Nanos/Unikernel ops MCP tools; Go justified as vendor edge integration (ADR-019 keeps dispatch in substrate).
+**Catalog ID:** `ops-mcp` (deprecated) | **Status:** retired (scheduled for archive)  
+**Use instead:** see [`RETIRED-MCP-REPOS`](../retire/RETIRED-MCP-REPOS.md)

@@ -1,6 +1,6 @@
 ---
 name: substrate-vs-servers
-description: Place dispatch and MCP tools in substrate vs PhenoMCPServers correctly. Use for cheap-llm, driver-mcp, and server migrations.
+description: Place dispatch and MCP tools in substrate vs PhenoMCPServers correctly. Use for cheap-llm, runtime boundary, and server migrations.
 ---
 
 # Substrate vs servers

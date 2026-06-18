@@ -4,7 +4,7 @@ Canonical copies for catalog review. Submodule copies live under each server pac
 
 | Server | Doc |
 |--------|-----|
-| MCPForge | [servers/external/mcpforge/docs/EDGE-JUSTIFICATION.md](../servers/external/mcpforge/docs/EDGE-JUSTIFICATION.md) |
-| ops-mcp | [servers/external/ops-mcp/docs/EDGE-JUSTIFICATION.md](../servers/external/ops-mcp/docs/EDGE-JUSTIFICATION.md) |
+| MCPForge (retired) | Absorbed into [PhenoFastMCP-go](https://github.com/KooshaPari/PhenoFastMCP-go); historical note in [mcpforge](./mcpforge.md) |
+| ops-mcp (deprecated) | [retired routing target](../retire/RETIRED-MCP-REPOS.md) |
 
 Per [LANGUAGE-TIERS-AND-ROLES.md](LANGUAGE-TIERS-AND-ROLES.md), tier-1 Go servers require EDGE-JUSTIFICATION before `status: active`.
