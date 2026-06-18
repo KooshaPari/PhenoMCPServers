@@ -241,6 +241,37 @@ servers:
       - "params for no-arg methods MUST be omitted/null; {} returns 'expected unit'"
       - "WS daemon on :9753 dies if TCP probes close mid-handshake; use a real WS handshake"
 
+  - id: forge3-bridge
+    title: forge3-bridge MCP
+    description: >
+      Bridge to the Forge Agent SDK (forge3). Wraps the forge3 JSON-RPC 2.0
+      surface (stdio or ws://127.0.0.1:9753) as 15 MCP tools: info / methods
+      / tools / extensions / models / agents / commands + raw RPC passthrough
+      + shell / search / read / write / patch / skill_search helpers + a
+      transport-health doctor.
+    package: servers/forge3-bridge
+    language: python
+    framework: fastmcp
+    transport: stdio
+    tier: 2
+    role: mcp-implementation
+    entry:
+      module: forge3_bridge_server
+      callable: main
+    env:
+      - FORGE3_BIN
+      - FORGE3_WS
+      - FORGE3_TRANSPORT
+    requires_binaries:
+      - forge3
+    optional_binaries:
+      - forge3-ctl   # builds at install time from bin/forge3-ctl-src/
+    status: active
+    notes:
+      - "id MUST be a string UUID; integer ids silently fail on WebSocket"
+      - "params for no-arg methods MUST be omitted/null; {} returns 'expected unit'"
+      - "WS daemon on :9753 dies if TCP probes close mid-handshake; use a real WS handshake"
+
   - id: pheno-org
     title: Pheno-org MCP server
     description: Governance, agent, knowledge, policy, session, and workflow tools proxying to Parpoura (migrated from PhenoMCP)
