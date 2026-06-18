@@ -210,7 +210,6 @@ servers:
       callable: main
     build: go build -o bin/ops-mcp .
     status: deprecated
-
   - id: forge3-bridge
     title: forge3-bridge MCP
     description: >
