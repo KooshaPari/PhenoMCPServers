@@ -1,0 +1,424 @@
+{
+  "repo": "agent-user-status",
+  "overall": 62,
+  "grade": "C",
+  "scores": {
+    "L1 Architecture": 40,
+    "L2 Dev Loop": 90,
+    "L3 Agent Loop": 40,
+    "L4 Observability": 65,
+    "L5 Security": 100,
+    "L6 Performance": 25,
+    "L7 Extensibility": 80,
+    "L8 Compliance": 30,
+    "L9 Complexity": 65,
+    "L10 Type Safety": 90,
+    "L11 Dependencies": 70,
+    "L12 Error Handling": 75,
+    "L13 Logging": 75,
+    "L14 Data Layer": 70,
+    "L15 API Surface": 50,
+    "L16 Frontend": 80,
+    "L17 I18n/A11y": 45,
+    "L18 Concurrency": 90,
+    "L19 Memory": 45,
+    "L20 Config": 70,
+    "L21 Testing Depth": 50,
+    "L22 Fuzzing": 35,
+    "L23 Release": 40,
+    "L24 Migration": 50,
+    "L25 Vendor Lockin": 100,
+    "L26 Event Driven": 85,
+    "L27 Infrastructure": 35,
+    "L28 Cost Efficiency": 65,
+    "L29 Monitoring": 75,
+    "L30 Onboarding": 55
+  },
+  "details": {
+    "L1 Architecture": {
+      "details": "34 files, 0 over 500L, 7 over 350L.\nTop oversized:\nsrc/mcp/agent_imessage_mcp.py:438\nsrc/agent_user_status/agent_imessage_commands.py:408\nsrc/agent_user_status/bootstrap_cli.py:479\nsrc/agent_user_status/agent_imessage_learning.py:487\nsrc/agent_user_status/gaze_projection.py:407\nsrc/agent_user_status/agent_imessage_core.py:431\nsrc/agent_user_status/statusd.py:486",
+      "raw": {}
+    },
+    "L2 Dev Loop": {
+      "details": "19 test files, 68 collected, 0 errors.",
+      "raw": {}
+    },
+    "L3 Agent Loop": {
+      "details": "CLI: MISSING. CI: 6 workflows.",
+      "raw": {}
+    },
+    "L4 Observability": {
+      "details": "Docs: 6/8 canonical files.",
+      "raw": {}
+    },
+    "L5 Security": {
+      "details": "Secret-like patterns: 0.",
+      "raw": {}
+    },
+    "L6 Performance": {
+      "details": "Async defs: 0, awaits: 0.",
+      "raw": {}
+    },
+    "L7 Extensibility": {
+      "details": "34 source files. Config: 2 features.",
+      "raw": {}
+    },
+    "L8 Compliance": {
+      "details": "Commits: 20. SSOT: False.",
+      "raw": {}
+    },
+    "L9 Complexity": {
+      "details": "Long funcs: 7, nested blocks: 656, branches: 644.",
+      "raw": {}
+    },
+    "L10 Type Safety": {
+      "details": "Type coverage: 332/332 (100%). Dataclasses: 7.",
+      "raw": {}
+    },
+    "L11 Dependencies": {
+      "details": "Lock: True, Requirements: False.",
+      "raw": {}
+    },
+    "L12 Error Handling": {
+      "details": "Try blocks: 53, bare excepts: 0, custom exceptions: 0, retry: 0.",
+      "raw": {}
+    },
+    "L13 Logging": {
+      "details": "Logger imports: 0, structured: 51.",
+      "raw": {}
+    },
+    "L14 Data Layer": {
+      "details": "ORM: 0, Migrations: 0, Redis: 0, SQLite: 0.",
+      "raw": {}
+    },
+    "L15 API Surface": {
+      "details": "FastAPI: 0, Flask: 0, Endpoints: 0, OpenAPI: 0.",
+      "raw": {}
+    },
+    "L16 Frontend": {
+      "details": "HTML: 3, JS: 6, CSS: 0, Templates: 0, React: 0.",
+      "raw": {}
+    },
+    "L17 I18n/A11y": {
+      "details": "Locale files: 0, gettext: 0, aria: 0.",
+      "raw": {}
+    },
+    "L18 Concurrency": {
+      "details": "Threading: 3, MP: 0, Locks: 1, Queue: 0.",
+      "raw": {}
+    },
+    "L19 Memory": {
+      "details": "Context managers: 0, GC: 0, Weakref: 0, Cleanup: 4.",
+      "raw": {}
+    },
+    "L20 Config": {
+      "details": "Env refs: 33, Dotenv: 0, Pydantic: 0, Config files: 214.",
+      "raw": {}
+    },
+    "L21 Testing Depth": {
+      "details": "Parametrize: 1, Fixtures: 1, Mock: 0, Patch: 58.",
+      "raw": {}
+    },
+    "L22 Fuzzing": {
+      "details": "Hypothesis: 0, Fuzzing: 0, Property tests: 1.",
+      "raw": {}
+    },
+    "L23 Release": {
+      "details": "Version file: False, Tags: 0, Semver: 0, Changelog: True.",
+      "raw": {}
+    },
+    "L24 Migration": {
+      "details": "Deprecated: 0, Warnings: 0, Migrations: 0.",
+      "raw": {}
+    },
+    "L25 Vendor Lockin": {
+      "details": "AWS: 0, Azure: 0, GCP: 0, Generic: 12.",
+      "raw": {}
+    },
+    "L26 Event Driven": {
+      "details": "Event bus: 0, Queue: 4, Pubsub: 0, Kafka: 0, Celery: 0.",
+      "raw": {}
+    },
+    "L27 Infrastructure": {
+      "details": "Docker: 0, Compose: 0, K8s: 0, Terraform: 0.",
+      "raw": {}
+    },
+    "L28 Cost Efficiency": {
+      "details": "Batching: 0, N+1: 0, Bulk: 0, Pagination: 160.",
+      "raw": {}
+    },
+    "L29 Monitoring": {
+      "details": "Prometheus: 3, Health: 57, Tracing: 0, Metrics: 0, SLO: 1.",
+      "raw": {}
+    },
+    "L30 Onboarding": {
+      "details": "Makefile: 0, Devcontainer: 0, Setup: 2, README: 1.",
+      "raw": {}
+    }
+  },
+  "raw": {
+    "source": {
+      "total": 34,
+      "over_500": 0,
+      "over_350": 7,
+      "oversized_files": [
+        "src/mcp/agent_imessage_mcp.py:438",
+        "src/agent_user_status/agent_imessage_commands.py:408",
+        "src/agent_user_status/bootstrap_cli.py:479",
+        "src/agent_user_status/agent_imessage_learning.py:487",
+        "src/agent_user_status/gaze_projection.py:407",
+        "src/agent_user_status/agent_imessage_core.py:431",
+        "src/agent_user_status/statusd.py:486"
+      ]
+    },
+    "tests": {
+      "total": 19,
+      "unit": 18,
+      "integration": 0,
+      "e2e": 0,
+      "files": [
+        "tests/conftest.py",
+        "tests/unit/test_agent_imessage_mcp.py",
+        "tests/unit/test_agent_imessage_session_commands.py",
+        "tests/unit/test_gaze_drift_correction.py",
+        "tests/unit/test_statusd_privacy.py",
+        "tests/unit/test_bootstrap_support.py",
+        "tests/unit/test_head_pose_telemetry.py",
+        "tests/unit/test_gaze_evaluation.py",
+        "tests/unit/test_state_retention.py",
+        "tests/unit/test_webcam_probe.py",
+        "tests/unit/test_agent_session_registry.py",
+        "tests/unit/test_webcam_eye_tracker.py",
+        "tests/unit/test_agent_imessage_recipients.py",
+        "tests/unit/test_agent_imessage_attribution.py",
+        "tests/unit/test_statusd_sessions.py",
+        "tests/unit/test_eye_publish.py",
+        "tests/unit/test_agent_session_scan.py",
+        "tests/unit/test_eye_smoothing.py",
+        "tests/unit/test_gaze_projection.py"
+      ]
+    },
+    "collection": {
+      "collected": 68,
+      "errors": 0,
+      "timeout": false,
+      "raw_output": ""
+    },
+    "cli": {
+      "exists": false,
+      "cmd": null,
+      "has_subcommands": false,
+      "help_length": 0
+    },
+    "docs": {
+      "has_docs_dir": true,
+      "files": {
+        "README": true,
+        "ARCHITECTURE": false,
+        "SSOT": false,
+        "CLAUDE": true,
+        "AGENTS": true,
+        "CONTRIBUTING": true,
+        "CHANGELOG": true,
+        "LICENSE": true
+      }
+    },
+    "security": {
+      "hardcoded_api_key": 0,
+      "hardcoded_secret": 0,
+      "hardcoded_password": 0,
+      "hardcoded_token": 0
+    },
+    "benchmarks": {
+      "has_benchmarks": false,
+      "has_contract_smoke": false,
+      "has_context7_smoke": false,
+      "has_check_regression": false
+    },
+    "async": {
+      "async_def": 0,
+      "await": 0,
+      "asyncio_import": 0,
+      "httpx_import": 0,
+      "aiohttp_import": 0
+    },
+    "pyproject": {
+      "exists": true,
+      "has_black": false,
+      "has_ruff": true,
+      "has_mypy": false,
+      "has_pytest": false,
+      "has_uv": false,
+      "has_hatch": false,
+      "has_poetry": false
+    },
+    "git": {
+      "has_git": true,
+      "recent_commits": 20,
+      "has_merge_commits": false
+    },
+    "ci": {
+      "has_github_actions": true,
+      "workflow_files": [
+        "trufflehog.yml",
+        "codeql.yml",
+        "journey-gate.yml",
+        "secrets-scan.yml",
+        "ci.yml",
+        "scorecard.yml"
+      ],
+      "has_precommit": true
+    },
+    "complexity": {
+      "long_functions": 7,
+      "nested_blocks": 656,
+      "branches": 644
+    },
+    "type_safety": {
+      "annotated_funcs": 332,
+      "total_funcs": 332,
+      "dataclasses": 7,
+      "protocols": 0,
+      "typeddicts": 0,
+      "generics": 0
+    },
+    "dependencies": {
+      "has_lock": true,
+      "has_requirements": false,
+      "has_constraints": false,
+      "dep_count": 0
+    },
+    "error_handling": {
+      "try_blocks": 53,
+      "bare_excepts": 0,
+      "custom_exceptions": 0,
+      "retry_decorators": 0
+    },
+    "logging": {
+      "logger_imports": 0,
+      "structured_logging": 51
+    },
+    "data_layer": {
+      "orm_refs": 0,
+      "migration_files": 0,
+      "redis_refs": 0,
+      "sqlite_refs": 0
+    },
+    "api_surface": {
+      "fastapi": 0,
+      "flask": 0,
+      "endpoints": 0,
+      "openapi": 0
+    },
+    "frontend": {
+      "html_files": 3,
+      "js_files": 6,
+      "css_files": 0,
+      "templates": 0,
+      "react_components": 0
+    },
+    "i18n_a11y": {
+      "locale_files": 0,
+      "gettext_refs": 0,
+      "aria_refs": 0
+    },
+    "concurrency": {
+      "threading_refs": 3,
+      "multiprocessing_refs": 0,
+      "lock_refs": 1,
+      "queue_refs": 0
+    },
+    "memory": {
+      "context_managers": 0,
+      "gc_refs": 0,
+      "weakref_refs": 0,
+      "cleanup_refs": 4
+    },
+    "config": {
+      "env_refs": 33,
+      "dotenv_refs": 0,
+      "pydantic_settings": 0,
+      "config_files": 214
+    },
+    "testing_depth": {
+      "parametrize": 1,
+      "fixtures": 1,
+      "mock": 0,
+      "patch": 58
+    },
+    "fuzzing": {
+      "hypothesis": 0,
+      "fuzzing": 0,
+      "property_tests": 1
+    },
+    "release": {
+      "has_version_file": false,
+      "tag_count": 0,
+      "semver_tags": 0,
+      "has_changelog": true
+    },
+    "migration": {
+      "deprecated_decorators": 0,
+      "warning_refs": 0,
+      "migration_scripts": 0
+    },
+    "vendor_lockin": {
+      "aws_refs": 0,
+      "azure_refs": 0,
+      "gcp_refs": 0,
+      "generic_refs": 12
+    },
+    "event_driven": {
+      "event_bus": 0,
+      "queue": 4,
+      "pubsub": 0,
+      "kafka": 0,
+      "celery": 0
+    },
+    "infrastructure": {
+      "dockerfile": 0,
+      "docker_compose": 0,
+      "k8s_manifests": 0,
+      "terraform_files": 0
+    },
+    "cost_efficiency": {
+      "batching_refs": 0,
+      "n_plus_one_refs": 0,
+      "bulk_refs": 0,
+      "pagination_refs": 160
+    },
+    "monitoring": {
+      "prometheus": 3,
+      "health_checks": 57,
+      "tracing": 0,
+      "metrics": 0,
+      "slo": 1
+    },
+    "onboarding": {
+      "makefile": 0,
+      "devcontainer": 0,
+      "setup_scripts": 2,
+      "readme_setup": 1
+    },
+    "all_ast": {
+      "long_functions": 7,
+      "nested_blocks": 656,
+      "branches": 644,
+      "annotated_funcs": 332,
+      "total_funcs": 332,
+      "dataclasses": 7,
+      "protocols": 0,
+      "typeddicts": 0,
+      "generics": 0,
+      "async_def": 0,
+      "await": 0,
+      "asyncio_import": 0,
+      "httpx_import": 0,
+      "aiohttp_import": 0,
+      "try_blocks": 53,
+      "bare_excepts": 0,
+      "custom_exceptions": 0,
+      "retry_decorators": 0
+    }
+  }
+}
