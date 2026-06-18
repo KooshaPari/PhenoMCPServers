@@ -19,3 +19,11 @@ python substrate_server.py
 ```
 
 Substrate runtime (HTTP, argv, cheap-llm CLI) remains in the **substrate** repo.
+
+## driver-mcp mirror sync (ADR-019)
+
+Canonical source is this directory (`servers/substrate/`). The **substrate** repo keeps a dev mirror at
+[`driver-mcp/`](https://github.com/KooshaPari/substrate/tree/main/driver-mcp) — see
+[`driver-mcp/SYNC.md`](https://github.com/KooshaPari/substrate/blob/main/driver-mcp/SYNC.md).
+
+CI runs `substrate/scripts/check_driver_mcp_sync.py` on every catalog workflow (substrate checked out as sibling).
