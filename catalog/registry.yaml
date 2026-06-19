@@ -57,24 +57,14 @@ retired_anti_patterns:
     successor_role: mcp-framework
     successor_tier: 0
 
-# Surviving tier-1 Go inventory (written justifications — Go placement rule).
-# These are the ONLY Go repos allowed; everything else in Go must justify here.
+# Go placement inventory.
+# Deprecated Go repos remain in server wiring as deprecated entries below.
 go_tier1_inventory:
   - id: phenofastmcp-go
     repo: https://github.com/KooshaPari/PhenoFastMCP-go
     role: mcp-framework
     tier: 1
     justification: "Fork of mark3labs/mcp-go; upstream is Go-native. Provides HTTP/SSE MCP edge servers."
-  - id: mcpforge
-    repo: https://github.com/KooshaPari/MCPForge
-    role: edge-gateway
-    tier: 1
-    justification: "LSP / HTTP MCP edge gateway in front of tier-0 substrate; not bulk app logic."
-  - id: ops-mcp
-    repo: https://github.com/KooshaPari/phenotype-ops-mcp
-    role: edge-gateway
-    tier: 1
-    justification: "NanoVM / unikernel ops boundary; microservice edge over substrate runtime."
   - id: substrate-go-client
     repo: null
     role: edge-gateway
@@ -206,7 +196,7 @@ servers:
       module: main
       callable: main
     build: go build -o bin/mcpforge .
-    status: active
+    status: deprecated
 
   - id: ops-mcp
     title: NanoVM ops MCP
@@ -219,8 +209,7 @@ servers:
       module: main
       callable: main
     build: go build -o bin/ops-mcp .
-    status: active
-
+    status: deprecated
   - id: forge3-bridge
     title: forge3-bridge MCP
     description: >

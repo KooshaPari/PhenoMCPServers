@@ -1,7 +1,18 @@
 # EDGE-JUSTIFICATION — MCPForge
 
-See [mcpforge submodule doc](../servers/external/mcpforge/docs/EDGE-JUSTIFICATION.md) when submodule is initialized.
+MCPForge is now retired from this catalog and is no longer maintained as an active edge server.
 
-**Catalog ID:** `mcpforge` | **Tier:** 1 Go | **Parent:** `isaacphi/mcp-language-server`
+**Catalog ID:** `mcpforge` (archived) | **Absorbed by:** PhenoFastMCP-go
 
-LSP-backed MCP edge server; Go justified for upstream alignment and deployable binary role (not framework core per ADR-017).
+MCPForge historical context remains in [PhenoFastMCP-go docs](https://github.com/KooshaPari/PhenoFastMCP-go/blob/main/SUPERSET.md).  
+Operational ownership of MCP edge behavior now routes through PhenoFastMCP-go and the
+PhenoMCPServers substrate boundary.
+
+## ADR-019 placement note
+
+MCPForge LSP protocol-generation and semantic tooling patterns are treated as **tier-1 edge**
+behavior in ADR-019.
+
+- Runtime and sync source of truth: `servers/substrate/` (PhenoMCPServers catalog path)
+- Substrate dev mirror: `KooshaPari/substrate` (`driver-mcp` mirror; see `driver-mcp/SYNC.md`)
+

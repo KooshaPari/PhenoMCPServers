@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: KooshaPari/substrate
-          path: ../substrate
+          path: substrate
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -39,7 +39,7 @@ jobs:
       - name: validate_bundle_wiring.py
         run: python scripts/validate_bundle_wiring.py
       - name: check_driver_mcp_sync.py
-        run: python ../substrate/scripts/check_driver_mcp_sync.py
+        run: python substrate/scripts/check_driver_mcp_sync.py
       - name: Install substrate server deps
         run: pip install -r servers/substrate/requirements.txt
       - name: Install pheno-org server deps

@@ -6,7 +6,7 @@ Use when placing dispatch, cheap-llm, or MCP tool logic.
 
 | Layer | Repo | Owns |
 |-------|------|------|
-| Runtime | substrate | `driver-argv`, `driver-http`, `driver-mcp` dev mirror |
+| Runtime | substrate | `driver-argv`, `driver-http` |
 | Implementations | PhenoMCPServers | `servers/substrate/`, catalog SSOT |
 | Framework | PhenoFastMCP* | Server builder SDKs |
 | Spec SDK | PhenoRMCP | rmcp transports |
@@ -15,14 +15,14 @@ Use when placing dispatch, cheap-llm, or MCP tool logic.
 
 - **cheap-llm** → substrate `driver-argv` only; do not add a standalone cheap-llm MCP catalog server
 - **MCP tool definitions** → PhenoMCPServers `servers/` (canonical)
-- **substrate/driver-mcp/** → dev mirror; sync via `scripts/check_driver_mcp_sync.py`
+- **substrate** → runtime only; MCP server packages live in PhenoMCPServers
 - **Dispatch HTTP** → `cargo run -p driver-http --bin substrate-http`; MCP tools call `/v1/plan` and `/v1/dispatch`
 
 ## Anti-patterns
 
 - Forking tool definitions in substrate long-term
 - Adding cheap-llm as catalog server entry
-- Putting fleet-lead agent config in substrate
+- Putting fleet-lead agent config in substrate runtime
 
 ## References
 

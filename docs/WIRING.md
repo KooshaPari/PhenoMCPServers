@@ -28,3 +28,9 @@ Copy `plugins/phenotype-bundle/mcp.json` into your project or merge into Cursor 
 
 - Skills: point Cursor agent skills at `skills/<id>/SKILL.md`
 - Agents: load `agents/<id>/agent.yaml` as persona + default server/skill set
+
+## Dogfood
+
+Use [docs/DOGFOOD.md](DOGFOOD.md) for the ADR-018 zero-loop ritual before fleet work.
+The fleet lead wiring lives in `agents/fleet-lead/agent.yaml` and
+[`agents/fleet-lead/README.md`](../agents/fleet-lead/README.md).

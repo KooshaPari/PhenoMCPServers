@@ -7,9 +7,11 @@
 |--------------|--------|-------------|
 | [PhenoMCP](https://github.com/KooshaPari/PhenoMCP) | archived 2026-06-17 | [PhenoMCPServers](https://github.com/KooshaPari/PhenoMCPServers) `servers/` + [PhenoFastMCP](https://github.com/KooshaPari/PhenoFastMCP)* |
 | [McpKit](https://github.com/KooshaPari/McpKit) | archived 2026-06-17 | PhenoFastMCP-py + PhenoMCPServers catalog |
+| [MCPForge](https://github.com/KooshaPari/MCPForge) | deprecated 2026-06-18 | [PhenoFastMCP-go](https://github.com/KooshaPari/PhenoFastMCP-go) (absorbed) |
 | cheap-llm standalone MCP | deleted | [substrate](https://github.com/KooshaPari/substrate) `driver-argv` only |
 | dispatch-mcp / thegent-dispatch | deleted | substrate `driver-http` + `servers/substrate/dispatch_server.py` |
-| phenotype-go-sdk (MCP bucket) | shrink per [#7](https://github.com/KooshaPari/PhenoMCPServers/issues/7) | PhenoFastMCP-go, MCPForge, phenotype-ops-mcp (tier-1 edges) |
+| [phenotype-ops-mcp](https://github.com/KooshaPari/phenotype-ops-mcp) | deprecated 2026-06-18 | migration lane in progress (ADR-019 routing consolidation) |
+| phenotype-go-sdk (MCP bucket) | shrink per [#7](https://github.com/KooshaPari/PhenoMCPServers/issues/7) | PhenoFastMCP-go (active tier-1), plus MCPForge and phenotype-ops-mcp deprecation lanes |
 | phenotype-rust-sdk (MCP bucket) | retired anti-pattern | PhenoFastMCP-rust + PhenoRMCP |
 | [dagctl](https://github.com/KooshaPari/dagctl) | archived 2026-06-17 | [phenodag](https://github.com/KooshaPari/phenodag) v1.0.0-rc.1+ |
 
@@ -24,5 +26,5 @@ Do not re-home AgentMCP into PhenoMCPServers `servers/` — instead:
 
 ## Validation
 
-- `python scripts/validate_stale_patterns.py` — bans revived bucket repos and mirror-to-empty
+- `python scripts/validate_stale_patterns.py` — bans revived bucket repos and unsupported fork bootstraps
 - `python scripts/validate_fork_parents.py` — fork_parent must match catalog

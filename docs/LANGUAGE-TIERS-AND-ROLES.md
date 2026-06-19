@@ -23,7 +23,7 @@ one language.
 ┌───────────────────────────▼─────────────────────────────────┐
 │ Tier 1 — EDGE GATEWAYS (justified Go; not bulk app logic)   │
 │   Go — microservices, ops glue, LSP bridges, HTTP MCP       │
-│   PhenoFastMCP-go · phenotype-ops-mcp · MCPForge            │
+│   PhenoFastMCP-go (active) · MCPForge, phenotype-ops-mcp retired │
 └───────────────────────────┬─────────────────────────────────┘
                             │ thin clients / admin / IDE / scripts
 ┌───────────────────────────▼─────────────────────────────────┐
@@ -44,7 +44,7 @@ Go is **not** a second core. Use Go only with **written justification**:
 
 | Allowed | Example |
 |---------|---------|
-| HTTP/SSE MCP edge server | MCPForge, ops-mcp |
+| HTTP/SSE MCP edge server | PhenoFastMCP-go (active); MCPForge, ops-mcp deprecated |
 | Microservice boundary | gateway in front of Rust substrate |
 | Upstream SDK is Go-native | mark3labs/mcp-go fork |
 
@@ -144,7 +144,7 @@ retired language umbrella; do not reintroduce it via Zig/Mojo.
 `DevHex`, and `McpKit`. It violated the tier model in two ways:
 
 1. **Language bucket, not domain role.** It owned no single narrow role and
-   shadowed the per-domain forks (PhenoFastMCP-go, MCPForge, ops-mcp).
+   shadowed the per-domain forks (PhenoFastMCP-go, MCPForge, and phenotype-ops-mcp, all now retired/deprecated).
 2. **Hidden tier violations.** Cross-domain Go code drifted into business
    logic that belongs in the tier-0 Rust core (substrate planner, claims,
    dispatch).
@@ -155,22 +155,20 @@ Its packages are split by domain role:
 | Old umbrella package | Domain role | New owner repo | Tier |
 |----------------------|-------------|----------------|------|
 | MCP framework bits   | mcp-framework | PhenoFastMCP-go | 1 |
-| LSP / HTTP MCP server | edge-gateway | MCPForge | 1 |
-| NanoVM / ops bindings | edge-gateway | phenotype-ops-mcp | 1 |
+| LSP / HTTP MCP server | retired edge (absorbed) | MCPForge | 1 |
+| NanoVM / ops bindings | retired edge (pending consolidation) | phenotype-ops-mcp | 1 |
 | Generic helpers (`PlatformKit`, `DevHex`) | folded into per-domain forks above | — | — |
 | Cross-domain lib dumps (`McpKit`) | **deleted** — duplicated PhenoFastMCP-go | — | — |
 
 ### Surviving tier-1 Go inventory (written justification)
 
-Every Go repo in the fleet must appear here with a justification that maps
-to one of the allowed placement rules in the table above. If a repo is
-missing from this list, it does not exist by policy.
+Active Go repos in the fleet must appear here with a justification that maps
+to one of the allowed placement rules in the table above. Deprecated or archived
+repos may remain in `servers` with `status: deprecated`.
 
 | Repo | Role | Justification (why Go, not tier-0) |
 |------|------|------------------------------------|
 | `KooshaPari/PhenoFastMCP-go` | mcp-framework | Upstream `mark3labs/mcp-go` is Go-native; fork is required for HTTP/SSE MCP edge servers. |
-| `KooshaPari/MCPForge` | edge-gateway | LSP + HTTP MCP gateway sitting in front of tier-0 substrate runtime. |
-| `KooshaPari/phenotype-ops-mcp` | edge-gateway | Unikernel / NanoVM ops boundary; microservice edge over substrate. |
 | `KooshaPari/substrate` (Go client only) | edge-gateway | Thin HTTP client for the tier-0 substrate API. Reuses `PhenoFastMCP-go` transport; no domain logic. |
 
 ### What does NOT live in Go
@@ -182,7 +180,7 @@ missing from this list, it does not exist by policy.
 
 ### Boundary check (this repo)
 
-`PhenoMCPServers` ships **no Go code**. Every Go pointer (`mcpforge`,
-`ops-mcp`) is an external repo listed under `go_tier1_inventory` above.
+`PhenoMCPServers` ships **no Go code**. Active Go pointers are listed under
+`go_tier1_inventory`; deprecated Go repos are documented in `docs/retire/RETIRED-MCP-REPOS.md`.
 Adding a new Go package to this repo is a tier violation; open an issue
 referencing this section instead.
