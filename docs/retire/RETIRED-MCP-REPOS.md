@@ -29,5 +29,5 @@ Do not re-home AgentMCP into PhenoMCPServers `servers/` — instead:
 
 ## Validation
 
-- `python scripts/validate_stale_patterns.py` — bans revived bucket repos and legacy pointer patterns
+- `python scripts/validate_stale_patterns.py` — bans revived bucket repos, unsupported fork bootstraps, legacy mirror bootstrap paths, and other pointer-pattern regressions
 - `python scripts/validate_fork_parents.py` — fork_parent must match catalog
