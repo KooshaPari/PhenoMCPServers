@@ -1,7 +1,7 @@
 # Pheno-org MCP server
 
-FastMCP port of the six org tool groups from
-[PhenoMCP](https://github.com/KooshaPari/PhenoMCP)
+Native PhenoMCPServers FastMCP server for the six org tool groups. The surface
+was originally migrated from [PhenoMCP](https://github.com/KooshaPari/PhenoMCP)
 (`python/src/pheno_mcp/tools/`):
 
 | Group | Tools |

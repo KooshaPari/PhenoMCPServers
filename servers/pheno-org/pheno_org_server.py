@@ -1,9 +1,9 @@
 """Pheno-org MCP server.
 
-FastMCP port of the six org tool groups originally defined in
-``PhenoMCP/python/src/pheno_mcp/tools`` (governance, agent, knowledge,
-policy, session, workflow). All tools proxy to a Parpoura HTTP backend
-via ``httpx.AsyncClient``.
+Native PhenoMCPServers FastMCP server for the six org tool groups
+(governance, agent, knowledge, policy, session, workflow). The surface was
+originally migrated from ``PhenoMCP/python/src/pheno_mcp/tools``. All tools
+proxy to a Parpoura HTTP backend via ``httpx.AsyncClient``.
 
 Env:
   PARPOURA_BASE_URL  -- base URL for the Parpoura API (default http://localhost:8001)
