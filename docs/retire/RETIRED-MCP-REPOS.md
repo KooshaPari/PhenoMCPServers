@@ -14,7 +14,7 @@
 | phenotype-go-sdk (MCP bucket) | shrink per [#7](https://github.com/KooshaPari/PhenoMCPServers/issues/7) | PhenoFastMCP-go (active tier-1), plus MCPForge and phenotype-ops-mcp deprecation lanes |
 | phenotype-rust-sdk (MCP bucket) | retired anti-pattern | PhenoFastMCP-rust + PhenoRMCP |
 | [dagctl](https://github.com/KooshaPari/dagctl) | archived 2026-06-17 | [phenodag](https://github.com/KooshaPari/phenodag) v1.0.0-rc.1+ |
-| [Apisync](https://github.com/KooshaPari/Apisync) | archived 2026-06-19, 3-way absorbed 2026-06-20 | [apikit](https://github.com/KooshaPari/apikit) (HTTP toolkit) + [HexaKit](https://github.com/KooshaPari/HexaKit) (hexagonal ADRs) + [HexaKit `templates/hexagon/rust/`](https://github.com/KooshaPari/HexaKit/tree/main/templates/hexagon/rust) (cargo template patterns) |
+| [Apisync](https://github.com/KooshaPari/Apisync) | **ARCHIVED** 2026-06-19, fully drained 2026-06-20 (all-rows-absorbed, 0 remaining active content) | absorbs → [apikit](https://github.com/KooshaPari/apikit) @ 28887d6 (HTTP toolkit) + [HexaKit](https://github.com/KooshaPari/HexaKit) 5 ADRs @ 48a8d4f + [HexaKit `templates/hexagon/rust/`](https://github.com/KooshaPari/HexaKit/tree/main/templates/hexagon/rust) cargo templates @ ab8a76c (via pheno-cargo-template) + apikit-final governance/CI/tooling @ 28887d6 — repo now fully obsolete |
 | [pheno-cargo-template](https://github.com/KooshaPari/pheno-cargo-template) | ABSORBED-INTO-HEXAKIT 2026-06-20 | [HexaKit `templates/hexagon/rust/`](https://github.com/KooshaPari/HexaKit/tree/main/templates/hexagon/rust) — use `cargo generate --git https://github.com/KooshaPari/HexaKit --subfolder templates/hexagon/rust` |
 
 
