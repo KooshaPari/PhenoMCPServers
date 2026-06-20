@@ -274,7 +274,7 @@ servers:
 
   - id: pheno-org
     title: Pheno-org MCP server
-    description: Governance, agent, knowledge, policy, session, and workflow tools proxying to Parpoura (migrated from PhenoMCP)
+    description: Native PhenoMCPServers FastMCP server for governance, agent, knowledge, policy, session, and workflow tools
     package: servers/pheno-org
     language: python
     framework: fastmcp
