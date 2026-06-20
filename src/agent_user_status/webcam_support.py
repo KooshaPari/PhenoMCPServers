@@ -60,7 +60,7 @@ def import_cv2() -> Any:
     try:
         import cv2  # type: ignore[import-not-found]
     except ImportError as exc:
-        raise TrackerError("opencv-python is required. Install with: python3.11 -m pip install opencv-python") from exc
+        raise TrackerError("opencv-contrib-python is required for eye tracking. Install with: pip install opencv-contrib-python") from exc
     return cv2
 
 
@@ -68,7 +68,7 @@ def import_numpy() -> Any:
     try:
         import numpy as np  # type: ignore[import-not-found]
     except ImportError as exc:
-        raise TrackerError("numpy is required. Install with: python3.11 -m pip install numpy") from exc
+        raise TrackerError("numpy is required. Install with: pip install numpy") from exc
     return np
 
 
@@ -76,7 +76,7 @@ def import_mediapipe() -> Any:
     try:
         import mediapipe as mp  # type: ignore[import-not-found]
     except ImportError as exc:
-        raise TrackerError("mediapipe is required. Install with: python3.11 -m pip install mediapipe") from exc
+        raise TrackerError("mediapipe is required. Install with: pip install mediapipe") from exc
     return mp
 
 

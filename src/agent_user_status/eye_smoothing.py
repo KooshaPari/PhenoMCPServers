@@ -16,6 +16,47 @@ class ScreenLike(Protocol):
 
 
 def projection_error(point_xy: tuple[float, float], screen: ScreenLike) -> float:
+    """Euclidean distance from *point_xy* to the nearest on-screen coordinate.
+
+    Points inside the screen bounds return 0.0. Off-screen points return the
+    distance to the nearest edge or corner of the screen rectangle.
+
+    Parameters
+    ----------
+    point_xy:
+        The (x, y) raw projection point in screen-pixel space.
+    screen:
+        An object with ``.width`` and ``.height`` int attributes.
+
+    Returns
+    -------
+    float
+        Non-negative distance in pixels.
+
+    Examples
+    --------
+    >>> from dataclasses import dataclass
+    >>> @dataclass(frozen=True)
+    ... class Screen:
+    ...     width: int
+    ...     height: int
+
+    A point well inside the screen yields zero error:
+
+    >>> projection_error((960.0, 540.0), Screen(1920, 1080))
+    0.0
+
+    A point to the left of the screen reports the horizontal offset:
+
+    >>> projection_error((-50.0, 540.0), Screen(1920, 1080))
+    50.0
+
+    A point beyond the bottom-right corner reports the diagonal distance:
+
+    >>> error = projection_error((2000.0, 1200.0), Screen(1920, 1080))
+    >>> round(error, 2)
+    145.61
+    """
     clamped_x = max(0.0, min(float(screen.width - 1), point_xy[0]))
     clamped_y = max(0.0, min(float(screen.height - 1), point_xy[1]))
     return math.hypot(point_xy[0] - clamped_x, point_xy[1] - clamped_y)

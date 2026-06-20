@@ -1,0 +1,17 @@
+# Gitleaks configuration for agent-user-status
+# Docs: https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml
+
+title = "agent-user-status gitleaks config"
+
+# Extend the default rule set
+[extend]
+useDefault = true
+
+# Allow list — paths to skip entirely
+[allowlist]
+paths = [
+    # Example/demo secrets in documentation are intentional
+    '''codex/AGENTS\.user-status-snippet\.md''',
+    # Test fixtures
+    '''tests/fixtures/''',
+]

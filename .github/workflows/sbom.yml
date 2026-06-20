@@ -1,0 +1,60 @@
+# =============================================================================
+# SBOM Generation — CycloneDX
+# =============================================================================
+# Generates a Software Bill of Materials (SBOM) in CycloneDX format for
+# this Python project using Anchore's Syft-based sbom-action. The resulting
+# SBOM is uploaded as a build artifact and can be used for vulnerability
+# scanning, supply-chain audits, and compliance reporting.
+# =============================================================================
+
+name: SBOM
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 06:00 UTC
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    name: Generate CycloneDX SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@97f013b8f2d91a6ae0eb1a45c4bb938edb8cc65c # v0.17.0
+        with:
+          path: ./
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: sbom-cyclonedx-json
+          path: sbom.cyclonedx.json
+          retention-days: 30
+
+      - name: Upload SBOM release asset
+        if: github.event_name == 'release'
+        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: sbom.cyclonedx.json
+          asset_name: sbom.cyclonedx.json
+          asset_content_type: application/json

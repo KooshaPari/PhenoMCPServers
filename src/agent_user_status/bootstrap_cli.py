@@ -386,14 +386,14 @@ def setup_eye_tracker_command(_: argparse.Namespace) -> int:
         raise SystemExit("webcam eye-tracker setup is currently supported only on macOS")
 
     paths = resolve_paths()
-    default_bootstrap = shutil.which("python3.11") or str(detect_python())
+    default_bootstrap = shutil.which("python3.12") or str(detect_python())
     eye_bootstrap_python = Path(
         os.environ.get("AGENT_USER_STATUS_EYE_BOOTSTRAP_PYTHON", default_bootstrap)
     ).expanduser()
     if not eye_bootstrap_python.exists():
         raise SystemExit(
-            f"missing Python 3.11 at {eye_bootstrap_python}\n"
-            "install python@3.11 or set AGENT_USER_STATUS_EYE_BOOTSTRAP_PYTHON"
+            f"missing Python 3.12 at {eye_bootstrap_python}\n"
+            "install python@3.12 or set AGENT_USER_STATUS_EYE_BOOTSTRAP_PYTHON"
         )
 
     if shutil.which("uv"):
@@ -411,7 +411,7 @@ def setup_eye_tracker_command(_: argparse.Namespace) -> int:
             "pip",
             "install",
             "mediapipe>=0.10.30",
-            "opencv-python>=4.10",
+            "opencv-contrib-python>=4.10",
             "numpy>=1.26",
             "pyobjc-framework-Cocoa>=10.0",
         ],

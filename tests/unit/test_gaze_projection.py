@@ -2,8 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from hypothesis import given, strategies as st
+
 from agent_user_status.gaze_calibration import projection_thresholds
-from agent_user_status.gaze_projection import ProjectionHoldGate, StableSampleGate
+from agent_user_status.gaze_projection import (
+    ProjectionHoldGate,
+    StableSampleGate,
+    clamp_point,
+    in_bounds,
+    screen_center,
+)
 
 
 @dataclass(frozen=True)
@@ -127,3 +135,54 @@ def test_stable_sample_gate_resets_on_confidence_jitter_before_it_is_ready() -> 
     assert gate.update(0.57) is False
     assert gate.update(0.58) is False
     assert gate.update(0.59) is True
+
+
+# ── Unit test: clamp_point / in_bounds pure helpers ──────────────────────
+
+
+def test_clamp_point_clamps_offscreen_coordinates_to_screen_bounds() -> None:
+    screen = Screen(width=1440, height=900)
+
+    # already in bounds → unchanged
+    assert clamp_point((720.0, 450.0), screen) == (720.0, 450.0)
+    assert in_bounds((720.0, 450.0), screen) is True
+
+    # negative x
+    assert clamp_point((-100.0, 450.0), screen) == (0.0, 450.0)
+    assert in_bounds((-100.0, 450.0), screen) is False
+
+    # negative y
+    assert clamp_point((720.0, -50.0), screen) == (720.0, 0.0)
+    assert in_bounds((720.0, -50.0), screen) is False
+
+    # beyond right edge
+    assert clamp_point((2000.0, 450.0), screen) == (1439.0, 450.0)
+    assert in_bounds((2000.0, 450.0), screen) is False
+
+    # beyond bottom edge
+    assert clamp_point((720.0, 1200.0), screen) == (720.0, 899.0)
+    assert in_bounds((720.0, 1200.0), screen) is False
+
+    # exactly at origin and far corner (boundary inclusive)
+    assert clamp_point((0.0, 0.0), screen) == (0.0, 0.0)
+    assert in_bounds((0.0, 0.0), screen) is True
+    assert clamp_point((1439.0, 899.0), screen) == (1439.0, 899.0)
+    assert in_bounds((1439.0, 899.0), screen) is True
+
+
+def test_screen_center_returns_midpoint() -> None:
+    screen = Screen(width=1920, height=1080)
+    center = screen_center(screen)
+    assert center == (959.5, 539.5)
+
+
+# ── Property-based test: clamp_point round-trip ─────────────────────────
+
+
+@given(stx=st.floats(min_value=0.0, max_value=1439.0), sty=st.floats(min_value=0.0, max_value=899.0))
+def test_clamp_point_roundtrip_in_bounds(stx: float, sty: float) -> None:
+    """Clamping an already-in-bounds point returns the original point unchanged."""
+    screen = Screen(width=1440, height=900)
+    original = (stx, sty)
+    assert clamp_point(original, screen) == original
+    assert in_bounds(original, screen) is True
