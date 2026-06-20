@@ -1,0 +1,54 @@
+# deny.toml — cargo-deny supply-chain policy
+# Staged for the future Rust surface (window-tracking worker, etc.). The
+# Python+Swift project today has no Cargo.toml, so `cargo deny check` will
+# not run against this file unless a Rust workspace lands. License and ban
+# rules below mirror the LICENSE-MIT/LICENSE-APACHE dual-license model used
+# by the project and the allow-list enforced by the pip-licenses gate.
+
+[graph]
+all-features = false
+
+[advisories]
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+yanked = "warn"
+ignore = []
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "MPL-2.0",
+    "Zlib",
+    "HPND",
+    "0BSD",
+    "CC0-1.0",
+    "Unlicense",
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+]
+confidence-threshold = 0.8
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+highlight = "all"
+deny = []
+skip = []
+skip-tree = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
+
+# [allow] — uncomment and append per-crate license overrides here, e.g.:
+#   { name = "ring", allow = ["OpenSSL"], version = "*" }
+# This keeps the file syntactically valid while leaving the override hook
+# in place for the future Rust surface.
+
