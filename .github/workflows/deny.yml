@@ -1,0 +1,98 @@
+name: Supply-Chain Deny
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '29 5 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cargo-deny:
+    name: cargo-deny
+    # This is a Python+Swift project today. The deny harness is staged here
+    # so a future Rust surface (or window-tracking worker) gets license/ban
+    # enforcement on day one. The job short-circuits to a notice when no
+    # Cargo manifest is present.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4.1.1
+
+      - name: Skip if no Rust workspace
+        id: detect
+        run: |
+          if [ -f "Cargo.toml" ] || [ -f "deny.toml" ]; then
+            echo "rust=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "rust=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Cargo.toml or deny.toml detected — skipping cargo-deny (Python+Swift project)."
+          fi
+
+      - name: Install Rust toolchain
+        if: steps.detect.outputs.rust == 'true'
+        uses: dtolnay/rust-toolchain@4b32c170c36f565c8591d2c5e6c1e02cf26d5e6c # stable
+        with:
+          toolchain: stable
+
+      - name: Run cargo-deny
+        if: steps.detect.outputs.rust == 'true'
+        uses: EmbarkStudios/cargo-deny-action@9a7e749aaa8d2c25c2f3f1bf6d77d0b2a8a99ed2 # v2.0.4
+        with:
+          command: check
+          arguments: --hide-inclusion-graph
+
+  pip-licenses:
+    name: pip-licenses
+    # Enforce allow-listed licenses for the runtime dependency surface.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4.1.1
+
+      - name: Set up Python
+        uses: actions/setup-python@c8813ba1bc76ebf779b911ad8ffccbf2e449cb48 # v5.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install runtime + license scanner
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[eye] || python -m pip install -e .
+          python -m pip install pip-licenses
+
+      - name: License policy gate
+        run: |
+          python -m piplicenses \
+            --format=markdown \
+            --with-system \
+            --allow-only=MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;MPL-2.0;Python-2.0;PSF-2.0;Zlib;HPND;LGPL-2.1-or-later;LGPL-3.0-or-later;LGPL-2.1-only;LGPL-3.0-only;Unlicense;CC0-1.0;0BSD \
+            --ignore-packages=agent-user-status \
+            > licenses.md
+
+          if grep -E '^#\s+[0-9]+ packages' licenses.md >/dev/null 2>&1; then
+            total=$(grep -oE '^#\s+[0-9]+' licenses.md | head -1 | awk '{print $2}')
+            echo "Scanned $total transitive packages against the allow list."
+          else
+            echo "::error::pip-licenses did not produce a report — see job log."
+            exit 1
+          fi
+
+      - name: Upload licenses report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.4.3
+        with:
+          name: licenses-report
+          path: licenses.md
+          retention-days: 7
+          if-no-files-found: ignore

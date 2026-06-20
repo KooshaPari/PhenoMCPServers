@@ -1,0 +1,45 @@
+# .gitattributes — Phenotype org canonical
+# https://git-scm.com/docs/gitattributes
+
+# Normalize line endings for text files and ensure shell scripts stay
+# executable when checked out fresh.
+*               text=auto eol=lf
+
+# Source — diff with sensible defaults
+*.py            diff=python
+*.rs            diff=rust
+*.swift         diff=swift
+*.ts            diff=typescript
+*.tsx           diff=tsx
+*.js            diff=javascript
+*.go            diff=go
+*.md            diff=markdown
+
+# Generated / vendored — suppress noisy diffs
+docs/**         linguist-generated
+CHANGELOG.md    linguist-generated
+uv.lock         -diff
+
+# Shell shebang preservation
+*.sh            text eol=lf
+
+# Markdown — keep trailing spaces (two-space line breaks)
+*.md            -whitespace=trailing-space
+
+# Binary — do not try to diff or merge
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.ico           binary
+*.pdf           binary
+*.zip           binary
+*.gz            binary
+*.tgz           binary
+*.tar           binary
+*.whl           binary
+*.pyc           binary
+*.pyd           binary
+*.so            binary
+*.dylib         binary
+*.dll           binary

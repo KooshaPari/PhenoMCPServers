@@ -1,0 +1,85 @@
+name: Dependency Audit
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '13 6 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pip-audit:
+    name: pip-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4.1.1
+
+      - name: Set up Python
+        uses: actions/setup-python@c8813ba1bc76ebf779b911ad8ffccbf2e449cb48 # v5.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install pip-audit
+        run: python -m pip install --upgrade pip pip-audit
+
+      - name: Resolve dependency tree
+        run: |
+          python -m pip install --upgrade pip
+          # Best-effort resolution; skip dev tooling that may not be present.
+          python -m pip install tomli || true
+          python -m pip install -e .[eye] || python -m pip install -e .
+
+      - name: Run pip-audit (strict on high+)
+        run: python -m pip_audit --strict
+
+  osv-scanner:
+    name: OSV Scanner
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v4.1.1
+
+      - name: Set up Python
+        uses: actions/setup-python@c8813ba1bc76ebf779b911ad8ffccbf2e449cb48 # v5.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install OSV-Scanner
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          # OSV-Scanner publishes a Python wrapper used for local validation.
+          python -m pip install osv-scanner
+
+      - name: Run OSV-Scanner
+        env:
+          OSV_SCANNER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! command -v osv-scanner >/dev/null 2>&1; then
+            # Fall back to a curl-based binary install if the python wrapper is unavailable.
+            curl -fsSL https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_linux_amd64 \
+              -o /usr/local/bin/osv-scanner
+            chmod +x /usr/local/bin/osv-scanner
+          fi
+          osv-scanner --lockfile=uv.lock --lockfile=pyproject.toml --recursive --format=table .
+          osv-scanner --lockfile=uv.lock --lockfile=pyproject.toml --recursive --format=sarif . > osv.sarif
+
+      - name: Upload OSV SARIF
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4.4.3
+        with:
+          name: osv-sarif
+          path: osv.sarif
+          retention-days: 7
+          if-no-files-found: ignore
