@@ -1,6 +1,6 @@
 # PhenoMCPServers catalog — single source of truth
 # Version bumps when any entry changes shape or wiring.
-registry_version: "1.4.0"
+registry_version: "1.4.1"
 
 # Language tiers & roles: docs/LANGUAGE-TIERS-AND-ROLES.md
 # Tier 0: Rust/Zig/Mojo core | Tier 1: Go edges (justified) | Tier 2: Py3.14/uv, Bun, TS7, C#, Java
@@ -395,6 +395,12 @@ skills:
         - ~/bin/forge3-cli
         - ~/bin/forge3-mcp
         - ~/bin/forge3-ctl
+    status: active
+
+  - id: hermes-tweet-signal
+    title: Hermes Tweet signal skill
+    description: Read-only X/Twitter signal briefs through Hermes Tweet plugin discovery and read tools
+    path: skills/hermes-tweet-signal
     status: active
 
 plugins:
