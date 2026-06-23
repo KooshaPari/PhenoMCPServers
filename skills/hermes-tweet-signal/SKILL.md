@@ -6,8 +6,6 @@ language: markdown
 author: Xquik-dev
 permissions:
   - network-public
-requires_plugins:
-  - hermes-tweet
 requires_env:
   - XQUIK_API_KEY
 triggers:
@@ -69,4 +67,4 @@ Use this skill when a user asks for a concise public X/Twitter signal brief and 
 ## Source
 
 - Hermes Tweet: https://github.com/Xquik-dev/hermes-tweet
-- Skill source: https://github.com/Xquik-dev/hermes-tweet/tree/master/skills/hermes-tweet
+- Skill source: https://github.com/KooshaPari/PhenoMCPServers/tree/main/skills/hermes-tweet-signal

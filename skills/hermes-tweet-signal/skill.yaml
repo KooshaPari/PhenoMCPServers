@@ -5,8 +5,6 @@ version: 0.1.0
 language: markdown
 permissions:
   - network-public
-requires_plugins:
-  - hermes-tweet
 requires_env:
   - XQUIK_API_KEY
 triggers:
