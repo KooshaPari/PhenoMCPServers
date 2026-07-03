@@ -105,7 +105,7 @@ def estimate_status(config: Config) -> dict[str, Any]:
     signal_confidence = weighted_average(signals)
     signal_reasons = [s for s in signals if s.get("ok")]
     try:
-        chat, messages = recent_messages(config, 25)
+        chat, messages = recent_messages(config, 25, timeout=0.5)
     except Exception as exc:
         confidence = signal_confidence if signal_confidence is not None else 0.0
         if confidence >= 0.72:

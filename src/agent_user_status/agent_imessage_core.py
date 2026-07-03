@@ -146,7 +146,7 @@ def recipient_send_address(config: Config) -> str:
     return address
 
 
-def run_imsg(args: list[str], timeout: int | None = 30) -> subprocess.CompletedProcess[str]:
+def run_imsg(args: list[str], timeout: float | None = 30) -> subprocess.CompletedProcess[str]:
     if not IMSG.exists():
         raise SystemExit(f"imsg binary not found at {IMSG}")
     return subprocess.run(
@@ -158,7 +158,7 @@ def run_imsg(args: list[str], timeout: int | None = 30) -> subprocess.CompletedP
     )
 
 
-def run_cmd(args: list[str], timeout: int = 5) -> subprocess.CompletedProcess[str]:
+def run_cmd(args: list[str], timeout: float = 5) -> subprocess.CompletedProcess[str]:
     try:
         return subprocess.run(
             args,
@@ -258,8 +258,8 @@ def inbound_messages(config: Config, messages: list[dict[str, Any]]) -> list[dic
     return [message for message in messages if not bool(message.get("is_from_me"))]
 
 
-def find_user_chat(config: Config) -> dict[str, Any] | None:
-    result = run_imsg(["chats", "--limit", "80", "--json"])
+def find_user_chat(config: Config, timeout: float | None = 30) -> dict[str, Any] | None:
+    result = run_imsg(["chats", "--limit", "80", "--json"], timeout=timeout)
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or result.stdout.strip())
 
@@ -278,12 +278,19 @@ def find_user_chat(config: Config) -> dict[str, Any] | None:
     return None
 
 
-def recent_messages(config: Config, limit: int) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
-    chat = find_user_chat(config)
+def recent_messages(
+    config: Config,
+    limit: int,
+    timeout: float | None = 30,
+) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    chat = find_user_chat(config, timeout=timeout)
     if not chat:
         return None, []
 
-    result = run_imsg(["history", "--chat-id", str(chat["id"]), "--limit", str(limit), "--json"])
+    result = run_imsg(
+        ["history", "--chat-id", str(chat["id"]), "--limit", str(limit), "--json"],
+        timeout=timeout,
+    )
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or result.stdout.strip())
 
@@ -321,7 +328,7 @@ def write_json_file(path: Path, value: dict[str, Any]) -> None:
     path.write_text(json.dumps(value, indent=2), encoding="utf-8")
 
 
-def frontmost_app_signal(timeout: int = 5) -> dict[str, Any]:
+def frontmost_app_signal(timeout: float = 0.5) -> dict[str, Any]:
     result = run_cmd(
         [
             "osascript",
@@ -354,7 +361,7 @@ def frontmost_app_signal(timeout: int = 5) -> dict[str, Any]:
     return {"name": "frontmost_app", "ok": True, "app": app, "score": score, "state": state}
 
 
-def process_activity_signal(timeout: int = 5) -> dict[str, Any]:
+def process_activity_signal(timeout: float = 0.5) -> dict[str, Any]:
     result = run_cmd(["ps", "-axo", "comm="], timeout=timeout)
     if result.returncode != 0:
         return {"name": "process_activity", "ok": False, "reason": result.stderr.strip()}
@@ -399,7 +406,7 @@ def process_activity_signal(timeout: int = 5) -> dict[str, Any]:
 
 
 def media_activity_signal() -> dict[str, Any]:
-    result = run_cmd(["pmset", "-g", "assertions"], timeout=5)
+    result = run_cmd(["pmset", "-g", "assertions"], timeout=0.5)
     if result.returncode != 0:
         return {"name": "media_activity", "ok": False, "reason": result.stderr.strip()}
     text = result.stdout
@@ -427,7 +434,7 @@ def media_activity_signal() -> dict[str, Any]:
 
 
 def idle_time_signal() -> dict[str, Any]:
-    result = run_cmd(["ioreg", "-c", "IOHIDSystem"], timeout=5)
+    result = run_cmd(["ioreg", "-c", "IOHIDSystem"], timeout=0.5)
     if result.returncode != 0:
         return {"name": "hid_idle", "ok": False, "reason": result.stderr.strip()}
     match = re.search(r'"HIDIdleTime"\s*=\s*(\d+)', result.stdout)
