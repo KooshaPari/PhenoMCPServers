@@ -204,8 +204,67 @@ def test_session_resume_posts_bundle_ref():
 
 
 # ---------------------------------------------------------------------------
+# knowledge (continued)
+# ---------------------------------------------------------------------------
+
+
+def test_knowledge_retrieve_gets_by_id():
+    client = MagicMock()
+    client.get.return_value = _async_return(_ok({"id": "k1", "content": "hello"}))
+    with _patch_client(client):
+        result = _run(pheno_org_server.knowledge_retrieve("k1"))
+    assert result == {"id": "k1", "content": "hello"}
+    args, _ = client.get.call_args
+    assert args[0] == "/api/v1/knowledge/k1"
+
+
+def test_knowledge_delete_removes_by_id():
+    client = MagicMock()
+    client.delete.return_value = _async_return(_ok({"ok": True}))
+    with _patch_client(client):
+        result = _run(pheno_org_server.knowledge_delete("k1"))
+    assert result == {"ok": True}
+    args, _ = client.delete.call_args
+    assert args[0] == "/api/v1/knowledge/k1"
+
+
+# ---------------------------------------------------------------------------
+# policy
+# ---------------------------------------------------------------------------
+
+
+def test_policy_list_gets_policies():
+    client = MagicMock()
+    client.get.return_value = _async_return(_ok({"policies": []}))
+    with _patch_client(client):
+        result = _run(pheno_org_server.policy_list())
+    assert result == {"policies": []}
+    client.get.assert_called_with("/api/v1/policies")
+
+
+def test_policy_get_by_id():
+    client = MagicMock()
+    client.get.return_value = _async_return(_ok({"id": "p1", "name": "test"}))
+    with _patch_client(client):
+        result = _run(pheno_org_server.policy_get("p1"))
+    assert result == {"id": "p1", "name": "test"}
+    args, _ = client.get.call_args
+    assert args[0] == "/api/v1/policies/p1"
+
+
+# ---------------------------------------------------------------------------
 # workflow
 # ---------------------------------------------------------------------------
+
+
+def test_workflow_cancel_posts_cancel():
+    client = MagicMock()
+    client.post.return_value = _async_return(_ok({"status": "CANCELED"}))
+    with _patch_client(client):
+        result = _run(pheno_org_server.workflow_cancel("w1"))
+    assert result == {"status": "CANCELED"}
+    args, _ = client.post.call_args
+    assert args[0] == "/workflows/w1/cancel"
 
 
 def test_workflow_execute_posts_with_type():
