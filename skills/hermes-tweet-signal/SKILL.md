@@ -27,7 +27,7 @@ install:
 
 # Hermes Tweet Signal
 
-Use this skill when a user asks for a concise public X/Twitter signal brief and Hermes Tweet is installed in the runtime.
+Use this skill when a user asks for a concise public X/Twitter signal brief and Hermes Tweet is installed in the runtime. Xquik is an independent third-party service. Not affiliated with X Corp. "Twitter" and "X" are trademarks of X Corp.
 
 ## Requirements
 
