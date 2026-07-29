@@ -1,0 +1,4 @@
+---
+name: agent-imessage
+description: Use when an agent needs to contact Koosha by iMessage/SMS, check whether he is likely to respond soon, wait for an async reply, publish eye/process/presence signals, or repair/register the local Messages MCP bridge for Codex or Claude Code.
+---

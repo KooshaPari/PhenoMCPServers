@@ -1,6 +1,6 @@
 # PhenoMCPServers catalog — single source of truth
 # Version bumps when any entry changes shape or wiring.
-registry_version: "1.4.0"
+registry_version: "1.5.0" # 2026-07-28: split-absorption from KooshaPari/agent-user-status — adds server `agent-imessage` and skill `agent-imessage`.
 
 # Language tiers & roles: docs/LANGUAGE-TIERS-AND-ROLES.md
 # Tier 0: Rust/Zig/Mojo core | Tier 1: Go edges (justified) | Tier 2: Py3.14/uv, Bun, TS7, C#, Java
@@ -315,6 +315,29 @@ servers:
     status: pointer
     note: Stub only — no pyproject.toml or server entry yet; see AgilePlus/docs/mcp/INTEGRATION.md
 
+  - id: agent-imessage
+    title: agent-imessage MCP bridge
+    description: >
+      iMessage / SMS / response-likelihood MCP tools that wrap the local
+      `agent-imessage` CLI for use by Codex, Claude Desktop, and Cursor.
+      Absorbed 2026-07-28 from KooshaPari/agent-user-status (split absorption;
+      see servers/agent-imessage/ABSORBED.md). Imports still reference the
+      legacy agent_user_status package — future PR rewrites imports to a
+      self-contained package layout.
+    package: servers/agent-imessage
+    language: python
+    framework: fastmcp
+    transport: stdio
+    tier: 2
+    role: mcp-implementation
+    entry:
+      module: agent_imessage_mcp
+      callable: main
+    requires_binaries:
+      - agent-imessage  # daemon CLI; remains in archived agent-user-status for now
+    status: migrated-placeholder
+    note: "Absorption placeholder; entry module imports the daemon-side helpers that stayed in the archived agent-user-status daemon."
+
 skills:
   - id: substrate-dispatch-skill
     title: Substrate dispatch skill
@@ -397,6 +420,27 @@ skills:
         - ~/bin/forge3-ctl
     status: active
 
+  - id: agent-imessage
+    title: agent-imessage skill
+    description: >
+      Contact Koosha by iMessage / SMS; check response-likelihood, wait for an
+      async reply, publish eye/process/presence signals, or repair the local
+      Messages MCP bridge. Absorbed 2026-07-28 from KooshaPari/agent-user-status.
+    path: skills/agent-imessage
+    requires_servers:
+      - agent-imessage
+    requires_binaries:
+      - agent-imessage
+    triggers:
+      - imessage
+      - sms
+      - koosha
+      - response likelihood
+      - presence signal
+      - eye tracking publish
+    status: migrated-placeholder
+    note: "Absorption placeholder; see skills/agent-imessage/SKILL.md for full guidance."
+
 plugins:
   - id: phenotype-mcp-bundle
     title: Phenotype default MCP bundle
@@ -407,6 +451,16 @@ plugins:
       - substrate-dispatch
       - pheno-org
     status: template
+
+  - id: agent-imessage-bundle
+    title: agent-imessage user-contact bundle
+    description: Adds the agent-imessage server + skill for Codex/Claude Desktop
+    path: plugins/agent-imessage-bundle
+    servers:
+      - agent-imessage
+    skills:
+      - agent-imessage
+    status: migrated-placeholder
 
 agents:
   - id: fleet-lead
@@ -424,3 +478,13 @@ agents:
     servers:
       - substrate
     status: template
+
+  - id: agent-imessage
+    title: agent-imessage contact agent
+    description: Sends iMessage / SMS, polls Koosha response-likelihood, waits for async replies
+    path: agents/agent-imessage
+    skills:
+      - agent-imessage
+    servers:
+      - agent-imessage
+    status: migrated-placeholder

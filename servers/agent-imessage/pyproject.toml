@@ -1,0 +1,15 @@
+[project]
+name = "agent-imessage-mcp"
+version = "0.1.0"
+description = "MCP bridge for the agent-imessage CLI (absorbed from KooshaPari/agent-user-status)."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    # The original agent-user-status agent_imessage modules additionally
+    # imported agent_user_status.bootstrap_support and agent_user_status.optional_dependencies.
+    # Those stay in the archived agent-user-status daemon for now; only the
+    # MCP bridge surface is migrated here.
+]
+
+[project.scripts]
+agent-imessage-mcp = "agent_imessage_mcp:main"
