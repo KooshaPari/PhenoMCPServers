@@ -7,39 +7,78 @@ from __future__ import annotations
 
 import json
 import os
+import select
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
 SERVER = REPO / "forge3_bridge_server.py"
+LEGACY_SERVER = REPO / "forge3_mcp.py"
 
 
-def _run_mcp(messages: list[dict], timeout: int = 30) -> list[dict]:
-    """Spawn the MCP server, send JSON-RPC messages, parse replies."""
-    input_lines = "\n".join(json.dumps(m) for m in messages) + "\n"
-    proc = subprocess.run(
-        [sys.executable, str(SERVER)],
-        input=input_lines,
-        capture_output=True,
+def _run_mcp(
+    messages: list[dict], timeout: int = 30, server: Path = SERVER
+) -> list[dict]:
+    """Spawn the MCP server and exchange each JSON-RPC message in order."""
+    proc = subprocess.Popen(
+        [sys.executable, str(server)],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         text=True,
-        timeout=timeout,
         cwd=str(REPO),
     )
-    # Server replies are JSON-RPC envelopes on stdout; pick them out and ignore
-    # any FastMCP banner lines.
     replies = []
-    for line in proc.stdout.splitlines():
-        line = line.strip()
-        if not line or not line.startswith("{"):
-            continue
-        try:
-            replies.append(json.loads(line))
-        except json.JSONDecodeError:
-            continue
+    try:
+        for message in messages:
+            assert proc.stdin is not None
+            assert proc.stdout is not None
+            proc.stdin.write(json.dumps(message) + "\n")
+            proc.stdin.flush()
+            if "id" not in message:
+                continue
+            deadline = time.monotonic() + timeout
+            while time.monotonic() < deadline:
+                ready, _, _ = select.select([proc.stdout], [], [], 0.1)
+                if not ready:
+                    continue
+                line = proc.stdout.readline().strip()
+                if not line or not line.startswith("{"):
+                    continue
+                try:
+                    reply = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                replies.append(reply)
+                if reply.get("id") == message["id"]:
+                    break
+            else:
+                raise AssertionError(f"no JSON-RPC reply for {message['id']}")
+    finally:
+        if proc.stdin is not None:
+            proc.stdin.close()
+        proc.terminate()
+        proc.wait(timeout=timeout)
     return replies
+
+
+def test_legacy_entrypoint_exposes_the_canonical_mcp_surface():
+    """Legacy filename remains a thin, protocol-compatible entrypoint."""
+    assert LEGACY_SERVER.is_file(), "missing legacy forge3_mcp.py entrypoint"
+    replies = _run_mcp([
+        {"jsonrpc": "2.0", "id": "legacy-init", "method": "initialize",
+         "params": {"protocolVersion": "2024-11-05", "capabilities": {},
+                    "clientInfo": {"name": "pytest", "version": "0.0.1"}}},
+        {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        {"jsonrpc": "2.0", "id": "legacy-tools", "method": "tools/list"},
+    ], server=LEGACY_SERVER)
+    assert len(replies) == 2
+    assert replies[0]["result"]["serverInfo"]["name"] == "forge3-bridge"
+    assert "forge3_doctor" in {tool["name"] for tool in replies[1]["result"]["tools"]}
 
 
 def test_server_responds_to_initialize_and_tools_list():

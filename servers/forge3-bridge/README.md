@@ -81,6 +81,7 @@ per call. Override with `FORGE3_TRANSPORT=ws` or `FORGE3_TRANSPORT=stdio` env va
 
 - `forge3_cli.py` — shared JSON-RPC client used by both the standalone CLI and this server.
 - `forge3_bridge_server.py` — `@mcp.tool()` definitions.
+- `forge3_mcp.py` — legacy filename compatibility entrypoint; delegates to the canonical server.
 - `tests/test_server.py` — pytest smoke for `initialize` + `tools/list` + one `tools/call`.
 - Skill frontmatter and dotfile installer: `skills/forge3-bridge/`.
 - Rust daemon manager: bundled as `bin/forge3-ctl` (download or `cargo install`).
