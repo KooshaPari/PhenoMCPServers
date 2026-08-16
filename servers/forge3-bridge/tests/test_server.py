@@ -3,6 +3,7 @@
 Verifies the server responds to MCP initialize + tools/list and can execute one
 real tool call (forge3_doctor) against the local forge3 binary.
 """
+
 from __future__ import annotations
 
 import json
@@ -116,7 +117,9 @@ for line in sys.stdin:
     assert replies == [{"jsonrpc": "2.0", "id": "noisy", "result": {}}]
 
 
-def test_run_mcp_uses_portable_pipe_reading(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_run_mcp_uses_portable_pipe_reading(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     """Anonymous-pipe handling does not depend on select(), which Windows rejects."""
     server = tmp_path / "replying_server.py"
     server.write_text(
@@ -146,15 +149,27 @@ for line in sys.stdin:
 def test_legacy_entrypoint_exposes_the_canonical_mcp_surface():
     """Legacy filename remains a thin, protocol-compatible entrypoint."""
     assert LEGACY_SERVER.is_file(), "missing legacy forge3_mcp.py entrypoint"
-    replies = _run_mcp([
-        {"jsonrpc": "2.0", "id": "legacy-init", "method": "initialize",
-         "params": {"protocolVersion": "2024-11-05", "capabilities": {},
-                    "clientInfo": {"name": "pytest", "version": "0.0.1"}}},
-        {"jsonrpc": "2.0", "method": "notifications/initialized"},
-        {"jsonrpc": "2.0", "id": "legacy-tools", "method": "tools/list"},
-    ], server=LEGACY_SERVER)
+    replies = _run_mcp(
+        [
+            {
+                "jsonrpc": "2.0",
+                "id": "legacy-init",
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {"name": "pytest", "version": "0.0.1"},
+                },
+            },
+            {"jsonrpc": "2.0", "method": "notifications/initialized"},
+            {"jsonrpc": "2.0", "id": "legacy-tools", "method": "tools/list"},
+        ],
+        server=LEGACY_SERVER,
+    )
     replies_by_id = {reply.get("id"): reply for reply in replies}
-    assert replies_by_id["legacy-init"]["result"]["serverInfo"]["name"] == "forge3-bridge"
+    assert (
+        replies_by_id["legacy-init"]["result"]["serverInfo"]["name"] == "forge3-bridge"
+    )
     assert "forge3_doctor" in {
         tool["name"] for tool in replies_by_id["legacy-tools"]["result"]["tools"]
     }
@@ -162,13 +177,22 @@ def test_legacy_entrypoint_exposes_the_canonical_mcp_surface():
 
 def test_server_responds_to_initialize_and_tools_list():
     """Server returns initialize result + a tools/list with all 15 tools."""
-    replies = _run_mcp([
-        {"jsonrpc": "2.0", "id": "t1", "method": "initialize",
-         "params": {"protocolVersion": "2024-11-05", "capabilities": {},
-                    "clientInfo": {"name": "pytest", "version": "0.0.1"}}},
-        {"jsonrpc": "2.0", "method": "notifications/initialized"},
-        {"jsonrpc": "2.0", "id": "t2", "method": "tools/list"},
-    ])
+    replies = _run_mcp(
+        [
+            {
+                "jsonrpc": "2.0",
+                "id": "t1",
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {"name": "pytest", "version": "0.0.1"},
+                },
+            },
+            {"jsonrpc": "2.0", "method": "notifications/initialized"},
+            {"jsonrpc": "2.0", "id": "t2", "method": "tools/list"},
+        ]
+    )
     assert len(replies) == 2, f"expected 2 JSON-RPC replies, got {len(replies)}"
 
     init = replies[0]
@@ -179,29 +203,57 @@ def test_server_responds_to_initialize_and_tools_list():
     tools = replies[1]
     assert tools["id"] == "t2"
     tool_names = [t["name"] for t in tools["result"]["tools"]]
-    expected = {"forge3_info", "forge3_doctor", "forge3_methods", "forge3_tools",
-                "forge3_extensions", "forge3_models", "forge3_agents",
-                "forge3_commands", "forge3_call", "forge3_shell", "forge3_search",
-                "forge3_read", "forge3_write", "forge3_patch", "forge3_skill_search"}
+    expected = {
+        "forge3_info",
+        "forge3_doctor",
+        "forge3_methods",
+        "forge3_tools",
+        "forge3_extensions",
+        "forge3_models",
+        "forge3_agents",
+        "forge3_commands",
+        "forge3_call",
+        "forge3_shell",
+        "forge3_search",
+        "forge3_read",
+        "forge3_write",
+        "forge3_patch",
+        "forge3_skill_search",
+    }
     missing = expected - set(tool_names)
     assert not missing, f"missing tools: {missing}"
     assert len(tool_names) >= 15
 
 
 @pytest.mark.skipif(
-    not os.path.exists(os.environ.get("FORGE3_BIN", "/Users/kooshapari/.cargo/bin/forge3")),
+    not os.path.exists(
+        os.environ.get("FORGE3_BIN", "/Users/kooshapari/.cargo/bin/forge3")
+    ),
     reason="forge3 binary not available",
 )
 def test_doctor_tool_call_against_real_daemon():
     """Real forge3_doctor call returns a verdict dict."""
-    replies = _run_mcp([
-        {"jsonrpc": "2.0", "id": "d1", "method": "initialize",
-         "params": {"protocolVersion": "2024-11-05", "capabilities": {},
-                    "clientInfo": {"name": "pytest", "version": "0.0.1"}}},
-        {"jsonrpc": "2.0", "method": "notifications/initialized"},
-        {"jsonrpc": "2.0", "id": "d2", "method": "tools/call",
-         "params": {"name": "forge3_doctor", "arguments": {}}},
-    ])
+    replies = _run_mcp(
+        [
+            {
+                "jsonrpc": "2.0",
+                "id": "d1",
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {"name": "pytest", "version": "0.0.1"},
+                },
+            },
+            {"jsonrpc": "2.0", "method": "notifications/initialized"},
+            {
+                "jsonrpc": "2.0",
+                "id": "d2",
+                "method": "tools/call",
+                "params": {"name": "forge3_doctor", "arguments": {}},
+            },
+        ]
+    )
     call_reply = replies[-1]
     assert call_reply["id"] == "d2"
     assert "result" in call_reply
@@ -212,7 +264,11 @@ def test_doctor_tool_call_against_real_daemon():
         parsed = result["structuredContent"]
     else:
         content = result.get("content", [])
-        text = content[0]["text"] if isinstance(content, list) and content else json.dumps(result)
+        text = (
+            content[0]["text"]
+            if isinstance(content, list) and content
+            else json.dumps(result)
+        )
         parsed = json.loads(text)
     assert "binary" in parsed
     assert "recommendation" in parsed
