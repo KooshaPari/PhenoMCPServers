@@ -178,7 +178,11 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
+      # Gitleaks compares the pull-request head to its parent. Retain that
+      # parent in the checkout rather than scanning an ambiguous shallow ref.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:

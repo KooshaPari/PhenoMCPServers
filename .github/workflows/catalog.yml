@@ -45,4 +45,4 @@ jobs:
       - name: Install pheno-org server deps
         run: pip install -e "servers/pheno-org[dev]"
       - name: pytest catalog + bundle + hexakit + substrate + pheno-org
-        run: pytest tests/test_catalog_validation.py tests/test_bundle_wiring.py tests/test_hexakit_template.py tests/test_mcp_server_ts7_template.py servers/substrate servers/pheno-org/tests -q
+        run: PYTHONPATH=. pytest tests/test_catalog_validation.py tests/test_bundle_wiring.py tests/test_hexakit_template.py tests/test_mcp_server_ts7_template.py servers/substrate servers/pheno-org/tests -q
