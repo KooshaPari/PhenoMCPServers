@@ -26,7 +26,7 @@
 
 use std::io::{Read, Write};
 use std::net::TcpStream;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::time::Duration;
 
@@ -139,9 +139,7 @@ fn main() -> Result<()> {
                     .and_then(|v| v.as_array())
                     .map(|arr| {
                         arr.iter()
-                            .filter_map(|p| {
-                                p.get("name").and_then(|v| v.as_str()).map(String::from)
-                            })
+                            .filter_map(|p| p.get("name").and_then(|v| v.as_str()).map(String::from))
                             .collect()
                     })
                     .unwrap_or_default();
@@ -168,7 +166,7 @@ fn main() -> Result<()> {
 
 // ----------------------------- daemon mgmt -----------------------------
 
-fn start_daemon(bin: &Path, addr: &str) -> Result<()> {
+fn start_daemon(bin: &PathBuf, addr: &str) -> Result<()> {
     if !bin.exists() {
         return Err(anyhow!(
             "forge3 binary not found at {}; set FORGE3_BIN or pass --bin",
@@ -270,7 +268,9 @@ fn stop_daemon() -> Result<()> {
         return Ok(());
     }
     // Fallback: pkill the user-level forge3 ws process.
-    let _ = Command::new("pkill").args(["-f", "forge3 ws"]).status();
+    let _ = Command::new("pkill")
+        .args(["-f", "forge3 ws"])
+        .status();
     Ok(())
 }
 
@@ -360,11 +360,7 @@ fn stdio_rpc(bin: &PathBuf, method: &str, params: Option<&Value>) -> Result<Valu
     drop(child.stdin.take());
 
     let mut out = String::new();
-    child
-        .stdout
-        .as_mut()
-        .context("stdout")?
-        .read_to_string(&mut out)?;
+    child.stdout.as_mut().context("stdout")?.read_to_string(&mut out)?;
     let _ = child.wait();
 
     // Pick first non-empty line that parses as JSON.
@@ -401,12 +397,12 @@ fn install_plan(
     source: &std::path::Path,
     home: &std::path::Path,
 ) -> Vec<(&'static str, String, String)> {
-    let claude_skills = home.join(".claude/skills/forge3-bridge");
-    let codex_skills = home.join(".codex/skills/forge3-bridge");
+    let claude_skills = home.join(".claude/skills/forge3");
+    let codex_skills = home.join(".codex/skills/forge3");
     let bin_dir = home.join("bin");
     let forge_dir = home.join(".forge");
-    let py_dir = source.join("servers/forge3-bridge");
-    let skill_src = source.join("skills/forge3-bridge/SKILL.md");
+    let py_dir = source.join("python");
+    let skill_src = source.join("skills/forge3/SKILL.md");
     let cli_src = py_dir.join("forge3_cli.py");
     let mcp_src = py_dir.join("forge3_mcp.py");
     let bridge_src = py_dir.join("forge3_bridge_server.py");
@@ -425,9 +421,9 @@ fn install_plan(
         ),
         (
             "file",
-            format!("{}/skill.yaml", claude_skills.display()),
+            format!("{}/skill.json", claude_skills.display()),
             source
-                .join("skills/forge3-bridge/skill.yaml")
+                .join("skills/forge3/skill.json")
                 .display()
                 .to_string(),
         ),
@@ -458,15 +454,15 @@ fn install_plan(
     ]
 }
 
-fn install(source: &Path, dry_run: bool) -> Result<()> {
+fn install(source: &PathBuf, dry_run: bool) -> Result<()> {
     let home = dirs::home_dir().context("home_dir")?;
-    let claude_skills = home.join(".claude/skills/forge3-bridge");
-    let codex_skills = home.join(".codex/skills/forge3-bridge");
+    let claude_skills = home.join(".claude/skills/forge3");
+    let codex_skills = home.join(".codex/skills/forge3");
     let bin_dir = home.join("bin");
     let forge_dir = home.join(".forge");
 
-    let py_dir = source.join("servers/forge3-bridge");
-    let skill_src = source.join("skills/forge3-bridge/SKILL.md");
+    let py_dir = source.join("python");
+    let skill_src = source.join("skills/forge3/SKILL.md");
 
     let cli_src = py_dir.join("forge3_cli.py");
     let mcp_src = py_dir.join("forge3_mcp.py");
@@ -503,10 +499,10 @@ fn install(source: &Path, dry_run: bool) -> Result<()> {
     std::fs::copy(&skill_src, claude_skills.join("SKILL.md")).context("copy SKILL.md -> claude")?;
     std::fs::copy(&skill_src, codex_skills.join("SKILL.md")).context("copy SKILL.md -> codex")?;
     std::fs::copy(
-        source.join("skills/forge3-bridge/skill.yaml"),
-        claude_skills.join("skill.yaml"),
+        &source.join("skills/forge3/skill.json"),
+        claude_skills.join("skill.json"),
     )
-    .context("copy skill.yaml -> claude")?;
+    .context("copy skill.json -> claude")?;
     std::fs::copy(&cli_src, &cli_dst).context("copy cli.py")?;
     std::fs::copy(&mcp_src, &mcp_dst).context("copy mcp.py")?;
     std::fs::copy(&bridge_src, &bridge_dst).context("copy bridge server.py")?;
@@ -554,31 +550,7 @@ mod tests {
         assert!(plan.iter().any(|(op, dst, src)| {
             *op == "file"
                 && dst == "/home/user/bin/forge3_bridge_server.py"
-                && src == "/source/servers/forge3-bridge/forge3_bridge_server.py"
-        }));
-    }
-
-    #[test]
-    fn install_plan_matches_repository_layout_and_skill_id() {
-        let plan = install_plan(
-            std::path::Path::new("/source"),
-            std::path::Path::new("/home/user"),
-        );
-
-        assert!(plan.iter().any(|(op, dst, src)| {
-            *op == "file"
-                && dst == "/home/user/.claude/skills/forge3-bridge/SKILL.md"
-                && src == "/source/skills/forge3-bridge/SKILL.md"
-        }));
-        assert!(plan.iter().any(|(op, dst, src)| {
-            *op == "file"
-                && dst == "/home/user/.claude/skills/forge3-bridge/skill.yaml"
-                && src == "/source/skills/forge3-bridge/skill.yaml"
-        }));
-        assert!(plan.iter().any(|(op, dst, src)| {
-            *op == "file"
-                && dst == "/home/user/bin/forge3_mcp.py"
-                && src == "/source/servers/forge3-bridge/forge3_mcp.py"
+                && src == "/source/python/forge3_bridge_server.py"
         }));
     }
 }

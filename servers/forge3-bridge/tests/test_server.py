@@ -7,9 +7,11 @@ from __future__ import annotations
 
 import json
 import os
+import queue
 import select
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -32,6 +34,16 @@ def _run_mcp(
         text=True,
         cwd=str(REPO),
     )
+    lines: queue.Queue = queue.Queue()
+
+    def read_stdout() -> None:
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            lines.put(line)
+        lines.put(None)
+
+    reader = threading.Thread(target=read_stdout, daemon=True)
+    reader.start()
     replies = []
     try:
         for message in messages:
@@ -43,10 +55,14 @@ def _run_mcp(
                 continue
             deadline = time.monotonic() + timeout
             while time.monotonic() < deadline:
-                ready, _, _ = select.select([proc.stdout], [], [], 0.1)
-                if not ready:
+                remaining = deadline - time.monotonic()
+                try:
+                    line = lines.get(timeout=min(remaining, 0.1))
+                except queue.Empty:
                     continue
-                line = proc.stdout.readline().strip()
+                if line is None:
+                    break
+                line = line.strip()
                 if not line or not line.startswith("{"):
                     continue
                 try:
@@ -67,6 +83,7 @@ def _run_mcp(
         except subprocess.TimeoutExpired:
             proc.kill()
             proc.wait(timeout=timeout)
+        reader.join(timeout=timeout)
     return replies
 
 
@@ -97,6 +114,33 @@ for line in sys.stdin:
     )
 
     assert replies == [{"jsonrpc": "2.0", "id": "noisy", "result": {}}]
+
+
+def test_run_mcp_uses_portable_pipe_reading(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Anonymous-pipe handling does not depend on select(), which Windows rejects."""
+    server = tmp_path / "replying_server.py"
+    server.write_text(
+        """import json
+import sys
+
+for line in sys.stdin:
+    request = json.loads(line)
+    if "id" in request:
+        print(json.dumps({"jsonrpc": "2.0", "id": request["id"], "result": {}}), flush=True)
+"""
+    )
+
+    def unsupported_select(*_args: object, **_kwargs: object) -> object:
+        raise OSError("anonymous pipes are unsupported")
+
+    monkeypatch.setattr(select, "select", unsupported_select)
+    replies = _run_mcp(
+        [{"jsonrpc": "2.0", "id": "portable", "method": "initialize"}],
+        timeout=1,
+        server=server,
+    )
+
+    assert replies == [{"jsonrpc": "2.0", "id": "portable", "result": {}}]
 
 
 def test_legacy_entrypoint_exposes_the_canonical_mcp_surface():
