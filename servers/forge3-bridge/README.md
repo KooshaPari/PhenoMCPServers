@@ -9,23 +9,23 @@ Framework: [PhenoFastMCP](https://github.com/KooshaPari/PhenoFastMCP) / fastmcp 
 
 ## Tools exposed (15 total)
 
-| Tool | What it does |
-|------|--------------|
-| `forge3_info` | `rpc.info` — full extension registry, enable state, version, capabilities |
-| `forge3_methods` | `rpc.discover` — every JSON-RPC method forge3 accepts |
-| `forge3_tools` | `tool_list` — LLM-facing tools (read/write/patch/search/shell/...) |
-| `forge3_extensions` | `info.extensions` — providers, tools, MCP, ... |
-| `forge3_models` | `model_list` — every model forge3 routes to |
-| `forge3_agents` | `agent_list` — headless agent profiles (forge/muse/sage) |
-| `forge3_commands` | `command_list` — slash-style ops (auth, reload, ...) |
-| `forge3_call` | raw JSON-RPC passthrough (any method, any params) |
-| `forge3_shell` | run shell command via `tool.shell` |
-| `forge3_search` | ripgrep-style code search via `tool.search` |
-| `forge3_read` | read a file via `tool.read` |
-| `forge3_write` | write a file via `tool.write` |
-| `forge3_patch` | patch a file via `tool.patch` |
-| `forge3_skill_search` | discover skills via `tool.skill_search` |
-| `forge3_doctor` | probe ws + stdio transport health |
+| Tool                  | What it does                                                              |
+| --------------------- | ------------------------------------------------------------------------- |
+| `forge3_info`         | `rpc.info` — full extension registry, enable state, version, capabilities |
+| `forge3_methods`      | `rpc.discover` — every JSON-RPC method forge3 accepts                     |
+| `forge3_tools`        | `tool_list` — LLM-facing tools (read/write/patch/search/shell/...)        |
+| `forge3_extensions`   | `info.extensions` — providers, tools, MCP, ...                            |
+| `forge3_models`       | `model_list` — every model forge3 routes to                               |
+| `forge3_agents`       | `agent_list` — headless agent profiles (forge/muse/sage)                  |
+| `forge3_commands`     | `command_list` — slash-style ops (auth, reload, ...)                      |
+| `forge3_call`         | raw JSON-RPC passthrough (any method, any params)                         |
+| `forge3_shell`        | run shell command via `tool.shell`                                        |
+| `forge3_search`       | ripgrep-style code search via `tool.search`                               |
+| `forge3_read`         | read a file via `tool.read`                                               |
+| `forge3_write`        | write a file via `tool.write`                                             |
+| `forge3_patch`        | patch a file via `tool.patch`                                             |
+| `forge3_skill_search` | discover skills via `tool.skill_search`                                   |
+| `forge3_doctor`       | probe ws + stdio transport health                                         |
 
 ## Install
 
@@ -55,7 +55,9 @@ Add to `~/.config/claude-desktop/config.json` (or equivalent MCP config):
   "mcpServers": {
     "forge3-bridge": {
       "command": "python",
-      "args": ["/abs/path/to/PhenoMCPServers/servers/forge3-bridge/forge3_bridge_server.py"],
+      "args": [
+        "/abs/path/to/PhenoMCPServers/servers/forge3-bridge/forge3_bridge_server.py"
+      ],
       "env": {
         "FORGE3_BIN": "/Users/kooshapari/.cargo/bin/forge3",
         "FORGE3_WS": "ws://127.0.0.1:9753"

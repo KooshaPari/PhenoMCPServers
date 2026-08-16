@@ -139,7 +139,9 @@ fn main() -> Result<()> {
                     .and_then(|v| v.as_array())
                     .map(|arr| {
                         arr.iter()
-                            .filter_map(|p| p.get("name").and_then(|v| v.as_str()).map(String::from))
+                            .filter_map(|p| {
+                                p.get("name").and_then(|v| v.as_str()).map(String::from)
+                            })
                             .collect()
                     })
                     .unwrap_or_default();
@@ -268,9 +270,7 @@ fn stop_daemon() -> Result<()> {
         return Ok(());
     }
     // Fallback: pkill the user-level forge3 ws process.
-    let _ = Command::new("pkill")
-        .args(["-f", "forge3 ws"])
-        .status();
+    let _ = Command::new("pkill").args(["-f", "forge3 ws"]).status();
     Ok(())
 }
 
@@ -360,7 +360,11 @@ fn stdio_rpc(bin: &PathBuf, method: &str, params: Option<&Value>) -> Result<Valu
     drop(child.stdin.take());
 
     let mut out = String::new();
-    child.stdout.as_mut().context("stdout")?.read_to_string(&mut out)?;
+    child
+        .stdout
+        .as_mut()
+        .context("stdout")?
+        .read_to_string(&mut out)?;
     let _ = child.wait();
 
     // Pick first non-empty line that parses as JSON.
