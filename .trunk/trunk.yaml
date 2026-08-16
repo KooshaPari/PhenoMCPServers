@@ -1,3 +1,4 @@
+---
 # Trunk Check configuration. The v0.1 schema is required by current
 # Trunk CLI/action releases; plugins provide the per-language definitions.
 version: 0.1
