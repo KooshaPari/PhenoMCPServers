@@ -12,20 +12,20 @@ plugins:
       ref: v1.11.0
       uri: https://github.com/trunk-io/plugins
 
-# mcpforge declares `go 1.24.0`; without this Trunk defaults to Go 1.21.
+# The highest embedded Go module requirement is ops-mcp's Go 1.26.0.
 runtimes:
   enabled:
-    - go@1.24.0
+    - go@1.26.0
 
 # Pin supported plugin definitions rather than relying on a moving generated
-# default. `golangci-lint` retains the repository's existing v1 config files.
+# default. The v2 linter is required for the Go 1.26 module.
 lint:
   enabled:
     - actionlint@1.7.8
     - black@25.9.0
     - clippy@1.65.0
     - eslint@8.10.0
-    - golangci-lint@1.64.8
+    - golangci-lint2@2.12.2
     - mypy@1.20.2
     - prettier@3.6.2
     - ruff@0.14.3
