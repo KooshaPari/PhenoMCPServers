@@ -28,7 +28,7 @@ def _run_mcp(
         [sys.executable, str(server)],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
         text=True,
         cwd=str(REPO),
     )
@@ -62,8 +62,41 @@ def _run_mcp(
         if proc.stdin is not None:
             proc.stdin.close()
         proc.terminate()
-        proc.wait(timeout=timeout)
+        try:
+            proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=timeout)
     return replies
+
+
+def test_run_mcp_handles_noisy_stderr_and_forces_uncooperative_shutdown(
+    tmp_path: Path,
+):
+    """A protocol reply survives stderr noise and a child that ignores SIGTERM."""
+    server = tmp_path / "noisy_server.py"
+    server.write_text(
+        """import json
+import signal
+import sys
+
+signal.signal(signal.SIGTERM, signal.SIG_IGN)
+sys.stderr.write("x" * 131072 + "\\n")
+sys.stderr.flush()
+for line in sys.stdin:
+    request = json.loads(line)
+    if "id" in request:
+        print(json.dumps({"jsonrpc": "2.0", "id": request["id"], "result": {}}), flush=True)
+"""
+    )
+
+    replies = _run_mcp(
+        [{"jsonrpc": "2.0", "id": "noisy", "method": "initialize"}],
+        timeout=1,
+        server=server,
+    )
+
+    assert replies == [{"jsonrpc": "2.0", "id": "noisy", "result": {}}]
 
 
 def test_legacy_entrypoint_exposes_the_canonical_mcp_surface():
@@ -76,9 +109,11 @@ def test_legacy_entrypoint_exposes_the_canonical_mcp_surface():
         {"jsonrpc": "2.0", "method": "notifications/initialized"},
         {"jsonrpc": "2.0", "id": "legacy-tools", "method": "tools/list"},
     ], server=LEGACY_SERVER)
-    assert len(replies) == 2
-    assert replies[0]["result"]["serverInfo"]["name"] == "forge3-bridge"
-    assert "forge3_doctor" in {tool["name"] for tool in replies[1]["result"]["tools"]}
+    replies_by_id = {reply.get("id"): reply for reply in replies}
+    assert replies_by_id["legacy-init"]["result"]["serverInfo"]["name"] == "forge3-bridge"
+    assert "forge3_doctor" in {
+        tool["name"] for tool in replies_by_id["legacy-tools"]["result"]["tools"]
+    }
 
 
 def test_server_responds_to_initialize_and_tools_list():
