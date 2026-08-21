@@ -179,6 +179,11 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Gitleaks v2 receives the pull-request head SHA. Checkout that
+          # commit explicitly; the synthetic merge ref is not the SHA it scans.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
