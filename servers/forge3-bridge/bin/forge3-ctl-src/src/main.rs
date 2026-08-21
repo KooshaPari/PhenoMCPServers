@@ -26,7 +26,7 @@
 
 use std::io::{Read, Write};
 use std::net::TcpStream;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::Duration;
 
@@ -168,7 +168,7 @@ fn main() -> Result<()> {
 
 // ----------------------------- daemon mgmt -----------------------------
 
-fn start_daemon(bin: &PathBuf, addr: &str) -> Result<()> {
+fn start_daemon(bin: &Path, addr: &str) -> Result<()> {
     if !bin.exists() {
         return Err(anyhow!(
             "forge3 binary not found at {}; set FORGE3_BIN or pass --bin",
@@ -458,7 +458,7 @@ fn install_plan(
     ]
 }
 
-fn install(source: &PathBuf, dry_run: bool) -> Result<()> {
+fn install(source: &Path, dry_run: bool) -> Result<()> {
     let home = dirs::home_dir().context("home_dir")?;
     let claude_skills = home.join(".claude/skills/forge3");
     let codex_skills = home.join(".codex/skills/forge3");
@@ -503,7 +503,7 @@ fn install(source: &PathBuf, dry_run: bool) -> Result<()> {
     std::fs::copy(&skill_src, claude_skills.join("SKILL.md")).context("copy SKILL.md -> claude")?;
     std::fs::copy(&skill_src, codex_skills.join("SKILL.md")).context("copy SKILL.md -> codex")?;
     std::fs::copy(
-        &source.join("skills/forge3/skill.json"),
+        source.join("skills/forge3/skill.json"),
         claude_skills.join("skill.json"),
     )
     .context("copy skill.json -> claude")?;
