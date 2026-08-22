@@ -32,6 +32,7 @@ Run:
     # Or, after `forge3-ctl install`:
     forge3-bridge-mcp
 """
+
 from __future__ import annotations
 
 import json
@@ -50,7 +51,6 @@ from forge3_cli import (  # noqa: E402
     TransportError,
     flatten_result,
     pick_transport,
-    render,
 )
 
 # MCP bootstrap.  PhenoMCPServers convention: `from fastmcp import FastMCP`.
@@ -119,7 +119,10 @@ def forge3_tools() -> list[dict]:
     """Forge3 tool_list — the LLM-facing tools (read/write/patch/search/shell/task/...)."""
     payload = _call("tool_list") or {}
     tools = payload.get("tools", []) if isinstance(payload, dict) else []
-    return [{"name": t.get("name"), "description": (t.get("description") or "")[:240]} for t in tools]
+    return [
+        {"name": t.get("name"), "description": (t.get("description") or "")[:240]}
+        for t in tools
+    ]
 
 
 @mcp.tool()
@@ -151,7 +154,10 @@ def forge3_agents() -> list[dict]:
     """Forge3 agent_list — the headless agent profiles forge3 exposes (forge/muse/sage)."""
     payload = _call("agent_list") or {}
     agents = payload.get("agents", []) if isinstance(payload, dict) else []
-    return [{"id": a.get("id"), "description": (a.get("description") or "")[:240]} for a in agents]
+    return [
+        {"id": a.get("id"), "description": (a.get("description") or "")[:240]}
+        for a in agents
+    ]
 
 
 @mcp.tool()
@@ -159,7 +165,10 @@ def forge3_commands() -> list[dict]:
     """Forge3 command_list — slash-style commands (auth flows, reload MCP, reload skills, ...)."""
     payload = _call("command_list") or {}
     cmds = payload.get("commands", []) if isinstance(payload, dict) else []
-    return [{"name": c.get("name"), "description": (c.get("description") or "")[:200]} for c in cmds]
+    return [
+        {"name": c.get("name"), "description": (c.get("description") or "")[:200]}
+        for c in cmds
+    ]
 
 
 @mcp.tool()
@@ -188,7 +197,9 @@ def forge3_shell(command: str, cwd: Optional[str] = None) -> dict:
 
 
 @mcp.tool()
-def forge3_search(pattern: str, path: Optional[str] = None, mode: str = "files_with_matches") -> dict:
+def forge3_search(
+    pattern: str, path: Optional[str] = None, mode: str = "files_with_matches"
+) -> dict:
     """Ripgrep-style code search via tool.search. `mode` is one of content/files_with_matches/count."""
     return _call(
         "tool_call",
@@ -215,11 +226,15 @@ def forge3_read(path: str, max_lines: Optional[int] = None) -> dict:
 @mcp.tool()
 def forge3_write(path: str, content: str) -> dict:
     """Write `content` to `path` via tool.write. Overwrites if existing."""
-    return _call("tool_call", {"name": "write", "arguments": {"path": path, "content": content}})
+    return _call(
+        "tool_call", {"name": "write", "arguments": {"path": path, "content": content}}
+    )
 
 
 @mcp.tool()
-def forge3_patch(path: str, old_string: str, new_string: str, replace_all: bool = False) -> dict:
+def forge3_patch(
+    path: str, old_string: str, new_string: str, replace_all: bool = False
+) -> dict:
     """Patch a file by exact-string replacement via tool.patch."""
     return _call(
         "tool_call",
@@ -254,13 +269,16 @@ def forge3_doctor() -> dict:
         "ws_error": ws_err,
         "stdio_reachable": stdio_reachable,
         "stdio_error": stdio_err,
-        "recommendation": "ws" if ws_reachable else ("stdio" if stdio_reachable else "neither"),
+        "recommendation": "ws"
+        if ws_reachable
+        else ("stdio" if stdio_reachable else "neither"),
     }
 
 
 def _probe_ws() -> tuple[bool, Optional[str]]:
     try:
         import asyncio
+
         try:
             import websockets  # noqa: F401
         except ImportError:

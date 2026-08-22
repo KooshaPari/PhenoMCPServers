@@ -64,13 +64,20 @@ def _get_router() -> Router:
     return _RouterHolder.get()
 
 
-def _make_dispatch(tier: str) -> Callable[[str], Awaitable[dict[str, str | bool | None]]]:
+def _make_dispatch(
+    tier: str,
+) -> Callable[[str], Awaitable[dict[str, str | bool | None]]]:
     @mcp.tool(name=f"dispatch_{tier}")
     async def dispatch(message: str) -> dict[str, str | bool | None]:
         if len(message.encode()) > MAX_MESSAGE_LENGTH:
-            raise ValueError(f"message exceeds maximum length of {MAX_MESSAGE_LENGTH} bytes")
+            raise ValueError(
+                f"message exceeds maximum length of {MAX_MESSAGE_LENGTH} bytes"
+            )
         router = _get_router()
-        return cast(dict[str, str | bool | None], await router.dispatch(message=message, tier=tier))
+        return cast(
+            dict[str, str | bool | None],
+            await router.dispatch(message=message, tier=tier),
+        )
 
     return dispatch
 
@@ -90,11 +97,17 @@ dispatch_gemini = _make_dispatch("gemini")
 @mcp.tool()
 async def dispatch_custom(tier: str, message: str) -> dict[str, str | bool | None]:
     if tier not in VALID_TIERS:
-        raise ValueError(f"Invalid tier '{tier}'. Must be one of: {', '.join(sorted(VALID_TIERS))}")
+        raise ValueError(
+            f"Invalid tier '{tier}'. Must be one of: {', '.join(sorted(VALID_TIERS))}"
+        )
     if len(message.encode()) > MAX_MESSAGE_LENGTH:
-        raise ValueError(f"message exceeds maximum length of {MAX_MESSAGE_LENGTH} bytes")
+        raise ValueError(
+            f"message exceeds maximum length of {MAX_MESSAGE_LENGTH} bytes"
+        )
     router = _get_router()
-    return cast(dict[str, str | bool | None], await router.dispatch(tier=tier, message=message))
+    return cast(
+        dict[str, str | bool | None], await router.dispatch(tier=tier, message=message)
+    )
 
 
 @mcp.tool()

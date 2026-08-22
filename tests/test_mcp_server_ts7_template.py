@@ -1,4 +1,5 @@
 """Smoke test: render the mcp-server-ts7 stub template."""
+
 from __future__ import annotations
 
 import subprocess

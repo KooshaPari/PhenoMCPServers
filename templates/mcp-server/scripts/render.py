@@ -11,6 +11,7 @@ files in this directory. It also validates the rendered catalog entry
 shape against ``schemas/registry.schema.json`` from the PhenoMCPServers
 checkout that owns the output directory.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -52,15 +53,15 @@ def render_string(text: str, mapping: dict[str, str]) -> str:
 
 def render_file(src: Path, dst: Path, mapping: dict[str, str]) -> None:
     dst.parent.mkdir(parents=True, exist_ok=True)
-    dst.write_text(render_string(src.read_text(encoding="utf-8"), mapping), encoding="utf-8")
+    dst.write_text(
+        render_string(src.read_text(encoding="utf-8"), mapping), encoding="utf-8"
+    )
 
 
 def build_mapping(args: argparse.Namespace) -> dict[str, str]:
     env = parse_env(args.env)
     env_list_lines = "\n".join(f"      - {name}" for name in env) if env else "      []"
-    env_json_lines = (
-        ",\n".join(f'        "{name}": ""' for name in env) if env else ""
-    )
+    env_json_lines = ",\n".join(f'        "{name}": ""' for name in env) if env else ""
     return {
         "id": args.id,
         "title": args.title or args.id,
@@ -117,13 +118,16 @@ def validate_catalog_entry(yaml_path: Path, repo_root: Path) -> None:
     rendered = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
     schema_path = repo_root / "schemas" / "registry.schema.json"
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
-    validator = Draft202012Validator(schema)
     errors: list = []
     defs = schema.get("$defs", {})
     for entry in rendered.get("servers", []):
         sub = Draft202012Validator(defs["server"])
         errors.extend(sub.iter_errors(entry))
-    for section, def_name in (("skills", "skill"), ("plugins", "plugin"), ("agents", "agent")):
+    for section, def_name in (
+        ("skills", "skill"),
+        ("plugins", "plugin"),
+        ("agents", "agent"),
+    ):
         for entry in rendered.get(section, []):
             sub = Draft202012Validator(defs[def_name])
             errors.extend(sub.iter_errors(entry))
@@ -160,10 +164,10 @@ def main() -> int:
         print(f"wrote {path.relative_to(out_dir)} ({name})")
 
     if repo_root is not None:
-        validate_catalog_entry(
-            rendered["catalog_entry.yaml.tmpl"], repo_root
+        validate_catalog_entry(rendered["catalog_entry.yaml.tmpl"], repo_root)
+        print(
+            f"OK catalog entry validates against {repo_root}/schemas/registry.schema.json"
         )
-        print(f"OK catalog entry validates against {repo_root}/schemas/registry.schema.json")
     else:
         print("WARN: no PhenoMCPServers repo root found; skipping schema validation")
 

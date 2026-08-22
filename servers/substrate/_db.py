@@ -1,9 +1,9 @@
 """Thin SQLite wrapper shared by team_mailbox_server and lead_server."""
+
 from __future__ import annotations
 
 import sqlite3
 import os
-from typing import Any
 
 
 def get_db_path() -> str:

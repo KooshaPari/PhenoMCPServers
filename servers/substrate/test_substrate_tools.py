@@ -1,4 +1,5 @@
 """pytest: substrate MCP tools call driver-http with correct shape."""
+
 from __future__ import annotations
 
 import os
@@ -36,7 +37,9 @@ def test_substrate_dispatch_calls_dispatch_endpoint():
             "internal_trace": "secret",
         },
     ) as mock_post:
-        result = substrate_server.substrate_dispatch("echo hi", engine="forge", cwd="/tmp")
+        result = substrate_server.substrate_dispatch(
+            "echo hi", engine="forge", cwd="/tmp"
+        )
 
     mock_post.assert_called_once_with(
         "/v1/dispatch",
@@ -80,7 +83,12 @@ def test_substrate_route_calls_route_endpoint():
     with patch.object(
         _http,
         "post_json",
-        return_value={"engine": "forge", "model": "kimi", "reason": "default", "shard": "internal"},
+        return_value={
+            "engine": "forge",
+            "model": "kimi",
+            "reason": "default",
+            "shard": "internal",
+        },
     ) as mock_post:
         result = substrate_server.substrate_route(task)
 
@@ -116,12 +124,18 @@ def test_empty_prompt_plan_rejected():
 
 
 def test_route_bad_task_rejected():
-    assert substrate_server.substrate_route({"cwd": "/tmp"}) == {"error": "task.prompt must not be empty"}
-    assert substrate_server.substrate_route("not-a-dict") == {"error": "task must be an object"}
+    assert substrate_server.substrate_route({"cwd": "/tmp"}) == {
+        "error": "task.prompt must not be empty"
+    }
+    assert substrate_server.substrate_route("not-a-dict") == {
+        "error": "task must be an object"
+    }
 
 
 def test_http_error_surfaces_as_error_key():
-    with patch.object(_http, "post_json", return_value={"error": "cwd must not be empty"}):
+    with patch.object(
+        _http, "post_json", return_value={"error": "cwd must not be empty"}
+    ):
         result = substrate_server.substrate_plan("hi", cwd="/tmp")
     assert result == {"error": "cwd must not be empty"}
 

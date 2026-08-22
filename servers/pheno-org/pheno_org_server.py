@@ -8,6 +8,7 @@ proxy to a Parpoura HTTP backend via ``httpx.AsyncClient``.
 Env:
   PARPOURA_BASE_URL  -- base URL for the Parpoura API (default http://localhost:8001)
 """
+
 from __future__ import annotations
 
 import os
@@ -165,7 +166,9 @@ async def knowledge_retrieve(knowledge_id: str) -> dict[str, Any]:
     """Retrieve a knowledge item by identifier."""
     async with _client() as client:
         try:
-            response = await client.get(f"/api/v1/knowledge/{quote(knowledge_id, safe='')}")
+            response = await client.get(
+                f"/api/v1/knowledge/{quote(knowledge_id, safe='')}"
+            )
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
@@ -190,7 +193,9 @@ async def knowledge_delete(knowledge_id: str) -> dict[str, Any]:
     """Delete a knowledge item by identifier."""
     async with _client() as client:
         try:
-            response = await client.delete(f"/api/v1/knowledge/{quote(knowledge_id, safe='')}")
+            response = await client.delete(
+                f"/api/v1/knowledge/{quote(knowledge_id, safe='')}"
+            )
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as exc:
@@ -279,7 +284,9 @@ async def session_resume(bundle_ref: str) -> dict[str, Any]:
 
 
 @mcp.tool()
-async def workflow_execute(workflow_id: str, workflow_type: str = "default") -> dict[str, Any]:
+async def workflow_execute(
+    workflow_id: str, workflow_type: str = "default"
+) -> dict[str, Any]:
     """Trigger execution of a workflow in PENDING or SUSPENDED status."""
     async with _client() as client:
         try:

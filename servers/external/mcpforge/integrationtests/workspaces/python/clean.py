@@ -1,7 +1,5 @@
 """A clean Python module without any errors or warnings."""
 
-from typing import Optional, Tuple
-
 
 def SameName():
     pass

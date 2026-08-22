@@ -1,4 +1,5 @@
 """pytest: pheno-org MCP tools call Parpoura HTTP with correct shape."""
+
 from __future__ import annotations
 
 import asyncio
@@ -30,8 +31,10 @@ def _err(status: int, text: str) -> httpx.Response:
 
 def _async_return(value):
     """Wrap a value as an awaitable."""
+
     async def _coro():
         return value
+
     return _coro()
 
 
@@ -42,6 +45,7 @@ def _mock_client() -> MagicMock:
 
 def _patch_client(client: MagicMock):
     """Patch pheno_org_server._client to return a context manager wrapping `client`."""
+
     @asynccontextmanager
     async def _factory():
         yield client
@@ -62,9 +66,11 @@ def test_ledger_query_passes_filters():
     client = MagicMock()
     client.get.return_value = _async_return(_ok({"entries": []}))
     with _patch_client(client):
-        result = _run(pheno_org_server.ledger_query(
-            action="money.ledger_entry.created.v1", actor="agent-1", limit=5
-        ))
+        result = _run(
+            pheno_org_server.ledger_query(
+                action="money.ledger_entry.created.v1", actor="agent-1", limit=5
+            )
+        )
     assert result == {"entries": []}
     args, kwargs = client.get.call_args
     assert args[0] == "/api/v1/governance/ledger"
@@ -93,9 +99,9 @@ def test_agent_create_posts_payload():
     client = MagicMock()
     client.post.return_value = _async_return(_ok({"id": "a1"}))
     with _patch_client(client):
-        result = _run(pheno_org_server.agent_create(
-            name="bot", agent_id="a1", description="test"
-        ))
+        result = _run(
+            pheno_org_server.agent_create(name="bot", agent_id="a1", description="test")
+        )
     assert result == {"id": "a1"}
     args, kwargs = client.post.call_args
     assert args[0] == "/api/v1/agents"
@@ -139,9 +145,11 @@ def test_knowledge_store_posts_payload():
     client = MagicMock()
     client.post.return_value = _async_return(_ok({"id": "k1"}))
     with _patch_client(client):
-        result = _run(pheno_org_server.knowledge_store(
-            knowledge_id="k1", content="hello", metadata={"src": "x"}
-        ))
+        result = _run(
+            pheno_org_server.knowledge_store(
+                knowledge_id="k1", content="hello", metadata={"src": "x"}
+            )
+        )
     assert result == {"id": "k1"}
     args, kwargs = client.post.call_args
     assert args[0] == "/api/v1/knowledge"
@@ -168,9 +176,9 @@ def test_policy_evaluate_posts_context():
     client = MagicMock()
     client.post.return_value = _async_return(_ok({"allow": True}))
     with _patch_client(client):
-        result = _run(pheno_org_server.policy_evaluate(
-            policy_id="p1", context={"user": "u"}
-        ))
+        result = _run(
+            pheno_org_server.policy_evaluate(policy_id="p1", context={"user": "u"})
+        )
     assert result == {"allow": True}
     args, kwargs = client.post.call_args
     assert args[0] == "/api/v1/policies/evaluate"

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Validate framework fork_parent fields per ADR-017."""
+
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import yaml
@@ -22,7 +22,9 @@ FORBIDDEN = {
 
 
 def main() -> int:
-    catalog = yaml.safe_load((ROOT / "catalog" / "registry.yaml").read_text(encoding="utf-8"))
+    catalog = yaml.safe_load(
+        (ROOT / "catalog" / "registry.yaml").read_text(encoding="utf-8")
+    )
     framework = catalog.get("framework", {})
     errors: list[str] = []
 
@@ -35,7 +37,9 @@ def main() -> int:
         if not parent:
             errors.append(f"framework.{lane} missing fork_parent")
         elif parent != expected_parent:
-            errors.append(f"framework.{lane} fork_parent={parent!r} want {expected_parent!r}")
+            errors.append(
+                f"framework.{lane} fork_parent={parent!r} want {expected_parent!r}"
+            )
         if parent in FORBIDDEN.get(lane, set()):
             errors.append(f"framework.{lane} uses forbidden parent {parent!r}")
 
@@ -44,7 +48,9 @@ def main() -> int:
         if item.get("id") == "phenotype-rust-sdk":
             repl = " ".join(str(x) for x in item.get("replacement", []))
             if "rmcp)" in repl and "PhenoRMCP" not in repl:
-                errors.append("phenotype-rust-sdk replacement still conflates rmcp with PhenoFastMCP-rust")
+                errors.append(
+                    "phenotype-rust-sdk replacement still conflates rmcp with PhenoFastMCP-rust"
+                )
 
     if errors:
         for e in errors:

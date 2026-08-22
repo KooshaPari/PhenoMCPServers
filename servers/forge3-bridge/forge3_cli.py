@@ -45,7 +45,9 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 DEFAULT_WS = os.environ.get("FORGE3_WS", "ws://127.0.0.1:9753")
-DEFAULT_BIN = os.environ.get("FORGE3_BIN", shutil.which("forge3") or "/Users/kooshapari/.cargo/bin/forge3")
+DEFAULT_BIN = os.environ.get(
+    "FORGE3_BIN", shutil.which("forge3") or "/Users/kooshapari/.cargo/bin/forge3"
+)
 
 
 # ----------------------------- transport layer -----------------------------
@@ -137,7 +139,9 @@ class WsTransport(Transport):
 
         if "error" in data:
             err = data["error"]
-            raise ForgeRpcError(err.get("code", -32000), err.get("message", ""), err.get("data"))
+            raise ForgeRpcError(
+                err.get("code", -32000), err.get("message", ""), err.get("data")
+            )
         return data.get("result")
 
     def close(self) -> None:
@@ -178,7 +182,9 @@ class StdioTransport(Transport):
             raise TransportError(f"binary not executable: {self.bin}") from e
 
         if proc.returncode != 0 and not proc.stdout.strip():
-            raise TransportError(f"forge3 exit={proc.returncode} stderr={proc.stderr.strip()[:400]}")
+            raise TransportError(
+                f"forge3 exit={proc.returncode} stderr={proc.stderr.strip()[:400]}"
+            )
 
         # Read first non-empty line as JSON reply.
         reply: Optional[dict] = None
@@ -197,7 +203,9 @@ class StdioTransport(Transport):
             )
         if "error" in reply:
             err = reply["error"]
-            raise ForgeRpcError(err.get("code", -32000), err.get("message", ""), err.get("data"))
+            raise ForgeRpcError(
+                err.get("code", -32000), err.get("message", ""), err.get("data")
+            )
         return reply.get("result")
 
 
@@ -229,20 +237,30 @@ def cmd_info(args, t: Transport):
 def cmd_methods(args, t: Transport):
     disc = flatten_result(t.call("rpc.discover"))
     methods = disc.get("methods", []) if isinstance(disc, dict) else []
-    return [{"name": m.get("name"), "params": [p.get("name") for p in m.get("params", [])]} for m in methods]
+    return [
+        {"name": m.get("name"), "params": [p.get("name") for p in m.get("params", [])]}
+        for m in methods
+    ]
 
 
 def cmd_tools(args, t: Transport):
     payload = flatten_result(t.call("tool_list"))
     tools = payload.get("tools", []) if isinstance(payload, dict) else []
-    return [{"name": t.get("name"), "description": (t.get("description") or "")[:120]} for t in tools]
+    return [
+        {"name": t.get("name"), "description": (t.get("description") or "")[:120]}
+        for t in tools
+    ]
 
 
 def cmd_extensions(args, t: Transport):
     info = flatten_result(t.call("info"))
     ext = info.get("extensions", {}) if isinstance(info, dict) else {}
     return [
-        {"id": k, "enabled": v.get("enabled"), "caps": (v.get("data") or {}).get("capabilities", [])}
+        {
+            "id": k,
+            "enabled": v.get("enabled"),
+            "caps": (v.get("data") or {}).get("capabilities", []),
+        }
         for k, v in ext.items()
     ]
 
@@ -256,13 +274,19 @@ def cmd_models(args, t: Transport):
 def cmd_agents(args, t: Transport):
     payload = flatten_result(t.call("agent_list"))
     agents = payload.get("agents", []) if isinstance(payload, dict) else []
-    return [{"id": a.get("id"), "description": (a.get("description") or "")[:160]} for a in agents]
+    return [
+        {"id": a.get("id"), "description": (a.get("description") or "")[:160]}
+        for a in agents
+    ]
 
 
 def cmd_commands(args, t: Transport):
     payload = flatten_result(t.call("command_list"))
     cmds = payload.get("commands", []) if isinstance(payload, dict) else []
-    return [{"name": c.get("name"), "description": (c.get("description") or "")[:120]} for c in cmds]
+    return [
+        {"name": c.get("name"), "description": (c.get("description") or "")[:120]}
+        for c in cmds
+    ]
 
 
 def cmd_call(args, t: Transport):
@@ -280,7 +304,10 @@ def cmd_shell(args, t: Transport):
     """Convenience: invoke the forge3 `tool.shell` extension via the generic tool_call RPC."""
     return t.call(
         "tool_call",
-        {"name": "shell", "arguments": {"command": args.command, "cwd": args.cwd or os.getcwd()}},
+        {
+            "name": "shell",
+            "arguments": {"command": args.command, "cwd": args.cwd or os.getcwd()},
+        },
     )
 
 
@@ -304,7 +331,9 @@ def cmd_doctor(args, t: Transport):
         try:
             # `forge3` with no args would launch stdio server and hang.
             # Use `forge3 help` which exits after printing help text.
-            v = subprocess.run([DEFAULT_BIN, "help"], capture_output=True, text=True, timeout=5)
+            v = subprocess.run(
+                [DEFAULT_BIN, "help"], capture_output=True, text=True, timeout=5
+            )
             combined = (v.stdout or "") + (v.stderr or "")
             first = next((ln.strip() for ln in combined.splitlines() if ln.strip()), "")
             out["version"] = first[:120] if first else f"exit={v.returncode}"
@@ -316,7 +345,11 @@ def cmd_doctor(args, t: Transport):
     try:
         out["ws_reachable"] = True
         info = flatten_result(ws.call("info", timeout=3))
-        out["ws_info_keys"] = sorted((info or {}).keys()) if isinstance(info, dict) else type(info).__name__
+        out["ws_info_keys"] = (
+            sorted((info or {}).keys())
+            if isinstance(info, dict)
+            else type(info).__name__
+        )
     except Exception as e:
         out["ws_reachable"] = False
         out["ws_error"] = str(e)
@@ -327,13 +360,19 @@ def cmd_doctor(args, t: Transport):
     try:
         out["stdio_reachable"] = True
         info = flatten_result(stdio.call("info", timeout=5))
-        out["stdio_info_keys"] = sorted((info or {}).keys()) if isinstance(info, dict) else type(info).__name__
+        out["stdio_info_keys"] = (
+            sorted((info or {}).keys())
+            if isinstance(info, dict)
+            else type(info).__name__
+        )
     except Exception as e:
         out["stdio_reachable"] = False
         out["stdio_error"] = str(e)
 
     out["recommendation"] = (
-        "ws" if out.get("ws_reachable") else ("stdio" if out.get("stdio_reachable") else "neither")
+        "ws"
+        if out.get("ws_reachable")
+        else ("stdio" if out.get("stdio_reachable") else "neither")
     )
     return out
 
@@ -364,8 +403,14 @@ def main(argv: Optional[list] = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument("--transport", choices=["auto", "ws", "stdio"], default="auto")
-    p.add_argument("--ws", default=DEFAULT_WS, help=f"WebSocket URL (default: {DEFAULT_WS})")
-    p.add_argument("--bin", default=DEFAULT_BIN, help=f"forge3 binary path (default: {DEFAULT_BIN})")
+    p.add_argument(
+        "--ws", default=DEFAULT_WS, help=f"WebSocket URL (default: {DEFAULT_WS})"
+    )
+    p.add_argument(
+        "--bin",
+        default=DEFAULT_BIN,
+        help=f"forge3 binary path (default: {DEFAULT_BIN})",
+    )
     p.add_argument("--quiet", action="store_true", help="suppress non-essential stderr")
 
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -379,18 +424,28 @@ def main(argv: Optional[list] = None) -> int:
     sub.add_parser("commands", help="command_list — slash-command style ops")
     sub.add_parser("doctor", help="probe ws + stdio transports and print verdict")
 
-    pc = sub.add_parser("call", help="raw json-rpc call: forge3-cli call <method> [--params '<json>']")
+    pc = sub.add_parser(
+        "call", help="raw json-rpc call: forge3-cli call <method> [--params '<json>']"
+    )
     pc.add_argument("method")
-    pc.add_argument("--params", help="JSON-encoded params object (omit for unit methods)")
+    pc.add_argument(
+        "--params", help="JSON-encoded params object (omit for unit methods)"
+    )
 
     ps = sub.add_parser("shell", help="high-level: run a shell command via tool.shell")
     ps.add_argument("command")
     ps.add_argument("--cwd")
 
-    psg = sub.add_parser("search", help="high-level: ripgrep-style search via tool.search")
+    psg = sub.add_parser(
+        "search", help="high-level: ripgrep-style search via tool.search"
+    )
     psg.add_argument("pattern")
     psg.add_argument("--path", help="search root (default: cwd)")
-    psg.add_argument("--mode", default="files_with_matches", choices=["content", "files_with_matches", "count"])
+    psg.add_argument(
+        "--mode",
+        default="files_with_matches",
+        choices=["content", "files_with_matches", "count"],
+    )
 
     args = p.parse_args(argv)
 

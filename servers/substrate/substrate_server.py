@@ -1,4 +1,5 @@
 """Substrate MCP server: dispatch/plan/route over HTTP plus team mailbox tools."""
+
 from __future__ import annotations
 
 import json
@@ -116,7 +117,17 @@ def team_send(
     _get_db().execute(
         "INSERT INTO mailbox (id, team_id, task_id, from_agent, to_agent, kind, parts, in_reply_to, state, created_at) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unread', ?)",
-        (msg_id, TEAM_ID, None, AGENT_NAME, to, kind, json.dumps(parts), in_reply_to, now),
+        (
+            msg_id,
+            TEAM_ID,
+            None,
+            AGENT_NAME,
+            to,
+            kind,
+            json.dumps(parts),
+            in_reply_to,
+            now,
+        ),
     )
     _get_db().commit()
     return sanitize_response({"ok": True, "id": msg_id})
@@ -125,11 +136,15 @@ def team_send(
 @mcp.tool()
 def team_inbox() -> dict[str, Any]:
     """Fetch all unread messages addressed to this agent."""
-    rows = _get_db().execute(
-        "SELECT id, from_agent, kind, parts, in_reply_to, created_at "
-        "FROM mailbox WHERE team_id=? AND to_agent=? AND state='unread' ORDER BY created_at ASC",
-        (TEAM_ID, AGENT_NAME),
-    ).fetchall()
+    rows = (
+        _get_db()
+        .execute(
+            "SELECT id, from_agent, kind, parts, in_reply_to, created_at "
+            "FROM mailbox WHERE team_id=? AND to_agent=? AND state='unread' ORDER BY created_at ASC",
+            (TEAM_ID, AGENT_NAME),
+        )
+        .fetchall()
+    )
     messages = [
         {
             "id": r[0],
@@ -147,11 +162,15 @@ def team_inbox() -> dict[str, Any]:
 @mcp.tool()
 def task_list() -> dict[str, Any]:
     """List all tasks in the team's tasklist."""
-    rows = _get_db().execute(
-        "SELECT id, title, state, owner, parent_task_id, created_at, updated_at "
-        "FROM tasklist WHERE team_id=? ORDER BY created_at ASC",
-        (TEAM_ID,),
-    ).fetchall()
+    rows = (
+        _get_db()
+        .execute(
+            "SELECT id, title, state, owner, parent_task_id, created_at, updated_at "
+            "FROM tasklist WHERE team_id=? ORDER BY created_at ASC",
+            (TEAM_ID,),
+        )
+        .fetchall()
+    )
     tasks = [
         {
             "id": r[0],
