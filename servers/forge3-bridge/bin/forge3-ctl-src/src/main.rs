@@ -401,12 +401,12 @@ fn install_plan(
     source: &std::path::Path,
     home: &std::path::Path,
 ) -> Vec<(&'static str, String, String)> {
-    let claude_skills = home.join(".claude/skills/forge3");
-    let codex_skills = home.join(".codex/skills/forge3");
+    let claude_skills = home.join(".claude/skills/forge3-bridge");
+    let codex_skills = home.join(".codex/skills/forge3-bridge");
     let bin_dir = home.join("bin");
     let forge_dir = home.join(".forge");
-    let py_dir = source.join("python");
-    let skill_src = source.join("skills/forge3/SKILL.md");
+    let py_dir = source.join("servers/forge3-bridge");
+    let skill_src = source.join("skills/forge3-bridge/SKILL.md");
     let cli_src = py_dir.join("forge3_cli.py");
     let mcp_src = py_dir.join("forge3_mcp.py");
     let bridge_src = py_dir.join("forge3_bridge_server.py");
@@ -425,9 +425,9 @@ fn install_plan(
         ),
         (
             "file",
-            format!("{}/skill.json", claude_skills.display()),
+            format!("{}/skill.yaml", claude_skills.display()),
             source
-                .join("skills/forge3/skill.json")
+                .join("skills/forge3-bridge/skill.yaml")
                 .display()
                 .to_string(),
         ),
@@ -460,13 +460,13 @@ fn install_plan(
 
 fn install(source: &Path, dry_run: bool) -> Result<()> {
     let home = dirs::home_dir().context("home_dir")?;
-    let claude_skills = home.join(".claude/skills/forge3");
-    let codex_skills = home.join(".codex/skills/forge3");
+    let claude_skills = home.join(".claude/skills/forge3-bridge");
+    let codex_skills = home.join(".codex/skills/forge3-bridge");
     let bin_dir = home.join("bin");
     let forge_dir = home.join(".forge");
 
-    let py_dir = source.join("python");
-    let skill_src = source.join("skills/forge3/SKILL.md");
+    let py_dir = source.join("servers/forge3-bridge");
+    let skill_src = source.join("skills/forge3-bridge/SKILL.md");
 
     let cli_src = py_dir.join("forge3_cli.py");
     let mcp_src = py_dir.join("forge3_mcp.py");
@@ -503,10 +503,10 @@ fn install(source: &Path, dry_run: bool) -> Result<()> {
     std::fs::copy(&skill_src, claude_skills.join("SKILL.md")).context("copy SKILL.md -> claude")?;
     std::fs::copy(&skill_src, codex_skills.join("SKILL.md")).context("copy SKILL.md -> codex")?;
     std::fs::copy(
-        source.join("skills/forge3/skill.json"),
-        claude_skills.join("skill.json"),
+        source.join("skills/forge3-bridge/skill.yaml"),
+        claude_skills.join("skill.yaml"),
     )
-    .context("copy skill.json -> claude")?;
+    .context("copy skill.yaml -> claude")?;
     std::fs::copy(&cli_src, &cli_dst).context("copy cli.py")?;
     std::fs::copy(&mcp_src, &mcp_dst).context("copy mcp.py")?;
     std::fs::copy(&bridge_src, &bridge_dst).context("copy bridge server.py")?;
@@ -554,7 +554,31 @@ mod tests {
         assert!(plan.iter().any(|(op, dst, src)| {
             *op == "file"
                 && dst == "/home/user/bin/forge3_bridge_server.py"
-                && src == "/source/python/forge3_bridge_server.py"
+                && src == "/source/servers/forge3-bridge/forge3_bridge_server.py"
+        }));
+    }
+
+    #[test]
+    fn install_plan_matches_repository_layout_and_skill_id() {
+        let plan = install_plan(
+            std::path::Path::new("/source"),
+            std::path::Path::new("/home/user"),
+        );
+
+        assert!(plan.iter().any(|(op, dst, src)| {
+            *op == "file"
+                && dst == "/home/user/.claude/skills/forge3-bridge/SKILL.md"
+                && src == "/source/skills/forge3-bridge/SKILL.md"
+        }));
+        assert!(plan.iter().any(|(op, dst, src)| {
+            *op == "file"
+                && dst == "/home/user/.claude/skills/forge3-bridge/skill.yaml"
+                && src == "/source/skills/forge3-bridge/skill.yaml"
+        }));
+        assert!(plan.iter().any(|(op, dst, src)| {
+            *op == "file"
+                && dst == "/home/user/bin/forge3_mcp.py"
+                && src == "/source/servers/forge3-bridge/forge3_mcp.py"
         }));
     }
 }
