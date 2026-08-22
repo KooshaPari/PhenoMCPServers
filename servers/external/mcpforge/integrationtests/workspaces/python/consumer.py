@@ -79,4 +79,3 @@ def process_data() -> None:
 if __name__ == "__main__":
     consumer_function()
     process_data()
-

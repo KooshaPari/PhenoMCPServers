@@ -1,4 +1,5 @@
 """Lead-facing MCP server: send messages, view inbox, list tasks."""
+
 from __future__ import annotations
 
 import json
@@ -10,6 +11,7 @@ from typing import Any
 from fastmcp import FastMCP
 
 from _db import open_db
+from _sanitize import sanitize_response as _sanitize_response
 
 mcp = FastMCP("lead-mailbox")
 
@@ -17,8 +19,6 @@ TEAM_ID = os.environ.get("SUBSTRATE_TEAM_ID", "default")
 AGENT_NAME = os.environ.get("SUBSTRATE_AGENT_NAME", "lead")
 
 _db = open_db()
-
-from _sanitize import sanitize_response as _sanitize_response
 
 
 @mcp.tool()
@@ -39,7 +39,17 @@ def team_send(
     _db.execute(
         "INSERT INTO mailbox (id, team_id, task_id, from_agent, to_agent, kind, parts, in_reply_to, state, created_at) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unread', ?)",
-        (msg_id, TEAM_ID, None, AGENT_NAME, to, kind, json.dumps(parts), in_reply_to, now),
+        (
+            msg_id,
+            TEAM_ID,
+            None,
+            AGENT_NAME,
+            to,
+            kind,
+            json.dumps(parts),
+            in_reply_to,
+            now,
+        ),
     )
     _db.commit()
     return _sanitize_response({"ok": True, "id": msg_id})
@@ -64,7 +74,9 @@ def team_inbox() -> dict[str, Any]:
         }
         for r in rows
     ]
-    return _sanitize_response({"ok": True, "count": len(messages), "messages": messages})
+    return _sanitize_response(
+        {"ok": True, "count": len(messages), "messages": messages}
+    )
 
 
 @mcp.tool()

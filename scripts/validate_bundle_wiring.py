@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Validate plugin bundle mcp.json matches catalog registry server wiring."""
+
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import yaml
@@ -14,7 +14,9 @@ BUNDLE_DIR = ROOT / "plugins" / "phenotype-bundle"
 
 
 def main() -> int:
-    catalog = yaml.safe_load((ROOT / "catalog" / "registry.yaml").read_text(encoding="utf-8"))
+    catalog = yaml.safe_load(
+        (ROOT / "catalog" / "registry.yaml").read_text(encoding="utf-8")
+    )
     plugins = {p["id"]: p for p in catalog.get("plugins", [])}
     servers = {s["id"]: s for s in catalog.get("servers", [])}
 
@@ -23,7 +25,9 @@ def main() -> int:
         print(f"MISSING plugin id={BUNDLE_ID} in catalog")
         return 1
 
-    plugin_yaml = yaml.safe_load((BUNDLE_DIR / "plugin.yaml").read_text(encoding="utf-8"))
+    plugin_yaml = yaml.safe_load(
+        (BUNDLE_DIR / "plugin.yaml").read_text(encoding="utf-8")
+    )
     mcp = json.loads((BUNDLE_DIR / "mcp.json").read_text(encoding="utf-8"))
     mcp_servers = set(mcp.get("mcpServers", {}))
     registry_servers = set(plugin.get("servers", []))
@@ -51,7 +55,9 @@ def main() -> int:
         script = Path(args[-1])
         expected = ROOT / pkg / f"{entry_mod}.py"
         if script.as_posix() != (Path(pkg) / f"{entry_mod}.py").as_posix():
-            print(f"PATH MISMATCH {sid}: mcp.json args[-1]={script} expected {pkg}/{entry_mod}.py")
+            print(
+                f"PATH MISMATCH {sid}: mcp.json args[-1]={script} expected {pkg}/{entry_mod}.py"
+            )
             return 1
         if not expected.exists():
             print(f"MISSING entry script: {expected}")

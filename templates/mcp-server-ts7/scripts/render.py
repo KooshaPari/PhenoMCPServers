@@ -8,12 +8,12 @@ Usage:
         --id echo --title "Echo MCP" --description "Echoes input back" \\
         --out /tmp/render
 """
+
 from __future__ import annotations
 
 import argparse
 import re
 import shutil
-import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -37,7 +37,9 @@ def render_string(text: str, mapping: dict[str, str]) -> str:
 
 def render_file(src: Path, dst: Path, mapping: dict[str, str]) -> None:
     dst.parent.mkdir(parents=True, exist_ok=True)
-    dst.write_text(render_string(src.read_text(encoding="utf-8"), mapping), encoding="utf-8")
+    dst.write_text(
+        render_string(src.read_text(encoding="utf-8"), mapping), encoding="utf-8"
+    )
 
 
 def build_mapping(args: argparse.Namespace) -> dict[str, str]:
@@ -71,7 +73,11 @@ def main() -> int:
     mapping = build_mapping(args)
     server_dir = out_dir / "servers" / mapping["id"] / "src"
     render_file(TEMPLATE_DIR / "server.ts.tmpl", server_dir / "index.ts", mapping)
-    render_file(TEMPLATE_DIR / "package.json.tmpl", out_dir / "servers" / mapping["id"] / "package.json", mapping)
+    render_file(
+        TEMPLATE_DIR / "package.json.tmpl",
+        out_dir / "servers" / mapping["id"] / "package.json",
+        mapping,
+    )
     catalog_path = out_dir / "catalog_entry.rendered.yaml"
     render_file(TEMPLATE_DIR / "catalog_entry.yaml.tmpl", catalog_path, mapping)
 

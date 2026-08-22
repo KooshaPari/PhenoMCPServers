@@ -1,4 +1,5 @@
 """Thin HTTP client for the substrate driver-http REST API."""
+
 from __future__ import annotations
 
 import os
@@ -20,7 +21,9 @@ def auth_headers() -> dict[str, str]:
     return {}
 
 
-def post_json(path: str, body: dict[str, Any], *, client: httpx.Client | None = None) -> dict[str, Any]:
+def post_json(
+    path: str, body: dict[str, Any], *, client: httpx.Client | None = None
+) -> dict[str, Any]:
     """POST JSON to a substrate HTTP endpoint and return the parsed body."""
     url = f"{http_base_url()}{path}"
     headers = {"Content-Type": "application/json", **auth_headers()}

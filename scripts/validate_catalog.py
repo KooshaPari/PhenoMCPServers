@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Validate catalog/registry.yaml against schemas/registry.schema.json."""
+
 from __future__ import annotations
 
 import json

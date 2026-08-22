@@ -19,7 +19,9 @@ def run_async(result: object) -> object:
 
 
 class _FakeRouter:
-    async def dispatch(self, message: str, tier: str, payload: dict | None = None) -> dict:  # noqa: ARG002
+    async def dispatch(
+        self, message: str, tier: str, payload: dict | None = None
+    ) -> dict:  # noqa: ARG002
         return {"ok": True, "tier": tier, "message": message}
 
 
@@ -38,7 +40,9 @@ class TestDispatchCustom:
 
         with patch.object(server._RouterHolder, "get", return_value=mock_router):
             result = run_async(server.dispatch_custom("worker", "hello"))
-            mock_router.dispatch.assert_awaited_once_with(tier="worker", message="hello")
+            mock_router.dispatch.assert_awaited_once_with(
+                tier="worker", message="hello"
+            )
             assert result == {"ok": True, "tier": "worker", "message": "hello"}
 
     def test_dispatch_custom_propagates_router_error(self) -> None:
@@ -55,7 +59,9 @@ class TestDispatchCustom:
 
     def test_missing_omniroute_url_bubbles_from_router(self) -> None:
         mock_router = AsyncMock()
-        mock_router.dispatch = AsyncMock(side_effect=ValueError("OMNIROUTE_URL missing"))
+        mock_router.dispatch = AsyncMock(
+            side_effect=ValueError("OMNIROUTE_URL missing")
+        )
 
         with patch.object(server._RouterHolder, "get", return_value=mock_router):
             with pytest.raises(ValueError, match="OMNIROUTE_URL"):
@@ -203,7 +209,9 @@ class TestHealthModule:
         mock_response.raise_for_status = MagicMock()
         with (
             patch.dict("os.environ", {"OMNIROUTE_URL": "http://localhost:8080"}),
-            patch("dispatch_mcp.health.httpx.get", return_value=mock_response) as mock_get,
+            patch(
+                "dispatch_mcp.health.httpx.get", return_value=mock_response
+            ) as mock_get,
         ):
             result = health.readiness(check_omniroute=True)
         assert result["status"] == "ready"

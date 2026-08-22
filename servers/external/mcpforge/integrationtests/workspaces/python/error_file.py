@@ -44,7 +44,7 @@ class ErrorClass:
 
     def method_with_undefined_variable(self) -> None:
         """A method that uses an undefined variable."""
-        print(undefined_variable)  # Error: undefined_variable is not defined
+        print(undefined_variable)  # noqa: F821 - deliberate diagnostic fixture
 
 
 # Variable with incompatible type annotation

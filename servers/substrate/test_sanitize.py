@@ -1,4 +1,5 @@
 """pytest: sanitize_response strips non-allowlisted keys."""
+
 import os
 import sys
 

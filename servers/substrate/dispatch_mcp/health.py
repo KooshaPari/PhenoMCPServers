@@ -42,7 +42,11 @@ def readiness(*, check_omniroute: bool = False, timeout: float = 2.0) -> dict[st
             }
             overall_ok = False
         else:
-            checks["omniroute_url"] = {"ok": True, "scheme": parsed.scheme, "host": parsed.hostname}
+            checks["omniroute_url"] = {
+                "ok": True,
+                "scheme": parsed.scheme,
+                "host": parsed.hostname,
+            }
 
     if check_omniroute and overall_ok:
         try:
@@ -52,7 +56,10 @@ def readiness(*, check_omniroute: bool = False, timeout: float = 2.0) -> dict[st
                 follow_redirects=False,
             )
             response.raise_for_status()
-            checks["omniroute_reachable"] = {"ok": True, "status_code": response.status_code}
+            checks["omniroute_reachable"] = {
+                "ok": True,
+                "status_code": response.status_code,
+            }
         except (httpx.HTTPError, httpx.RequestError) as exc:
             checks["omniroute_reachable"] = {"ok": False, "detail": str(exc)}
             overall_ok = False
