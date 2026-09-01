@@ -5,6 +5,8 @@ Phenotype **implementations** registry — runnable MCP servers plus **skills**,
 [PhenoFastMCP](https://github.com/KooshaPari/PhenoFastMCP)* tiered forks — not language
 umbrella SDKs. See [docs/LANGUAGE-TIERS-AND-ROLES.md](docs/LANGUAGE-TIERS-AND-ROLES.md).
 
+[![AI slop inside](https://sladge.net/badge.svg)](https://sladge.net) [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/KooshaPari/PhenoMCPServers/total)](https://github.com/KooshaPari/PhenoMCPServers/releases)
+
 ## Layout
 
 ```
