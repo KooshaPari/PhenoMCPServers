@@ -7,3 +7,7 @@ __pycache__/
 
 # Local DB from mailbox tools
 substrate.db
+
+# uv lock files (reproducible installs use requirements.txt + constraints)
+uv.lock
+servers/*/uv.lock
